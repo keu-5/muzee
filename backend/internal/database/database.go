@@ -13,7 +13,7 @@ import (
 var Pool *pgxpool.Pool
 var Queries *db.Queries
 
-func ConnectDatabase(cfg *config.Config) (*pgxpool.Pool, *db.Queries) {
+func ConnectDatabase(cfg *config.Config) (*pgxpool.Pool, error) {
 	var dsn string
 	
 	if cfg.DatabaseURL != "" {
@@ -33,12 +33,12 @@ func ConnectDatabase(cfg *config.Config) (*pgxpool.Pool, *db.Queries) {
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		return nil, fmt.Errorf("failed to connect to database: %w", err)
 	}
 
 	Pool = pool
 	Queries = db.New(pool)
-	return pool, Queries
+	return pool, nil
 }
 
 func GetPool() *pgxpool.Pool {
@@ -47,6 +47,10 @@ func GetPool() *pgxpool.Pool {
 
 func GetQueries() *db.Queries {
 	return Queries
+}
+
+func NewQueries(pool *pgxpool.Pool) *db.Queries {
+	return db.New(pool)
 }
 
 func Close() {

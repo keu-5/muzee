@@ -16,13 +16,16 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 
-	// データベース接続を初期化
-	pool, _ := database.ConnectDatabase(cfg)
+	// Wire-generated dependency injection
+	handler, err := InitializeApp(cfg)
+	if err != nil {
+		log.Fatal("Failed to initialize app:", err)
+	}
 	defer database.Close()
 
 	app := fiber.New()
 
-	router.SetupRoutes(app, cfg)
+	router.SetupRoutes(app, handler)
 
 	// Graceful shutdown
 	c := make(chan os.Signal, 1)
@@ -35,6 +38,7 @@ func main() {
 	}()
 
 	// Ping database to ensure connection
+	pool := database.GetPool()
 	if err := pool.Ping(context.Background()); err != nil {
 		log.Fatal("Failed to ping database:", err)
 	}
@@ -47,6 +51,5 @@ func main() {
 	}
 
 	log.Println("Running cleanup tasks...")
-	// Add cleanup tasks here if needed
 	log.Println("Server was successful shutdown.")
 }

@@ -18,9 +18,9 @@ type AuthService struct {
 	config   *config.Config
 }
 
-func NewAuthService(config *config.Config) *AuthService {
+func NewAuthService(userRepo *repository.UserRepository, config *config.Config) *AuthService {
 	return &AuthService{
-		userRepo: repository.NewUserRepository(),
+		userRepo: userRepo,
 		config:   config,
 	}
 }

@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/keu-5/muzee/backend/internal/database"
 	"github.com/keu-5/muzee/backend/internal/db"
 )
 
@@ -13,9 +12,9 @@ type UserRepository struct {
 	queries *db.Queries
 }
 
-func NewUserRepository() *UserRepository {
+func NewUserRepository(queries *db.Queries) *UserRepository {
 	return &UserRepository{
-		queries: database.GetQueries(),
+		queries: queries,
 	}
 }
 

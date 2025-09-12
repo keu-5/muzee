@@ -2,8 +2,6 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/keu-5/muzee/backend/config"
-	"github.com/keu-5/muzee/backend/internal/service"
 )
 
 type LoginRequest struct {
@@ -17,15 +15,13 @@ type RegisterRequest struct {
 	Password string `json:"password" validate:"required,min=6"`
 }
 
-func Login(c *fiber.Ctx, cfg *config.Config) error {
+func (h *Handler) Login(c *fiber.Ctx) error {
 	var req LoginRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	authService := service.NewAuthService(cfg)
-	
-	user, err := authService.AuthenticateUser(c.Context(), req.Username, req.Password)
+	user, err := h.authService.AuthenticateUser(c.Context(), req.Username, req.Password)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal server error"})
 	}
@@ -34,7 +30,7 @@ func Login(c *fiber.Ctx, cfg *config.Config) error {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
 
-	token, err := authService.GenerateToken(user.ID)
+	token, err := h.authService.GenerateToken(user.ID)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to generate token"})
 	}
@@ -49,15 +45,13 @@ func Login(c *fiber.Ctx, cfg *config.Config) error {
 	})
 }
 
-func Register(c *fiber.Ctx, cfg *config.Config) error {
+func (h *Handler) Register(c *fiber.Ctx) error {
 	var req RegisterRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Invalid request body"})
 	}
 
-	authService := service.NewAuthService(cfg)
-	
-	user, err := authService.CreateUser(c.Context(), req.Username, req.Email, req.Password)
+	user, err := h.authService.CreateUser(c.Context(), req.Username, req.Email, req.Password)
 	if err != nil {
 		if err.Error() == "username already exists" || err.Error() == "email already exists" {
 			return c.Status(409).JSON(fiber.Map{"error": err.Error()})
@@ -65,7 +59,7 @@ func Register(c *fiber.Ctx, cfg *config.Config) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal server error"})
 	}
 
-	token, err := authService.GenerateToken(user.ID)
+	token, err := h.authService.GenerateToken(user.ID)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to generate token"})
 	}
