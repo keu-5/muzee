@@ -40,6 +40,7 @@ go get entgo.io/ent/cmd/ent
 - **Fiber v2** - Web フレームワーク
 - **JWT** - 認証
 - **Wire** - 依存性注入（DI）
+- **zap** - 構造化ロギング
 
 ## アーキテクチャ
 
@@ -392,6 +393,67 @@ func ConnectDatabase(cfg *config.Config) (*ent.Client, error) {
 - 接続プールを使用
 - Eager Loading で N+1 問題を回避
 - インデックス設定をスキーマで定義
+
+## ロギング
+
+このプロジェクトでは、Uber の zap パッケージを使用して構造化ロギングを実装しています。
+
+### ロガーの初期化
+
+```go
+// サーバー起動時にロガーを初期化
+logger.Init()
+```
+
+### ログレベル
+
+以下のログレベルが利用可能です：
+
+- **Debug** - デバッグ情報
+- **Info** - 一般的な情報
+- **Warn** - 警告
+- **Error** - エラー
+- **Fatal** - 致命的なエラー（ログ出力後にプログラムが終了）
+
+### 使用例
+
+```go
+import (
+    "github.com/keu-5/muzee/backend/pkg/logger"
+    "go.uber.org/zap"
+)
+
+// 基本的なログ出力
+logger.Info("Server starting")
+
+// フィールド付きのログ出力
+logger.Info("User login",
+    zap.String("username", user.Name),
+    zap.Int("user_id", user.ID),
+)
+
+// エラー情報を含むログ
+if err != nil {
+    logger.Error("Failed to process request", zap.Error(err))
+}
+```
+
+### ログ出力形式
+
+ログは JSON 形式で出力され、以下のフィールドが含まれます：
+
+```json
+{
+  "level": "info",
+  "time": "2025-09-13T00:00:00.000Z",
+  "caller": "app/main.go:42",
+  "msg": "Server starting",
+  "user_id": 123,
+  "username": "john_doe"
+}
+```
+
+この形式により、ログの収集、検索、分析が容易になります。
 
 ## 開発コマンド
 
