@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"time"
@@ -24,8 +25,8 @@ func NewAuthService(config *config.Config) *AuthService {
 	}
 }
 
-func (s *AuthService) AuthenticateUser(username, password string) (db.User, error) {
-	user, err := s.userRepo.GetUserByUsername(username)
+func (s *AuthService) AuthenticateUser(ctx context.Context, username, password string) (db.User, error) {
+	user, err := s.userRepo.GetUserByUsername(ctx, username)
 	if err != nil {
 		return db.User{}, err
 	}
@@ -41,9 +42,9 @@ func (s *AuthService) AuthenticateUser(username, password string) (db.User, erro
 	return user, nil
 }
 
-func (s *AuthService) CreateUser(username, email, password string) (db.User, error) {
+func (s *AuthService) CreateUser(ctx context.Context, username, email, password string) (db.User, error) {
 	// ユーザー名の重複チェック
-	existingUser, err := s.userRepo.GetUserByUsername(username)
+	existingUser, err := s.userRepo.GetUserByUsername(ctx, username)
 	if err != nil {
 		return db.User{}, err
 	}
@@ -52,7 +53,7 @@ func (s *AuthService) CreateUser(username, email, password string) (db.User, err
 	}
 
 	// メールアドレスの重複チェック
-	existingUser, err = s.userRepo.GetUserByEmail(email)
+	existingUser, err = s.userRepo.GetUserByEmail(ctx, email)
 	if err != nil {
 		return db.User{}, err
 	}
@@ -72,7 +73,7 @@ func (s *AuthService) CreateUser(username, email, password string) (db.User, err
 		Password: string(hashedPassword),
 	}
 
-	user, err := s.userRepo.CreateUser(params)
+	user, err := s.userRepo.CreateUser(ctx, params)
 	if err != nil {
 		return db.User{}, err
 	}

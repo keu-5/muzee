@@ -19,12 +19,12 @@ func NewUserRepository() *UserRepository {
 	}
 }
 
-func (r *UserRepository) CreateUser(params db.CreateUserParams) (db.User, error) {
-	return r.queries.CreateUser(context.Background(), params)
+func (r *UserRepository) CreateUser(ctx context.Context, params db.CreateUserParams) (db.User, error) {
+	return r.queries.CreateUser(ctx, params)
 }
 
-func (r *UserRepository) GetUserByID(id int32) (db.User, error) {
-	user, err := r.queries.GetUserByID(context.Background(), id)
+func (r *UserRepository) GetUserByID(ctx context.Context, id int32) (db.User, error) {
+	user, err := r.queries.GetUserByID(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return db.User{}, nil
@@ -34,8 +34,8 @@ func (r *UserRepository) GetUserByID(id int32) (db.User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetUserByUsername(username string) (db.User, error) {
-	user, err := r.queries.GetUserByUsername(context.Background(), username)
+func (r *UserRepository) GetUserByUsername(ctx context.Context, username string) (db.User, error) {
+	user, err := r.queries.GetUserByUsername(ctx, username)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return db.User{}, nil
@@ -45,8 +45,8 @@ func (r *UserRepository) GetUserByUsername(username string) (db.User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetUserByEmail(email string) (db.User, error) {
-	user, err := r.queries.GetUserByEmail(context.Background(), email)
+func (r *UserRepository) GetUserByEmail(ctx context.Context, email string) (db.User, error) {
+	user, err := r.queries.GetUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return db.User{}, nil

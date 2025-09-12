@@ -25,7 +25,7 @@ func Login(c *fiber.Ctx, cfg *config.Config) error {
 
 	authService := service.NewAuthService(cfg)
 	
-	user, err := authService.AuthenticateUser(req.Username, req.Password)
+	user, err := authService.AuthenticateUser(c.Context(), req.Username, req.Password)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal server error"})
 	}
@@ -57,7 +57,7 @@ func Register(c *fiber.Ctx, cfg *config.Config) error {
 
 	authService := service.NewAuthService(cfg)
 	
-	user, err := authService.CreateUser(req.Username, req.Email, req.Password)
+	user, err := authService.CreateUser(c.Context(), req.Username, req.Email, req.Password)
 	if err != nil {
 		if err.Error() == "username already exists" || err.Error() == "email already exists" {
 			return c.Status(409).JSON(fiber.Map{"error": err.Error()})

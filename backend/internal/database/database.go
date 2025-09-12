@@ -5,15 +5,15 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/keu-5/muzee/backend/config"
 	"github.com/keu-5/muzee/backend/internal/db"
 )
 
-var DB *pgx.Conn
+var Pool *pgxpool.Pool
 var Queries *db.Queries
 
-func ConnectDatabase(cfg *config.Config) (*pgx.Conn, *db.Queries) {
+func ConnectDatabase(cfg *config.Config) (*pgxpool.Pool, *db.Queries) {
 	var dsn string
 	
 	if cfg.DatabaseURL != "" {
@@ -23,20 +23,34 @@ func ConnectDatabase(cfg *config.Config) (*pgx.Conn, *db.Queries) {
 			cfg.DatabaseUser, cfg.DatabasePass, cfg.DatabaseHost, cfg.DatabasePort, cfg.DatabaseName)
 	}
 
-	conn, err := pgx.Connect(context.Background(), dsn)
+	poolConfig, err := pgxpool.ParseConfig(dsn)
+	if err != nil {
+		log.Fatal("Failed to parse database config:", err)
+	}
+
+	poolConfig.MaxConns = 30
+	poolConfig.MinConns = 5
+
+	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
 
-	DB = conn
-	Queries = db.New(conn)
-	return conn, Queries
+	Pool = pool
+	Queries = db.New(pool)
+	return pool, Queries
 }
 
-func GetDB() *pgx.Conn {
-	return DB
+func GetPool() *pgxpool.Pool {
+	return Pool
 }
 
 func GetQueries() *db.Queries {
 	return Queries
+}
+
+func Close() {
+	if Pool != nil {
+		Pool.Close()
+	}
 }
