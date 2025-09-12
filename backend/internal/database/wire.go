@@ -7,5 +7,4 @@ import (
 // ProviderSet is the wire provider set for database layer
 var ProviderSet = wire.NewSet(
 	ConnectDatabase,
-	NewQueries,
 )

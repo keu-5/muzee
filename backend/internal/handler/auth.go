@@ -26,7 +26,7 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 		return c.Status(500).JSON(fiber.Map{"error": "Internal server error"})
 	}
 	
-	if user.ID == 0 {
+	if user == nil {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
 

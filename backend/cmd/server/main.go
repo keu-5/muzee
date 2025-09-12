@@ -38,9 +38,9 @@ func main() {
 	}()
 
 	// Ping database to ensure connection
-	pool := database.GetPool()
-	if err := pool.Ping(context.Background()); err != nil {
-		log.Fatal("Failed to ping database:", err)
+	client := database.GetClient()
+	if err := client.Schema.Create(context.Background()); err != nil {
+		log.Printf("Failed to create schema: %v", err)
 	}
 
 	log.Println("Connected to database successfully")

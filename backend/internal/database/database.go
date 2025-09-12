@@ -1,19 +1,19 @@
 package database
 
 import (
-	"context"
+	"database/sql"
 	"fmt"
-	"log"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/keu-5/muzee/backend/config"
-	"github.com/keu-5/muzee/backend/internal/db"
+	"github.com/keu-5/muzee/backend/ent"
+
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
-var Pool *pgxpool.Pool
-var Queries *db.Queries
+var EntClient *ent.Client
 
-func ConnectDatabase(cfg *config.Config) (*pgxpool.Pool, error) {
+func ConnectDatabase(cfg *config.Config) (*ent.Client, error) {
 	var dsn string
 	
 	if cfg.DatabaseURL != "" {
@@ -23,38 +23,31 @@ func ConnectDatabase(cfg *config.Config) (*pgxpool.Pool, error) {
 			cfg.DatabaseUser, cfg.DatabasePass, cfg.DatabaseHost, cfg.DatabasePort, cfg.DatabaseName)
 	}
 
-	poolConfig, err := pgxpool.ParseConfig(dsn)
+	db, err := sql.Open("pgx", dsn)
 	if err != nil {
-		log.Fatal("Failed to parse database config:", err)
+		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
 
-	poolConfig.MaxConns = 30
-	poolConfig.MinConns = 5
+	db.SetMaxOpenConns(30)
+	db.SetMaxIdleConns(5)
 
-	pool, err := pgxpool.NewWithConfig(context.Background(), poolConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to database: %w", err)
-	}
+	drv := entsql.OpenDB("postgres", db)
+	client := ent.NewClient(ent.Driver(drv))
 
-	Pool = pool
-	Queries = db.New(pool)
-	return pool, nil
+	EntClient = client
+	return client, nil
 }
 
-func GetPool() *pgxpool.Pool {
-	return Pool
+func GetClient() *ent.Client {
+	return EntClient
 }
 
-func GetQueries() *db.Queries {
-	return Queries
-}
-
-func NewQueries(pool *pgxpool.Pool) *db.Queries {
-	return db.New(pool)
+func NewClient() *ent.Client {
+	return EntClient
 }
 
 func Close() {
-	if Pool != nil {
-		Pool.Close()
+	if EntClient != nil {
+		EntClient.Close()
 	}
 }
