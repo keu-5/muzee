@@ -12,6 +12,7 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBName     string
+	GOEnv      string
 }
 
 func Load() *Config {
@@ -20,6 +21,7 @@ func Load() *Config {
 	viper.SetDefault("POSTGRES_USER", "appuser")
 	viper.SetDefault("POSTGRES_PASSWORD", "apppassword")
 	viper.SetDefault("POSTGRES_DB", "appdb")
+	viper.SetDefault("GO_ENV", "development")
 
 	viper.AutomaticEnv()
 
@@ -38,6 +40,7 @@ func Load() *Config {
 		DBUser:     viper.GetString("POSTGRES_USER"),
 		DBPassword: viper.GetString("POSTGRES_PASSWORD"),
 		DBName:     viper.GetString("POSTGRES_DB"),
+		GOEnv:      viper.GetString("GO_ENV"),
 	}
 }
 
