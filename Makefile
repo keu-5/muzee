@@ -17,7 +17,10 @@ dev-build:
 .PHONY: gen-swagger-v2
 gen-swagger-v2:
 	@echo "[OAS2] Generate swagger.yaml & swagger.json"
-	cd backend && swag fmt && swag init -g cmd/server/main.go --parseDependency
+	docker run --rm -v $(PWD)/backend:/app -w /app golang:1.25-alpine \
+	  sh -c "go install github.com/swaggo/swag/cmd/swag@latest && \
+	  swag fmt && \
+	  swag init -g cmd/server/main.go --parseDependency"
 
 .PHONY: gen-openapi-v3
 gen-openapi-v3:
