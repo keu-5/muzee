@@ -1,0 +1,72 @@
+openapi: 3.0.1
+info:
+  contact: {}
+  description: This is the API documentation for the Muzee application.
+  title: Muzee API
+  version: "1.0"
+servers:
+- url: http://localhost/api
+paths:
+  /tests:
+    get:
+      description: Returns all test records
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/github.com_keu-5_muzee_backend_internal_interface_handler.TestResponse"
+                type: array
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: Internal Server Error
+      summary: List all tests
+      tags:
+      - tests
+    post:
+      description: Creates a test record and returns it
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github.com_keu-5_muzee_backend_internal_interface_handler.TestResponse"
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+          description: Internal Server Error
+      summary: Create a new test
+      tags:
+      - tests
+components:
+  schemas:
+    github.com_keu-5_muzee_backend_internal_interface_handler.TestResponse:
+      example:
+        id: 0
+      properties:
+        id:
+          type: integer
+      type: object
+    internal_interface_handler.TestResponse:
+      properties:
+        id:
+          type: integer
+      type: object
+  securitySchemes:
+    ApiKeyAuth:
+      in: header
+      name: Authorization
+      type: apiKey
+x-original-swagger-version: "2.0"

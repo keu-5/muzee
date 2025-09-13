@@ -32,7 +32,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/internal_interface_handler.TestResponse"
+                                "$ref": "#/definitions/github.com_keu-5_muzee_backend_internal_interface_handler.TestResponse"
                             }
                         }
                     },
@@ -60,7 +60,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/internal_interface_handler.TestResponse"
+                            "$ref": "#/definitions/github.com_keu-5_muzee_backend_internal_interface_handler.TestResponse"
                         }
                     },
                     "500": {
