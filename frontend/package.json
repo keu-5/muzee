@@ -33,6 +33,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.3",
     "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-better-tailwindcss": "^3.7.8",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-import-access": "^3.0.0",
     "eslint-plugin-readable-tailwind": "^3.0.0",

@@ -6,6 +6,7 @@
     "source.fixAll.eslint": "explicit",
     "source.organizeImports": "explicit"
   },
+  "eslint.run": "onSave",
   "typescript.preferences.importModuleSpecifier": "non-relative",
   "typescript.tsdk": "frontend/node_modules/typescript/lib",
   "tailwindCSS.classAttributes": ["class", "className", ".*Class"],

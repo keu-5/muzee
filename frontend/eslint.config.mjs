@@ -8,7 +8,7 @@ import simpleImportSort from "eslint-plugin-simple-import-sort";
 import unusedImports from "eslint-plugin-unused-imports";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import readableTailwind from "eslint-plugin-readable-tailwind";
+import betterTailwindcss from "eslint-plugin-better-tailwindcss";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,7 +44,7 @@ export default [
       "simple-import-sort": simpleImportSort,
       "unused-imports": unusedImports,
       "import-access": importAccess,
-      "readable-tailwind": readableTailwind,
+      "better-tailwindcss": betterTailwindcss,
     },
     languageOptions: {
       parser: tsParser,
@@ -55,7 +55,12 @@ export default [
         tsconfigRootDir: __dirname,
       },
     },
-    settings: {},
+    settings: {
+      tailwindcss: {
+        callees: ["cn", "cva"],
+        config: "tailwind.config.ts",
+      },
+    },
     rules: {
       "@typescript-eslint/naming-convention": [
         "error",
@@ -97,7 +102,7 @@ export default [
           patterns: ["react-icons/*"],
         },
       ],
-      "readable-tailwind/multiline": [
+      "better-tailwindcss/multiline": [
         "warn",
         {
           group: "newLine",
