@@ -52,3 +52,13 @@ make dev-up
 ```zsh
 make dev-down
 ```
+
+## swaggo
+
+```shell
+cd backend/cmd/server
+swag fmt
+swag init --parseDependency --parseInternal
+```
+
+docker compose 起動後、`http://localhost/api/docs/index.html`で確認可能

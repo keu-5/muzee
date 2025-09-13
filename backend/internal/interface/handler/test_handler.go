@@ -19,13 +19,13 @@ func NewTestHandler(uc usecase.TestUsecase) *TestHandler {
 }
 
 // Create
-// @Summary Create a new test
+// @Summary     Create a new test
 // @Description Creates a test record and returns it
-// @Tags tests
-// @Produce json
-// @Success 200 {object} TestResponse
-// @Failure 500 {object} map[string]string
-// @Router /tests [post]
+// @Tags        tests
+// @Produce     json
+// @Success     200 {object} TestResponse
+// @Failure     500 {object} map[string]string
+// @Router      /tests [post]
 func (h *TestHandler) Create(c *fiber.Ctx) error {
     test, err := h.uc.CreateTest(c.Context())
     if err != nil {
@@ -35,13 +35,13 @@ func (h *TestHandler) Create(c *fiber.Ctx) error {
 }
 
 // GetAll
-// @Summary List all tests
+// @Summary     List all tests
 // @Description Returns all test records
-// @Tags tests
-// @Produce json
-// @Success 200 {array} TestResponse
-// @Failure 500 {object} map[string]string
-// @Router /tests [get]
+// @Tags        tests
+// @Produce     json
+// @Success     200 {array}  TestResponse
+// @Failure     500 {object} map[string]string
+// @Router      /tests [get]
 func (h *TestHandler) GetAll(c *fiber.Ctx) error {
     tests, err := h.uc.GetAllTests(c.Context())
     if err != nil {

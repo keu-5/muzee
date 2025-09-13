@@ -43,15 +43,15 @@ func RegisterRoutes(app *fiber.App, h *handler.TestHandler, cfg *config.Config) 
     interfacepkg.RegisterRoutes(app, h, cfg)
 }
 
-// @title Muzee API
-// @version 1.0
-// @description This is the API documentation for the Muzee application.
-// @host localhost
-// @BasePath /api
-// @schemes http
+// @title                      Muzee API
+// @version                    1.0
+// @description                This is the API documentation for the Muzee application.
+// @host                       localhost
+// @BasePath                   /api
+// @schemes                    http
 // @securityDefinitions.apikey ApiKeyAuth
-// @in header
-// @name Authorization
+// @in                         header
+// @name                       Authorization
 func main() {
 	fx.New(
 		fx.Provide(
