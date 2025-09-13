@@ -1,14 +1,19 @@
 FROM node:20-alpine
 
+RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-RUN npm install -g pnpm
+# Use corepack instead of npm install
+RUN corepack enable pnpm
 
+# Copy package files for better layer caching
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
-RUN pnpm install
+RUN pnpm install --frozen-lockfile
 
+# Copy source code
 COPY frontend/ .
 
 EXPOSE 3000
+ENV NEXT_TELEMETRY_DISABLED 1
 
 CMD ["pnpm", "dev"]

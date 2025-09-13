@@ -1,28 +1,58 @@
+version: "3.9"
+
+x-common: &common
+  restart: unless-stopped
+  networks:
+    - app-network
+
 services:
   backend:
+    <<: *common
     build:
       context: ..
       dockerfile: deploy/docker/backend/Dockerfile.dev
     volumes:
       - ../backend:/app
+      - go_mod_cache:/go/pkg/mod
     ports:
       - "8080:8080"
     env_file:
       - .env.dev
+    develop:
+      watch:
+        - action: sync
+          path: ../backend
+          target: /app
+        - action: rebuild
+          path: ../backend/go.mod
 
   frontend:
+    <<: *common
     build:
       context: ..
       dockerfile: deploy/docker/frontend/Dockerfile.dev
     volumes:
       - ../frontend:/app
       - /app/node_modules
+      - /app/.next
+      - pnpm_cache:/root/.local/share/pnpm
     ports:
       - "3000:3000"
     env_file:
       - .env.dev
+    develop:
+      watch:
+        - action: sync
+          path: ../frontend
+          target: /app
+          ignore:
+            - node_modules/
+            - .next/
+        - action: rebuild
+          path: ../frontend/package.json
 
   db:
+    <<: *common
     build:
       context: ..
       dockerfile: deploy/docker/db/Dockerfile
@@ -31,14 +61,33 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
     env_file:
-      - ./.env.dev
+      - .env.dev
+    command: [
+      "postgres",
+      "-c", "log_statement=all",
+      "-c", "log_destination=stderr",
+      "-c", "shared_preload_libraries=pg_stat_statements"
+    ]
 
   nginx:
+    <<: *common
     build:
       context: ..
       dockerfile: deploy/docker/nginx/Dockerfile
     ports:
       - "80:80"
+    depends_on:
+      - frontend
+      - backend
 
 volumes:
   db_data:
+    driver: local
+  go_mod_cache:
+    driver: local
+  pnpm_cache:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
