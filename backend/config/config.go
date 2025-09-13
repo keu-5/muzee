@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/spf13/viper"
 )
@@ -30,7 +29,7 @@ func Load() *Config {
 	viper.AddConfigPath(".")
 
 	if err := viper.ReadInConfig(); err != nil {
-		log.Printf("Warning: Could not read config file: %v", err)
+		// Config file not found or error reading - using defaults
 	}
 
 	return &Config{

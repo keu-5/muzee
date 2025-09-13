@@ -18,6 +18,12 @@ func NewFiberApp() *fiber.App {
 	return fiber.New()
 }
 
+func LogConfigLoaded(cfg *config.Config, logger *infrastructure.Logger) {
+	if cfg != nil {
+		logger.Info("Configuration loaded successfully")
+	}
+}
+
 func StartServer(lc fx.Lifecycle, app *fiber.App, cfg *config.Config) {
 	lc.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {
@@ -39,6 +45,7 @@ func RegisterRoutes(app *fiber.App, h *handler.TestHandler) {
 func main() {
 	fx.New(
 		fx.Provide(
+			infrastructure.NewDevelopmentLogger,
 			config.Load,
 			infrastructure.NewClient,
 			NewFiberApp,
@@ -47,6 +54,7 @@ func main() {
 			handler.NewTestHandler,
 		),
 		fx.Invoke(
+			LogConfigLoaded,
 			infrastructure.AutoMigrate,
 			RegisterRoutes,
 			StartServer,
