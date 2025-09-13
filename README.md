@@ -53,14 +53,14 @@ make dev-up
 make dev-down
 ```
 
-## swaggo
+## api クライアント作成
+
+バックエンドで各 handler に swaggo 用のコメントアウトを書き、以下を実行するとフロントエンドで api クライアントが生成される
 
 ```shell
-make gen-swagger-v2
+make gen-all
 ```
 
-```shell
-make gen-openapi-v3
-```
+コメントアウトの書き方は実装を確認
 
 docker compose 起動後、`http://localhost/api/docs/index.html`で確認可能

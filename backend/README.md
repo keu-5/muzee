@@ -28,6 +28,14 @@
 - **[zap](https://github.com/uber-go/zap)**
   高性能な構造化ロガー。開発・本番で異なるログ設定を使い分け、パフォーマンスと可読性を両立します。
 
+- **[swaggo/swag](https://github.com/swaggo/swag)**
+  Go のコードコメントから Swagger(OpenAPI v2) ドキュメントを自動生成するツール。
+  Fiber ハンドラーにコメントを追加することで、API 仕様を常に最新状態に保つことができます。
+
+- **[OpenAPI Generator](https://openapi-generator.tech/)**
+  `openapitools/openapi-generator-cli:latest-release` の Docker イメージを利用し、Swagger から OpenAPI v3 仕様への変換や、各種言語のクライアント SDK の生成を行います。
+  CI/CD パイプラインに組み込むことで、API 仕様とクライアントの同期を自動化できます。
+
 ## エンドポイント追加方法
 
 このプロジェクトでは **ent (ORM)** と **Clean Architecture** をベースにエンドポイントを追加します。
