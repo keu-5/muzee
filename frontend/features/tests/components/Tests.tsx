@@ -16,7 +16,11 @@ const _Tests = () => {
     };
 
     return (
-        <div className="w-full max-w-2xl p-6 border border-gray-200 dark:border-gray-700 rounded-lg">
+        <div className={`
+          w-full max-w-2xl p-6 border border-gray-200
+          dark:border-gray-700
+          rounded-lg
+        `}>
             <h2 className="text-xl font-semibold mb-4">API Test Results</h2>
 
             <div className="space-y-4">
@@ -24,7 +28,11 @@ const _Tests = () => {
                 <button
                 onClick={handleCreateTest}
                 disabled={createTest.isPending}
-                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
+                className={`
+                  px-4 py-2 bg-blue-500 text-white rounded
+                  hover:bg-blue-600
+                  disabled:opacity-50
+                `}
                 >
                 {createTest.isPending ? 'Creating Test...' : 'Create New Test'}
                 </button>
@@ -41,7 +49,11 @@ const _Tests = () => {
                 {isLoading && <p>Loading tests...</p>}
                 {error && <p className="text-red-500">Error loading tests: {error.message}</p>}
                 {tests && (
-                <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded">
+                <div className={`
+                  bg-gray-100
+                  dark:bg-gray-800
+                  p-3 rounded
+                `}>
                     <pre className="text-sm">{JSON.stringify(tests, null, 2)}</pre>
                 </div>
                 )}

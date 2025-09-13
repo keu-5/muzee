@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosError } from "axios";
+import axios, { AxiosError,AxiosRequestConfig } from "axios";
 
 const isServer = typeof window === "undefined";
 
