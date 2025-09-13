@@ -36,6 +36,7 @@ export default [
       "plugin:import/recommended",
       "plugin:import/warnings",
       "plugin:tailwindcss/recommended",
+      "prettier",
     ),
   ),
   {
