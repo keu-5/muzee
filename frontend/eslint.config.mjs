@@ -35,7 +35,6 @@ export default [
       "next/core-web-vitals",
       "plugin:import/recommended",
       "plugin:import/warnings",
-      "plugin:tailwindcss/recommended",
       "prettier",
     ),
   ),
@@ -56,11 +55,7 @@ export default [
         tsconfigRootDir: __dirname,
       },
     },
-    settings: {
-      tailwindcss: {
-        callees: ["cn", "cva"], // `cn()` や `cva()` の中のclass名もチェック対象に
-      },
-    },
+    settings: {},
     rules: {
       "@typescript-eslint/naming-convention": [
         "error",
@@ -100,14 +95,6 @@ export default [
             },
           ],
           patterns: ["react-icons/*"],
-        },
-      ],
-      "tailwindcss/no-custom-classname": [
-        "error",
-        {
-          classRegex:
-            "^(class(Name)?|textClassName|iconClassName|innerClassName)$",
-          whitelist: ["^[A-Z].*"],
         },
       ],
       "readable-tailwind/multiline": [
