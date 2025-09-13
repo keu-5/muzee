@@ -36,3 +36,9 @@ gen-openapi-v3:
 	docker run --rm -v $(PWD)/backend/docs/v3:/work golang:1.21-alpine \
 	  sh -c "mv /work/openapi/openapi.yaml /work && mv /work/openapi/openapi.json /work && rm -rf /work/openapi"
 
+.PHONY: gen-client
+gen-client:
+	@echo "[Clean] Remove old generated client"
+	rm -rf frontend/src/api/__generated__
+	@echo "[Generate] Running npm run gen:client"
+	cd frontend && npm run gen:client
