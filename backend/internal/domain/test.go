@@ -1,5 +1,5 @@
 package domain
 
 type Test struct {
-	ID int
+	ID int `json:"id"`
 }
