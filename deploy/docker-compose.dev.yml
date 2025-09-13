@@ -1,0 +1,44 @@
+services:
+  backend:
+    build:
+      context: ..
+      dockerfile: deploy/docker/backend/Dockerfile.dev
+    volumes:
+      - ../backend:/app
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.dev
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: deploy/docker/frontend/Dockerfile.dev
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.dev
+
+  db:
+    build:
+      context: ..
+      dockerfile: deploy/docker/db/Dockerfile
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    env_file:
+      - ./.env.dev
+
+  nginx:
+    build:
+      context: ..
+      dockerfile: deploy/docker/nginx/Dockerfile
+    ports:
+      - "80:80"
+
+volumes:
+  db_data:
