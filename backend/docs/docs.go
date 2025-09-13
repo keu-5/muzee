@@ -32,7 +32,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/handler.TestResponse"
+                                "$ref": "#/definitions/internal_interface_handler.TestResponse"
                             }
                         }
                     },
@@ -60,7 +60,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/handler.TestResponse"
+                            "$ref": "#/definitions/internal_interface_handler.TestResponse"
                         }
                     },
                     "500": {
@@ -77,7 +77,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handler.TestResponse": {
+        "github.com_keu-5_muzee_backend_internal_interface_handler.TestResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "internal_interface_handler.TestResponse": {
             "type": "object",
             "properties": {
                 "id": {

@@ -1,6 +1,11 @@
 basePath: /api
 definitions:
-  handler.TestResponse:
+  github.com_keu-5_muzee_backend_internal_interface_handler.TestResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+  internal_interface_handler.TestResponse:
     properties:
       id:
         type: integer
@@ -22,7 +27,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/handler.TestResponse'
+              $ref: '#/definitions/internal_interface_handler.TestResponse'
             type: array
         "500":
           description: Internal Server Error
@@ -41,7 +46,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handler.TestResponse'
+            $ref: '#/definitions/internal_interface_handler.TestResponse'
         "500":
           description: Internal Server Error
           schema:
