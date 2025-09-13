@@ -1,5 +1,3 @@
-# Makefile
-
 DEV_ENV_FILE=deploy/.env.dev
 DEV_COMPOSE_FILE=deploy/docker-compose.dev.yml
 
@@ -42,3 +40,7 @@ gen-client:
 	rm -rf frontend/src/api/__generated__
 	@echo "[Generate] Running npm run gen:client"
 	cd frontend && npm run gen:client
+
+.PHONY: gen-all
+gen-all: gen-swagger-v2 gen-openapi-v3 gen-client
+	@echo "[Done] All generation tasks completed."
