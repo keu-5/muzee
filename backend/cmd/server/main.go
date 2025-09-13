@@ -5,7 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/keu-5/muzee/backend/config"
-	"github.com/keu-5/muzee/backend/internal/db"
+	"github.com/keu-5/muzee/backend/internal/infrastructure"
 	"github.com/keu-5/muzee/backend/internal/interface/handler"
 	interfacepkg "github.com/keu-5/muzee/backend/internal/interface"
 	"github.com/keu-5/muzee/backend/internal/repository"
@@ -40,14 +40,14 @@ func main() {
 	fx.New(
 		fx.Provide(
 			config.Load,
-			db.NewClient,
+			infrastructure.NewClient,
 			NewFiberApp,
 			repository.NewTestRepository,
 			usecase.NewTestUsecase,
 			handler.NewTestHandler,
 		),
 		fx.Invoke(
-			db.AutoMigrate,
+			infrastructure.AutoMigrate,
 			RegisterRoutes,
 			StartServer,
 		),
