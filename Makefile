@@ -13,3 +13,23 @@ dev-down:
 
 dev-build:
 	docker compose -f $(DEV_COMPOSE_FILE) --env-file $(DEV_ENV_FILE) build
+
+.PHONY: gen-swagger-v2
+gen-swagger-v2:
+	@echo "[OAS2] Generate swagger.yaml & swagger.json"
+	cd backend && swag fmt && swag init -g cmd/server/main.go --parseDependency
+
+.PHONY: gen-openapi-v3
+gen-openapi-v3:
+	@echo "[OAS3] Convert swagger.yaml → openapi.yaml"
+	docker run --rm -v $(PWD)/backend/docs:/work openapitools/openapi-generator-cli:latest-release \
+	  generate -i /work/swagger.yaml -o /work/v3 -g openapi-yaml --minimal-update
+
+	@echo "[OAS3] Convert swagger.json → openapi.json"
+	docker run --rm -v $(PWD)/backend/docs:/work openapitools/openapi-generator-cli:latest-release \
+	  generate -s -i /work/swagger.json -o /work/v3/openapi -g openapi --minimal-update
+
+	@echo "[Cleanup]"
+	docker run --rm -v $(PWD)/backend/docs/v3:/work golang:1.21-alpine \
+	  sh -c "mv /work/openapi/openapi.yaml /work && mv /work/openapi/openapi.json /work && rm -rf /work/openapi"
+

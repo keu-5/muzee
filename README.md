@@ -56,9 +56,11 @@ make dev-down
 ## swaggo
 
 ```shell
-cd backend/cmd/server
-swag fmt
-swag init --parseDependency --parseInternal
+make gen-swagger-v2
+```
+
+```shell
+make gen-openapi-v3
 ```
 
 docker compose 起動後、`http://localhost/api/docs/index.html`で確認可能
