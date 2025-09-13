@@ -1,5 +1,28 @@
 # muzee
 
+## 必要環境
+
+- Docker / Docker Compose（推奨）
+
+## 構成
+
+- **Docker / Docker Compose**
+  各サービス（バックエンド / フロントエンド / DB / Nginx）をコンテナとして起動・管理します。開発・本番環境の切り替えも容易に行えます。
+
+- **Go**
+  バックエンド API サーバー。軽量フレームワーク **Fiber** を利用し、**Air** によるホットリロードをサポートしています。
+  → 詳細は [backend/README.md](backend/README.md)
+
+- **Next.js**
+  フロントエンドアプリケーション。React ベースで SSR/SSG に対応し、スタイリングには **Tailwind CSS** を利用しています。
+  → 詳細は [frontend/README.md](frontend/README.md)
+
+- **PostgreSQL**
+  メインのリレーショナルデータベース。ユーザー情報やアプリケーションデータを永続化します。
+
+- **Nginx**
+  リバースプロキシとして利用。フロントエンド（Next.js）とバックエンド（Go API）へのリクエストをルーティングします。
+
 ## 開発環境構築
 
 ### プロジェクトの取り込み
@@ -23,6 +46,8 @@ make dev-build
 ```zsh
 make dev-up
 ```
+
+`localhost`, `localhost/api/`にアクセス可能になります。
 
 ```zsh
 make dev-down
