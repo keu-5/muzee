@@ -1,0 +1,97 @@
+# deploy/docker-compose.prod.yml
+version: "3.9"
+
+x-common: &common
+  restart: unless-stopped
+  networks:
+    - app-network
+
+services:
+  backend:
+    <<: *common
+    build:
+      context: ..
+      dockerfile: deploy/docker/backend/Dockerfile.prod
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env.prod
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    <<: *common
+    build:
+      context: ..
+      dockerfile: deploy/docker/frontend/Dockerfile.prod
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.prod
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  db:
+    <<: *common
+    build:
+      context: ..
+      dockerfile: deploy/docker/db/Dockerfile
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    env_file:
+      - .env.prod
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command:
+      [
+        "postgres",
+        "-c",
+        "shared_preload_libraries=pg_stat_statements",
+        "-c",
+        "max_connections=200",
+        "-c",
+        "shared_buffers=256MB",
+        "-c",
+        "effective_cache_size=1GB",
+        "-c",
+        "work_mem=4MB",
+        "-c",
+        "maintenance_work_mem=64MB",
+        "-c",
+        "checkpoint_completion_target=0.7",
+        "-c",
+        "wal_buffers=16MB",
+        "-c",
+        "default_statistics_target=100",
+      ]
+
+  nginx:
+    <<: *common
+    build:
+      context: ..
+      dockerfile: deploy/docker/nginx/Dockerfile
+    ports:
+      - "80:80"
+    depends_on:
+      frontend:
+        condition: service_started
+      backend:
+        condition: service_healthy
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
