@@ -8,6 +8,7 @@ import simpleImportSort from "eslint-plugin-simple-import-sort";
 import unusedImports from "eslint-plugin-unused-imports";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import readableTailwind from "eslint-plugin-readable-tailwind";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -20,7 +21,13 @@ const compat = new FlatCompat({
 
 export default [
   {
-    ignores: ["coverage", ".next", "*.config.mjs", "components/ui/**/*"],
+    ignores: [
+      "coverage",
+      ".next",
+      "*.config.mjs",
+      "tailwind.config.ts",
+      "components/ui/**/*",
+    ],
   },
   ...fixupConfigRules(
     compat.extends(
@@ -28,6 +35,7 @@ export default [
       "next/core-web-vitals",
       "plugin:import/recommended",
       "plugin:import/warnings",
+      "plugin:tailwindcss/recommended",
     ),
   ),
   {
@@ -36,6 +44,7 @@ export default [
       "simple-import-sort": simpleImportSort,
       "unused-imports": unusedImports,
       "import-access": importAccess,
+      "readable-tailwind": readableTailwind,
     },
     languageOptions: {
       parser: tsParser,
@@ -44,6 +53,11 @@ export default [
       parserOptions: {
         project: "./tsconfig.json",
         tsconfigRootDir: __dirname,
+      },
+    },
+    settings: {
+      tailwindcss: {
+        callees: ["cn", "cva"], // `cn()` や `cva()` の中のclass名もチェック対象に
       },
     },
     rules: {
@@ -85,6 +99,20 @@ export default [
             },
           ],
           patterns: ["react-icons/*"],
+        },
+      ],
+      "tailwindcss/no-custom-classname": [
+        "error",
+        {
+          classRegex:
+            "^(class(Name)?|textClassName|iconClassName|innerClassName)$",
+          whitelist: ["^[A-Z].*"],
+        },
+      ],
+      "readable-tailwind/multiline": [
+        "warn",
+        {
+          group: "newLine",
         },
       ],
       "no-restricted-syntax": [
