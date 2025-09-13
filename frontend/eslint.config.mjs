@@ -27,6 +27,7 @@ export default [
       "*.config.mjs",
       "tailwind.config.ts",
       "components/ui/**/*",
+      "src/api/__generated__/**/*",
     ],
   },
   ...fixupConfigRules(
@@ -56,9 +57,9 @@ export default [
       },
     },
     settings: {
-      tailwindcss: {
+      "better-tailwindcss": {
+        entryPoint: "./app/globals.css",
         callees: ["cn", "cva"],
-        config: "tailwind.config.ts",
       },
     },
     rules: {
@@ -102,12 +103,13 @@ export default [
           patterns: ["react-icons/*"],
         },
       ],
-      "better-tailwindcss/multiline": [
-        "warn",
-        {
-          group: "newLine",
-        },
-      ],
+      "better-tailwindcss/enforce-consistent-line-wrapping": "warn",
+      "better-tailwindcss/enforce-consistent-class-order": "warn",
+      "better-tailwindcss/enforce-shorthand-classes": "warn",
+      "better-tailwindcss/no-duplicate-classes": "warn",
+      "better-tailwindcss/no-unregistered-classes": "error",
+      "better-tailwindcss/no-conflicting-classes": "error",
+      "better-tailwindcss/no-unnecessary-whitespace": "warn",
       "no-restricted-syntax": [
         "error",
         {
