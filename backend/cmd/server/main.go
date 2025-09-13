@@ -5,9 +5,10 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/keu-5/muzee/backend/config"
+	_ "github.com/keu-5/muzee/backend/docs"
 	"github.com/keu-5/muzee/backend/internal/infrastructure"
-	"github.com/keu-5/muzee/backend/internal/interface/handler"
 	interfacepkg "github.com/keu-5/muzee/backend/internal/interface"
+	"github.com/keu-5/muzee/backend/internal/interface/handler"
 	"github.com/keu-5/muzee/backend/internal/repository"
 	"github.com/keu-5/muzee/backend/internal/usecase"
 	_ "github.com/lib/pq"
@@ -38,10 +39,19 @@ func StartServer(lc fx.Lifecycle, app *fiber.App, cfg *config.Config) {
 	})
 }
 
-func RegisterRoutes(app *fiber.App, h *handler.TestHandler) {
-	interfacepkg.RegisterRoutes(app, h)
+func RegisterRoutes(app *fiber.App, h *handler.TestHandler, cfg *config.Config) {
+    interfacepkg.RegisterRoutes(app, h, cfg)
 }
 
+// @title Muzee API
+// @version 1.0
+// @description This is the API documentation for the Muzee application.
+// @host localhost
+// @BasePath /api
+// @schemes http
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
 func main() {
 	fx.New(
 		fx.Provide(
