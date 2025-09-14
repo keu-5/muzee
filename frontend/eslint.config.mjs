@@ -4,15 +4,14 @@ import js from "@eslint/js";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import importAccess from "eslint-plugin-import-access/flat-config";
+import readableTailwind from "eslint-plugin-readable-tailwind";
 import simpleImportSort from "eslint-plugin-simple-import-sort";
 import unusedImports from "eslint-plugin-unused-imports";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import readableTailwind from "eslint-plugin-readable-tailwind";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const compat = new FlatCompat({
   baseDirectory: __dirname,
   recommendedConfig: js.configs.recommended,
@@ -23,10 +22,13 @@ export default [
   {
     ignores: [
       "coverage",
+      ".storybook",
       ".next",
       "*.config.mjs",
       "tailwind.config.ts",
-      "components/ui/**/*",
+      "src/types/generatedSchema.ts",
+      "src/api/__generated__/**/*",
+      "components/*.{ts,tsx}",
     ],
   },
   ...fixupConfigRules(
@@ -36,8 +38,8 @@ export default [
       "plugin:import/recommended",
       "plugin:import/warnings",
       "plugin:tailwindcss/recommended",
-      "prettier",
-    ),
+      "prettier"
+    )
   ),
   {
     plugins: {
@@ -58,7 +60,7 @@ export default [
     },
     settings: {
       tailwindcss: {
-        callees: ["cn", "cva"], // `cn()` や `cva()` の中のclass名もチェック対象に
+        callees: ["cn", "cva"],
       },
     },
     rules: {
@@ -137,13 +139,14 @@ export default [
       "src/features/**/*Repository.ts",
       "src/features/**/*Converter.ts",
       "src/features/**/*Constants.ts",
+      "src/api/__generated__/**/*",
     ],
     rules: {
       "import/group-exports": "off",
     },
   },
   {
-    files: ["components/icons/**/*.{ts,tsx}"],
+    files: ["src/components/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": "off",
     },
