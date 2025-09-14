@@ -31,9 +31,6 @@ services:
       dockerfile: deploy/docker/frontend/Dockerfile.dev
     volumes:
       - ../frontend:/app
-      - /app/node_modules
-      - /app/.next
-      - pnpm_cache:/root/.local/share/pnpm
     ports:
       - "3000:3000"
     env_file:
