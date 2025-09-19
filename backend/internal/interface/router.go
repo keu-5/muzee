@@ -22,5 +22,4 @@ func RegisterRoutes(app *fiber.App, h *handler.TestHandler, cfg *config.Config) 
 
 	app.Post("/tests", h.Create)
 	app.Get("/tests", h.GetAll)
-	app.Get("/swagger-test", h.SwaggerTest)
 }
