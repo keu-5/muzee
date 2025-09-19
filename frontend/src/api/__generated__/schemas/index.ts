@@ -6,7 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export * from './getSwaggerTest200';
 export * from './getTests500';
 export * from './internalInterfaceHandlerTestResponse';
 export * from './postTests500';

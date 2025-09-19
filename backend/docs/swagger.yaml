@@ -12,20 +12,6 @@ info:
   title: Muzee API
   version: "1.0"
 paths:
-  /swagger-test:
-    get:
-      description: Simple test endpoint to verify GitHub Action workflow
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Test endpoint for Swagger auto-generation
-      tags:
-      - swagger-test
   /tests:
     get:
       description: Returns all test records

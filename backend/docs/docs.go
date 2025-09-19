@@ -15,27 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/swagger-test": {
-            "get": {
-                "description": "Simple test endpoint to verify GitHub Action workflow",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "swagger-test"
-                ],
-                "summary": "Test endpoint for Swagger auto-generation",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/tests": {
             "get": {
                 "description": "Returns all test records",
