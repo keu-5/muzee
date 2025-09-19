@@ -8,6 +8,9 @@ on:
     paths:
       - "backend/**/*.go"
 
+permissions:
+  contents: write
+
 jobs:
   auto-gen-swagger:
     runs-on: ubuntu-latest
