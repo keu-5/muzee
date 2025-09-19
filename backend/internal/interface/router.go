@@ -22,6 +22,4 @@ func RegisterRoutes(app *fiber.App, h *handler.TestHandler, cfg *config.Config) 
 
 	app.Post("/tests", h.Create)
 	app.Get("/tests", h.GetAll)
-	app.Get("/tests/:id", h.GetByID)
-	app.Delete("/tests/:id", h.Delete)
 }
