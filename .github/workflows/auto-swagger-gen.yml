@@ -1,0 +1,73 @@
+name: Auto Generate Swagger Documentation
+
+on:
+  push:
+    paths:
+      - "backend/**/*.go"
+  pull_request:
+    paths:
+      - "backend/**/*.go"
+
+jobs:
+  auto-gen-swagger:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.25"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Check for Swagger comment changes
+        id: check-swagger
+        run: |
+          # Check if any Go files with Swagger comments were modified
+          if git diff HEAD~1 --name-only | grep -E "backend/.*\.go$" | xargs grep -l "@" > /dev/null 2>&1; then
+            echo "swagger_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "swagger_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Swagger documentation
+        if: steps.check-swagger.outputs.swagger_changed == 'true'
+        run: |
+          make gen-all
+
+      - name: Check for generated file changes
+        if: steps.check-swagger.outputs.swagger_changed == 'true'
+        id: check-changes
+        run: |
+          if git diff --quiet; then
+            echo "changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "changes=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push generated files
+        if: steps.check-swagger.outputs.swagger_changed == 'true' && steps.check-changes.outputs.changes == 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add backend/docs/ frontend/src/api/__generated__/
+          git commit -m "auto: regenerate Swagger documentation
+
+          🤖 Generated with GitHub Actions
+
+          Co-Authored-By: GitHub Action <action@github.com>"
+          git push
