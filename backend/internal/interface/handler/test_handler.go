@@ -51,3 +51,19 @@ func (h *TestHandler) GetAll(c *fiber.Ctx) error {
 	}
 	return c.JSON(tests)
 }
+
+// SwaggerTest
+//
+//  @Summary        Test endpoint for Swagger auto-generation
+//  @Description    Simple test endpoint to verify GitHub Action workflow
+//  @Tags           swagger-test
+//  @Produce        json
+//  @Success        200 {object}    map[string]interface{}
+//  @Router         /swagger-test [get]
+func (h *TestHandler) SwaggerTest(c *fiber.Ctx) error {
+    return c.JSON(fiber.Map{
+        "message":   "Swagger auto-generation workflow test",
+        "status":    "success",
+        "timestamp": "2025-09-19",
+    })
+}
