@@ -51,18 +51,3 @@ func (h *TestHandler) GetAll(c *fiber.Ctx) error {
 	}
 	return c.JSON(tests)
 }
-
-// HealthCheck
-//
-//	@Summary		Health check for testing Swagger generation
-//	@Description	Simple health check endpoint to test auto-swagger workflow
-//	@Tags			health
-//	@Produce		json
-//	@Success		200	{object}	map[string]string
-//	@Router			/tests/health [get]
-func (h *TestHandler) HealthCheck(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
-		"status":  "ok",
-		"message": "Swagger auto-generation test endpoint is working",
-	})
-}
