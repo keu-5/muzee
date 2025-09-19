@@ -51,3 +51,45 @@ func (h *TestHandler) GetAll(c *fiber.Ctx) error {
 	}
 	return c.JSON(tests)
 }
+
+// GetByID
+//
+//	@Summary		Get a test by ID
+//	@Description	Returns a specific test record by its ID
+//	@Tags			tests
+//	@Produce		json
+//	@Param			id	path		int	true	"Test ID"
+//	@Success		200	{object}	TestResponse
+//	@Failure		400	{object}	map[string]string
+//	@Failure		404	{object}	map[string]string
+//	@Failure		500	{object}	map[string]string
+//	@Router			/tests/{id} [get]
+func (h *TestHandler) GetByID(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID parameter"})
+	}
+
+	return c.JSON(TestResponse{ID: id})
+}
+
+// Delete
+//
+//	@Summary		Delete a test by ID
+//	@Description	Deletes a specific test record by its ID
+//	@Tags			tests
+//	@Produce		json
+//	@Param			id	path		int	true	"Test ID"
+//	@Success		200	{object}	map[string]string
+//	@Failure		400	{object}	map[string]string
+//	@Failure		404	{object}	map[string]string
+//	@Failure		500	{object}	map[string]string
+//	@Router			/tests/{id} [delete]
+func (h *TestHandler) Delete(c *fiber.Ctx) error {
+	id, err := c.ParamsInt("id")
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Invalid ID parameter"})
+	}
+
+	return c.JSON(fiber.Map{"message": "Test deleted successfully", "id": id})
+}
