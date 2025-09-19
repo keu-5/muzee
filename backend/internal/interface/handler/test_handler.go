@@ -51,3 +51,5 @@ func (h *TestHandler) GetAll(c *fiber.Ctx) error {
 	}
 	return c.JSON(tests)
 }
+
+// SwaggerTest
