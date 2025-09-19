@@ -7,6 +7,20 @@ info:
 servers:
 - url: http://localhost/api
 paths:
+  /swagger-test:
+    get:
+      description: Simple test endpoint to verify GitHub Action workflow
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                additionalProperties: true
+                type: object
+          description: OK
+      summary: Test endpoint for Swagger auto-generation
+      tags:
+      - swagger-test
   /tests:
     get:
       description: Returns all test records
