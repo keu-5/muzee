@@ -104,8 +104,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "This is the API documentation for the Muzee application.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {
