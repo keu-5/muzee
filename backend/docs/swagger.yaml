@@ -1,0 +1,61 @@
+basePath: /api
+definitions:
+  internal_interface_handler.TestResponse:
+    properties:
+      id:
+        type: integer
+    type: object
+host: localhost
+info:
+  contact: {}
+  description: This is the API documentation for the Muzee application.
+  title: Muzee API
+  version: "1.0"
+paths:
+  /tests:
+    get:
+      description: Returns all test records
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/internal_interface_handler.TestResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List all tests
+      tags:
+      - tests
+    post:
+      description: Creates a test record and returns it
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.TestResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a new test
+      tags:
+      - tests
+schemes:
+- http
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
