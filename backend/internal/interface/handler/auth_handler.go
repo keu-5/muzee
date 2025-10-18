@@ -484,3 +484,63 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		ExpiresIn:    900,
 	})
 }
+
+type LogoutRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+type LogoutResponse struct {
+	Message string `json:"message"`
+}
+
+// Logout invalidates a refresh token
+//
+//	@Summary		User logout
+//	@Description	Invalidates the refresh token by deleting it from Redis, ending the user's session
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		LogoutRequest	true	"Refresh token"
+//	@Success		200		{object}	LogoutResponse
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/api/v1/auth/logout [post]
+func (h *AuthHandler) Logout(c *fiber.Ctx) error {
+	// 1. リクエストパース
+	var req LogoutRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "invalid_request",
+			Message: "リクエストの形式が正しくありません",
+		})
+	}
+
+	// 2. バリデーション
+	if err := h.validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
+	}
+
+	ctx := c.Context()
+
+	// 3. トークンの存在確認
+	_, err := h.sessionHelper.GetRefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "token_not_found",
+			Message: "セッションが存在しません。既にログアウト済みです。",
+		})
+	}
+
+	// 4. Redisからリフレッシュトークンを削除
+	if err := h.sessionHelper.DeleteRefreshToken(ctx, req.RefreshToken); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "サーバー内部でエラーが発生しました",
+		})
+	}
+
+	// 5. レスポンス返却
+	return c.JSON(LogoutResponse{
+		Message: "ログアウトしました",
+	})
+}

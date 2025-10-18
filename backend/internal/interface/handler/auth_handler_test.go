@@ -104,6 +104,7 @@ func setupTestApp(handler *AuthHandler) *fiber.App {
 	app := fiber.New()
 	app.Post("/api/v1/auth/login", handler.Login)
 	app.Post("/api/v1/auth/refresh", handler.RefreshToken)
+	app.Post("/api/v1/auth/logout", handler.Logout)
 	app.Post("/api/v1/auth/signup/send-code", handler.SendCode)
 	app.Post("/api/v1/auth/signup/verify-code", handler.VerifyCode)
 	return app
@@ -1307,4 +1308,196 @@ func TestRefreshToken_UserNotFound(t *testing.T) {
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &errResp)
 	assert.Equal(t, "refresh_token_invalid", errResp.Error)
+}
+
+// ========== Logout Tests ==========
+
+func TestLogout_Success(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	app := setupTestApp(handler)
+
+	// Pre-save refresh token in Redis
+	ctx := context.Background()
+	refreshToken := "test-logout-token-123"
+	userID := int64(123)
+	clientID := "test-client-id-123"
+
+	err := sessionHelper.SaveRefreshToken(ctx, refreshToken, userID, clientID)
+	if err != nil {
+		t.Skipf("Redis not available: %v", err)
+		return
+	}
+
+	// Create logout request
+	reqBody := LogoutRequest{
+		RefreshToken: refreshToken,
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/logout", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform request
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 200, resp.StatusCode)
+
+	var response LogoutResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	err = json.Unmarshal(bodyBytes, &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "ログアウトしました", response.Message)
+
+	// Verify token is deleted from Redis
+	_, err = sessionHelper.GetRefreshToken(ctx, refreshToken)
+	assert.Error(t, err) // Should error because token is deleted
+}
+
+func TestLogout_InvalidJSON(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Invalid JSON
+	req := httptest.NewRequest("POST", "/api/v1/auth/logout", bytes.NewReader([]byte("invalid json")))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "invalid_request", errResp.Error)
+}
+
+func TestLogout_ValidationError_MissingToken(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Missing refresh token
+	reqBody := LogoutRequest{
+		RefreshToken: "",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/logout", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+}
+
+func TestLogout_TokenNotFound(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Token not in Redis
+	reqBody := LogoutRequest{
+		RefreshToken: "nonexistent-token",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/logout", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// If Redis is not available, might get 500
+	if resp.StatusCode == 400 {
+		var errResp helper.ErrorResponse
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		json.Unmarshal(bodyBytes, &errResp)
+		assert.Equal(t, "token_not_found", errResp.Error)
+		assert.Equal(t, "セッションが存在しません。既にログアウト済みです。", errResp.Message)
+	} else {
+		assert.Equal(t, 500, resp.StatusCode)
+	}
+}
+
+func TestLogout_AlreadyLoggedOut(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	app := setupTestApp(handler)
+
+	// Pre-save and then delete refresh token
+	ctx := context.Background()
+	refreshToken := "test-logout-token-456"
+	userID := int64(123)
+	clientID := "test-client-id-123"
+
+	err := sessionHelper.SaveRefreshToken(ctx, refreshToken, userID, clientID)
+	if err != nil {
+		t.Skipf("Redis not available: %v", err)
+		return
+	}
+
+	// First logout (should succeed)
+	reqBody := LogoutRequest{
+		RefreshToken: refreshToken,
+	}
+	body, _ := json.Marshal(reqBody)
+	req1 := httptest.NewRequest("POST", "/api/v1/auth/logout", bytes.NewReader(body))
+	req1.Header.Set("Content-Type", "application/json")
+
+	resp1, err := app.Test(req1, -1)
+	assert.NoError(t, err)
+	defer resp1.Body.Close()
+	assert.Equal(t, 200, resp1.StatusCode)
+
+	// Second logout (should fail with token_not_found)
+	body2, _ := json.Marshal(reqBody)
+	req2 := httptest.NewRequest("POST", "/api/v1/auth/logout", bytes.NewReader(body2))
+	req2.Header.Set("Content-Type", "application/json")
+
+	resp2, err := app.Test(req2, -1)
+	assert.NoError(t, err)
+	defer resp2.Body.Close()
+
+	assert.Equal(t, 400, resp2.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp2.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "token_not_found", errResp.Error)
 }

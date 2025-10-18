@@ -32,6 +32,7 @@ func RegisterRoutes(
 	auth := v1.Group("/auth")
 	auth.Post("/login", authHandler.Login)
 	auth.Post("/refresh", authHandler.RefreshToken)
+	auth.Post("/logout", authHandler.Logout)
 
 	signup := auth.Group("/signup")
 	signup.Post("/send-code", authHandler.SendCode)
