@@ -372,3 +372,102 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		},
 	})
 }
+
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+type RefreshTokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	TokenType    string `json:"token_type"`
+	ExpiresIn    int    `json:"expires_in"`
+}
+
+// RefreshToken refreshes the access token using a refresh token
+//
+//	@Summary		Refresh access token
+//	@Description	Uses a refresh token to generate a new access token and refresh token. The old refresh token is invalidated.
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		RefreshTokenRequest	true	"Refresh token"
+//	@Success		200		{object}	RefreshTokenResponse
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		401		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/api/v1/auth/refresh [post]
+func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
+	// 1. リクエストパース
+	var req RefreshTokenRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "invalid_request",
+			Message: "リクエストの形式が正しくありません",
+		})
+	}
+
+	// 2. バリデーション
+	if err := h.validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
+	}
+
+	ctx := c.Context()
+
+	// 3. Redisからリフレッシュトークンを取得
+	tokenData, err := h.sessionHelper.GetRefreshToken(ctx, req.RefreshToken)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
+			Error:   "refresh_token_invalid",
+			Message: "リフレッシュトークンが無効または期限切れです。再度ログインしてください。",
+		})
+	}
+
+	// 4. ユーザー情報を取得
+	user, err := h.userUC.GetUserByID(ctx, tokenData.UserID)
+	if err != nil || user == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
+			Error:   "refresh_token_invalid",
+			Message: "リフレッシュトークンが無効または期限切れです。再度ログインしてください。",
+		})
+	}
+
+	// 5. 古いリフレッシュトークンを削除
+	if err := h.sessionHelper.DeleteRefreshToken(ctx, req.RefreshToken); err != nil {
+		fmt.Printf("リフレッシュトークン削除エラー: %v\n", err)
+	}
+
+	// 6. 新しいアクセストークンを生成
+	newAccessToken, err := util.GenerateAccessToken(user.ID, user.Email, h.jwtSecret)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "トークンの生成に失敗しました",
+		})
+	}
+
+	// 7. 新しいリフレッシュトークンを生成
+	newRefreshToken, err := util.GenerateRefreshToken()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "トークンの生成に失敗しました",
+		})
+	}
+
+	// 8. Redisに新しいリフレッシュトークンを保存（30日間）
+	if err := h.sessionHelper.SaveRefreshToken(ctx, newRefreshToken, user.ID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "トークンの保存に失敗しました",
+		})
+	}
+
+	// 9. レスポンス返却
+	return c.JSON(RefreshTokenResponse{
+		AccessToken:  newAccessToken,
+		RefreshToken: newRefreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    900,
+	})
+}
