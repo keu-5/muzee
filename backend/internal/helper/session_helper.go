@@ -46,6 +46,22 @@ func (s *SessionHelper) CheckRateLimit(ctx context.Context, email string) error 
 	return nil
 }
 
+// CheckLoginRateLimit checks if the email has exceeded the rate limit for login attempts
+func (s *SessionHelper) CheckLoginRateLimit(ctx context.Context, email string) error {
+	rateLimitKey := fmt.Sprintf("rate_limit:login:%s", email)
+	count, err := s.redisClient.Incr(ctx, rateLimitKey).Result()
+	if err != nil {
+		return err
+	}
+	if count == 1 {
+		s.redisClient.Expire(ctx, rateLimitKey, 15*time.Minute)
+	}
+	if count > 5 {
+		return fmt.Errorf("rate limit exceeded")
+	}
+	return nil
+}
+
 // SaveSignupSession saves the signup session data to Redis
 func (s *SessionHelper) SaveSignupSession(ctx context.Context, email, passwordHash, code string) error {
 	sessionData := SignupSessionData{
