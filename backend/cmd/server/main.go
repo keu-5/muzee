@@ -64,16 +64,18 @@ func main() {
 			config.Load,
 			infrastructure.NewClient,
 			infrastructure.NewRedisClient,
+			infrastructure.NewEmailClient,
 			NewFiberApp,
-			
+
 			// Repository
 			repository.NewTestRepository,
 			repository.NewUserRepository,
-			
+
 			// Usecase
 			usecase.NewTestUsecase,
 			usecase.NewAuthUsecase,
-			
+			usecase.NewEmailUsecase,
+
 			// Handler
 			handler.NewTestHandler,
 			handler.NewAuthHandler,
