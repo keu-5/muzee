@@ -2,9 +2,7 @@ package usecase
 
 import (
 	"context"
-	"strings"
 
-	"github.com/keu-5/muzee/backend/internal/repository"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -14,11 +12,11 @@ type AuthUsecase interface {
 }
 
 type authUsecase struct {
-	userRepo repository.UserRepository
+	userUC UserUsecase
 }
 
-func NewAuthUsecase(userRepo repository.UserRepository) AuthUsecase {
-	return &authUsecase{userRepo: userRepo}
+func NewAuthUsecase(userUC UserUsecase) AuthUsecase {
+	return &authUsecase{userUC: userUC}
 }
 
 func (a *authUsecase) HashPassword(password string) (string, error) {
@@ -30,8 +28,7 @@ func (a *authUsecase) HashPassword(password string) (string, error) {
 }
 
 func (a *authUsecase) CheckEmailExists(ctx context.Context, email string) (bool, error) {
-	email = strings.ToLower(strings.TrimSpace(email))
-	user, err := a.userRepo.GetByEmail(ctx, email)
+	user, err := a.userUC.GetUserByEmail(ctx, email)
 	if err != nil {
 		return false, err
 	}
