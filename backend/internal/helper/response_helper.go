@@ -2,6 +2,7 @@ package helper
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -28,5 +29,21 @@ func GetValidationMessage(fe validator.FieldError) string {
 		return fmt.Sprintf("%s文字で入力してください", fe.Param())
 	default:
 		return "入力内容が正しくありません"
+	}
+}
+
+// BuildValidationErrorResponse builds a standardized validation error response
+func BuildValidationErrorResponse(err error) ErrorResponse {
+	details := make([]map[string]interface{}, 0)
+	for _, err := range err.(validator.ValidationErrors) {
+		details = append(details, map[string]interface{}{
+			"field":   strings.ToLower(err.Field()),
+			"message": GetValidationMessage(err),
+		})
+	}
+	return ErrorResponse{
+		Error:   "validation_error",
+		Message: "入力内容に誤りがあります",
+		Details: details,
 	}
 }

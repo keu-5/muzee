@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/keu-5/muzee/backend/config"
 	"github.com/keu-5/muzee/backend/internal/interface/handler"
+	"github.com/keu-5/muzee/backend/internal/interface/middleware"
 	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
@@ -11,6 +12,7 @@ func RegisterRoutes(
 	app *fiber.App,
 	testHandler *handler.TestHandler,
 	authHandler *handler.AuthHandler,
+	userHandler *handler.UserHandler,
 	cfg *config.Config,
 ) {
 	if cfg != nil && cfg.GOEnv == "development" {
@@ -29,7 +31,15 @@ func RegisterRoutes(
 	app.Get("/tests", testHandler.GetAll)
 
 	v1 := app.Group("/v1")
-	auth := v1.Group("/auth/signup")
-	auth.Post("/send-code", authHandler.SendCode)
-	auth.Post("/verify-code", authHandler.VerifyCode)
+	auth := v1.Group("/auth")
+	auth.Post("/login", authHandler.Login)
+	auth.Post("/refresh", authHandler.RefreshToken)
+	auth.Post("/logout", authHandler.Logout)
+
+	signup := auth.Group("/signup")
+	signup.Post("/send-code", authHandler.SendCode)
+	signup.Post("/verify-code", authHandler.VerifyCode)
+
+	users := v1.Group("/users", middleware.AuthMiddleware(cfg.JWTSecret))
+	users.Get("/me", userHandler.GetMe)
 }

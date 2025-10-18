@@ -11,6 +11,7 @@ import (
 type UserUsecase interface {
 	CreateUser(ctx context.Context, email, passwordHash string) (*domain.User, error)
 	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
+	GetUserByID(ctx context.Context, id int64) (*domain.User, error)
 }
 
 type userUsecase struct {
@@ -33,4 +34,8 @@ func (u *userUsecase) CreateUser(ctx context.Context, email, passwordHash string
 func (u *userUsecase) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
 	email = strings.ToLower(strings.TrimSpace(email))
 	return u.userRepo.GetByEmail(ctx, email)
+}
+
+func (u *userUsecase) GetUserByID(ctx context.Context, id int64) (*domain.User, error) {
+	return u.userRepo.GetByID(ctx, id)
 }
