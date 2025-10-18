@@ -114,3 +114,25 @@ func (s *SessionHelper) SaveRefreshToken(ctx context.Context, token string, user
 	key := fmt.Sprintf("refresh_token:%s", token)
 	return s.redisClient.Set(ctx, key, dataJSON, 30*24*time.Hour).Err()
 }
+
+// GetRefreshToken retrieves the refresh token data from Redis
+func (s *SessionHelper) GetRefreshToken(ctx context.Context, token string) (*RefreshTokenData, error) {
+	key := fmt.Sprintf("refresh_token:%s", token)
+	data, err := s.redisClient.Get(ctx, key).Result()
+	if err != nil {
+		return nil, err
+	}
+
+	var tokenData RefreshTokenData
+	if err := json.Unmarshal([]byte(data), &tokenData); err != nil {
+		return nil, err
+	}
+
+	return &tokenData, nil
+}
+
+// DeleteRefreshToken deletes the refresh token data from Redis
+func (s *SessionHelper) DeleteRefreshToken(ctx context.Context, token string) error {
+	key := fmt.Sprintf("refresh_token:%s", token)
+	return s.redisClient.Del(ctx, key).Err()
+}
