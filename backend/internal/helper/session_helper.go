@@ -16,8 +16,9 @@ type SignupSessionData struct {
 }
 
 type RefreshTokenData struct {
-	UserID    int64 `json:"user_id"`
-	CreatedAt int64 `json:"created_at"`
+	UserID    int64  `json:"user_id"`
+	ClientID  string `json:"client_id"`
+	CreatedAt int64  `json:"created_at"`
 }
 
 type SessionHelper struct {
@@ -101,9 +102,10 @@ func (s *SessionHelper) DeleteSignupSession(ctx context.Context, email string) e
 }
 
 // SaveRefreshToken saves the refresh token data to Redis
-func (s *SessionHelper) SaveRefreshToken(ctx context.Context, token string, userID int64) error {
+func (s *SessionHelper) SaveRefreshToken(ctx context.Context, token string, userID int64, clientID string) error {
 	tokenData := RefreshTokenData{
 		UserID:    userID,
+		ClientID:  clientID,
 		CreatedAt: time.Now().Unix(),
 	}
 	dataJSON, err := json.Marshal(tokenData)

@@ -135,8 +135,9 @@ func (h *AuthHandler) SendCode(c *fiber.Ctx) error {
 }
 
 type VerifyCodeRequest struct {
-	Email string `json:"email" validate:"required,email,max=255"`
-	Code  string `json:"code" validate:"required,len=6"`
+	Email    string `json:"email" validate:"required,email,max=255"`
+	Code     string `json:"code" validate:"required,len=6"`
+	ClientID string `json:"client_id" validate:"required,min=1,max=255"`
 }
 
 type VerifyCodeResponse struct {
@@ -228,7 +229,7 @@ func (h *AuthHandler) VerifyCode(c *fiber.Ctx) error {
 	}
 
 	// 8. Redisにリフレッシュトークンを保存（30日間）
-	if err := h.sessionHelper.SaveRefreshToken(ctx, refreshToken, user.ID); err != nil {
+	if err := h.sessionHelper.SaveRefreshToken(ctx, refreshToken, user.ID, req.ClientID); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
 			Message: "トークンの保存に失敗しました",
@@ -259,6 +260,7 @@ func (h *AuthHandler) VerifyCode(c *fiber.Ctx) error {
 type LoginRequest struct {
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Password string `json:"password" validate:"required,min=8,max=72"`
+	ClientID string `json:"client_id" validate:"required,min=1,max=255"`
 }
 
 type LoginResponse struct {
@@ -351,7 +353,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	}
 
 	// 8. Redisにリフレッシュトークンを保存（30日間）
-	if err := h.sessionHelper.SaveRefreshToken(ctx, refreshToken, user.ID); err != nil {
+	if err := h.sessionHelper.SaveRefreshToken(ctx, refreshToken, user.ID, req.ClientID); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
 			Message: "トークンの保存に失敗しました",
@@ -375,6 +377,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 
 type RefreshTokenRequest struct {
 	RefreshToken string `json:"refresh_token" validate:"required"`
+	ClientID     string `json:"client_id" validate:"required,min=1,max=255"`
 }
 
 type RefreshTokenResponse struct {
@@ -423,7 +426,17 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 4. ユーザー情報を取得
+	// 4. ClientIDの検証
+	if tokenData.ClientID != req.ClientID {
+		// ClientIDが一致しない場合、トークンが盗まれた可能性があるため削除
+		h.sessionHelper.DeleteRefreshToken(ctx, req.RefreshToken)
+		return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
+			Error:   "client_id_mismatch",
+			Message: "認証情報が一致しません。再度ログインしてください。",
+		})
+	}
+
+	// 5. ユーザー情報を取得
 	user, err := h.userUC.GetUserByID(ctx, tokenData.UserID)
 	if err != nil || user == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
@@ -432,12 +445,12 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 5. 古いリフレッシュトークンを削除
+	// 6. 古いリフレッシュトークンを削除
 	if err := h.sessionHelper.DeleteRefreshToken(ctx, req.RefreshToken); err != nil {
 		fmt.Printf("リフレッシュトークン削除エラー: %v\n", err)
 	}
 
-	// 6. 新しいアクセストークンを生成
+	// 7. 新しいアクセストークンを生成
 	newAccessToken, err := util.GenerateAccessToken(user.ID, user.Email, h.jwtSecret)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
@@ -446,7 +459,7 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 7. 新しいリフレッシュトークンを生成
+	// 8. 新しいリフレッシュトークンを生成
 	newRefreshToken, err := util.GenerateRefreshToken()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
@@ -455,15 +468,15 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 8. Redisに新しいリフレッシュトークンを保存（30日間）
-	if err := h.sessionHelper.SaveRefreshToken(ctx, newRefreshToken, user.ID); err != nil {
+	// 9. Redisに新しいリフレッシュトークンを保存（30日間）
+	if err := h.sessionHelper.SaveRefreshToken(ctx, newRefreshToken, user.ID, req.ClientID); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
 			Message: "トークンの保存に失敗しました",
 		})
 	}
 
-	// 9. レスポンス返却
+	// 10. レスポンス返却
 	return c.JSON(RefreshTokenResponse{
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
