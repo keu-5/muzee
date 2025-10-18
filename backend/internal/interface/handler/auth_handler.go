@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -68,18 +67,7 @@ func (h *AuthHandler) SendCode(c *fiber.Ctx) error {
 
 	// 2. バリデーション
 	if err := h.validate.Struct(req); err != nil {
-		details := make([]map[string]interface{}, 0)
-		for _, err := range err.(validator.ValidationErrors) {
-			details = append(details, map[string]interface{}{
-				"field":   strings.ToLower(err.Field()),
-				"message": helper.GetValidationMessage(err),
-			})
-		}
-		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
-			Error:   "validation_error",
-			Message: "入力内容に誤りがあります",
-			Details: details,
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
 	}
 
 	ctx := c.Context()
@@ -152,12 +140,12 @@ type VerifyCodeRequest struct {
 }
 
 type VerifyCodeResponse struct {
-	Message      string          `json:"message"`
-	AccessToken  string          `json:"access_token"`
-	RefreshToken string          `json:"refresh_token"`
-	TokenType    string          `json:"token_type"`
-	ExpiresIn    int             `json:"expires_in"`
-	User         UserResponse    `json:"user"`
+	Message      string       `json:"message"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+	TokenType    string       `json:"token_type"`
+	ExpiresIn    int          `json:"expires_in"`
+	User         UserResponse `json:"user"`
 }
 
 type UserResponse struct {
@@ -190,18 +178,7 @@ func (h *AuthHandler) VerifyCode(c *fiber.Ctx) error {
 
 	// 2. バリデーション
 	if err := h.validate.Struct(req); err != nil {
-		details := make([]map[string]interface{}, 0)
-		for _, err := range err.(validator.ValidationErrors) {
-			details = append(details, map[string]interface{}{
-				"field":   strings.ToLower(err.Field()),
-				"message": helper.GetValidationMessage(err),
-			})
-		}
-		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
-			Error:   "validation_error",
-			Message: "入力内容に誤りがあります",
-			Details: details,
-		})
+		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
 	}
 
 	ctx := c.Context()
@@ -267,6 +244,123 @@ func (h *AuthHandler) VerifyCode(c *fiber.Ctx) error {
 	// 10. レスポンス返却
 	return c.Status(fiber.StatusCreated).JSON(VerifyCodeResponse{
 		Message:      "アカウントが作成されました",
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		TokenType:    "Bearer",
+		ExpiresIn:    900,
+		User: UserResponse{
+			ID:        user.ID,
+			Email:     user.Email,
+			CreatedAt: user.CreatedAt.Format(time.RFC3339),
+		},
+	})
+}
+
+type LoginRequest struct {
+	Email    string `json:"email" validate:"required,email,max=255"`
+	Password string `json:"password" validate:"required,min=8,max=72"`
+}
+
+type LoginResponse struct {
+	Message      string       `json:"message"`
+	AccessToken  string       `json:"access_token"`
+	RefreshToken string       `json:"refresh_token"`
+	TokenType    string       `json:"token_type"`
+	ExpiresIn    int          `json:"expires_in"`
+	User         UserResponse `json:"user"`
+}
+
+// Login authenticates a user with email and password
+//
+//	@Summary		User login
+//	@Description	Authenticates user with email and password, returns access and refresh tokens
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		LoginRequest	true	"Email and password"
+//	@Success		200		{object}	LoginResponse
+//	@Failure		400		{object}	ErrorResponse
+//	@Failure		401		{object}	ErrorResponse
+//	@Failure		429		{object}	ErrorResponse
+//	@Failure		500		{object}	ErrorResponse
+//	@Router			/api/v1/auth/login [post]
+func (h *AuthHandler) Login(c *fiber.Ctx) error {
+	// 1. リクエストパース
+	var req LoginRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "invalid_request",
+			Message: "リクエストの形式が正しくありません",
+		})
+	}
+
+	// 2. バリデーション
+	if err := h.validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
+	}
+
+	ctx := c.Context()
+
+	// 3. レート制限チェック（ログイン試行）
+	if err := h.sessionHelper.CheckLoginRateLimit(ctx, req.Email); err != nil {
+		return c.Status(fiber.StatusTooManyRequests).JSON(helper.ErrorResponse{
+			Error:   "rate_limit_exceeded",
+			Message: "短時間に複数回ログインが試行されました。しばらくお待ちください",
+		})
+	}
+
+	// 4. ユーザーを取得
+	user, err := h.userUC.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "サーバーエラーが発生しました。しばらく待ってから再度お試しください",
+		})
+	}
+	if user == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
+			Error:   "invalid_credentials",
+			Message: "メールアドレスまたはパスワードが間違っています",
+		})
+	}
+
+	// 5. パスワード照合
+	if err := h.authUC.VerifyPassword(req.Password, user.PasswordHash); err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
+			Error:   "invalid_credentials",
+			Message: "メールアドレスまたはパスワードが間違っています",
+		})
+	}
+
+	// 6. JWT生成
+	accessToken, err := util.GenerateAccessToken(user.ID, user.Email, h.jwtSecret)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "トークンの生成に失敗しました",
+		})
+	}
+
+	// 7. リフレッシュトークン生成
+	refreshToken, err := util.GenerateRefreshToken()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "トークンの生成に失敗しました",
+		})
+	}
+
+	// 8. Redisにリフレッシュトークンを保存（30日間）
+	if err := h.sessionHelper.SaveRefreshToken(ctx, refreshToken, user.ID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "トークンの保存に失敗しました",
+		})
+	}
+
+	// 9. レスポンス返却
+	return c.JSON(LoginResponse{
+		Message:      "ログインに成功しました",
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 		TokenType:    "Bearer",

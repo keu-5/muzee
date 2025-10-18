@@ -29,7 +29,10 @@ func RegisterRoutes(
 	app.Get("/tests", testHandler.GetAll)
 
 	v1 := app.Group("/v1")
-	auth := v1.Group("/auth/signup")
-	auth.Post("/send-code", authHandler.SendCode)
-	auth.Post("/verify-code", authHandler.VerifyCode)
+	auth := v1.Group("/auth")
+	auth.Post("/login", authHandler.Login)
+
+	signup := auth.Group("/signup")
+	signup.Post("/send-code", authHandler.SendCode)
+	signup.Post("/verify-code", authHandler.VerifyCode)
 }
