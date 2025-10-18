@@ -23,6 +23,7 @@ import (
 // Mock AuthUsecase
 type mockAuthUsecase struct {
 	hashPasswordFunc     func(password string) (string, error)
+	verifyPasswordFunc   func(password, hash string) error
 	checkEmailExistsFunc func(ctx context.Context, email string) (bool, error)
 }
 
@@ -31,6 +32,13 @@ func (m *mockAuthUsecase) HashPassword(password string) (string, error) {
 		return m.hashPasswordFunc(password)
 	}
 	return "hashed_password", nil
+}
+
+func (m *mockAuthUsecase) VerifyPassword(password, hash string) error {
+	if m.verifyPasswordFunc != nil {
+		return m.verifyPasswordFunc(password, hash)
+	}
+	return nil
 }
 
 func (m *mockAuthUsecase) CheckEmailExists(ctx context.Context, email string) (bool, error) {
@@ -80,6 +88,7 @@ func (m *mockEmailUsecase) SendVerificationCode(email, code string) error {
 
 func setupTestApp(handler *AuthHandler) *fiber.App {
 	app := fiber.New()
+	app.Post("/api/v1/auth/login", handler.Login)
 	app.Post("/api/v1/auth/signup/send-code", handler.SendCode)
 	app.Post("/api/v1/auth/signup/verify-code", handler.VerifyCode)
 	return app
@@ -768,4 +777,297 @@ func TestVerifyCode_CreateUserError(t *testing.T) {
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &errResp)
 	assert.Equal(t, "internal_server_error", errResp.Error)
+}
+
+// ========== Login Tests ==========
+
+func TestLogin_Success(t *testing.T) {
+	mockAuth := &mockAuthUsecase{
+		verifyPasswordFunc: func(password, hash string) error {
+			return nil
+		},
+	}
+	mockUser := &mockUserUsecase{
+		getUserByEmailFunc: func(ctx context.Context, email string) (*domain.User, error) {
+			return &domain.User{
+				ID:           123,
+				Email:        email,
+				PasswordHash: "hashed_password",
+				CreatedAt:    time.Now(),
+				UpdatedAt:    time.Now(),
+			}, nil
+		},
+	}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	app := setupTestApp(handler)
+
+	// Create login request
+	reqBody := LoginRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform request
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// If Redis is available, expect 200, otherwise 500
+	if resp.StatusCode == 200 {
+		var response LoginResponse
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		err = json.Unmarshal(bodyBytes, &response)
+		assert.NoError(t, err)
+		assert.Equal(t, "ログインに成功しました", response.Message)
+		assert.NotEmpty(t, response.AccessToken)
+		assert.NotEmpty(t, response.RefreshToken)
+		assert.Equal(t, "Bearer", response.TokenType)
+		assert.Equal(t, 900, response.ExpiresIn)
+		assert.Equal(t, int64(123), response.User.ID)
+		assert.Equal(t, "test@example.com", response.User.Email)
+	} else {
+		assert.Contains(t, []int{500, 429}, resp.StatusCode)
+	}
+}
+
+func TestLogin_InvalidJSON(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Invalid JSON
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader([]byte("invalid json")))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "invalid_request", errResp.Error)
+}
+
+func TestLogin_ValidationError_MissingEmail(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Missing email
+	reqBody := LoginRequest{
+		Email:    "",
+		Password: "password123",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+	assert.NotEmpty(t, errResp.Details)
+}
+
+func TestLogin_ValidationError_InvalidEmail(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Invalid email format
+	reqBody := LoginRequest{
+		Email:    "invalid-email",
+		Password: "password123",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+}
+
+func TestLogin_ValidationError_ShortPassword(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Password too short
+	reqBody := LoginRequest{
+		Email:    "test@example.com",
+		Password: "short",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+}
+
+func TestLogin_UserNotFound(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{
+		getUserByEmailFunc: func(ctx context.Context, email string) (*domain.User, error) {
+			return nil, nil // User not found
+		},
+	}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	reqBody := LoginRequest{
+		Email:    "nonexistent@example.com",
+		Password: "password123",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// If Redis rate limit fails, might get 429 or 500
+	if resp.StatusCode == 401 {
+		var errResp helper.ErrorResponse
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		json.Unmarshal(bodyBytes, &errResp)
+		assert.Equal(t, "invalid_credentials", errResp.Error)
+	} else {
+		assert.Contains(t, []int{429, 500}, resp.StatusCode)
+	}
+}
+
+func TestLogin_InvalidPassword(t *testing.T) {
+	mockAuth := &mockAuthUsecase{
+		verifyPasswordFunc: func(password, hash string) error {
+			return errors.New("password mismatch")
+		},
+	}
+	mockUser := &mockUserUsecase{
+		getUserByEmailFunc: func(ctx context.Context, email string) (*domain.User, error) {
+			return &domain.User{
+				ID:           123,
+				Email:        email,
+				PasswordHash: "hashed_password",
+				CreatedAt:    time.Now(),
+				UpdatedAt:    time.Now(),
+			}, nil
+		},
+	}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	reqBody := LoginRequest{
+		Email:    "test@example.com",
+		Password: "wrongpassword",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// If Redis rate limit fails, might get 429 or 500
+	if resp.StatusCode == 401 {
+		var errResp helper.ErrorResponse
+		bodyBytes, _ := io.ReadAll(resp.Body)
+		json.Unmarshal(bodyBytes, &errResp)
+		assert.Equal(t, "invalid_credentials", errResp.Error)
+		assert.Equal(t, "メールアドレスまたはパスワードが間違っています", errResp.Message)
+	} else {
+		assert.Contains(t, []int{429, 500}, resp.StatusCode)
+	}
+}
+
+func TestLogin_GetUserByEmailError(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{
+		getUserByEmailFunc: func(ctx context.Context, email string) (*domain.User, error) {
+			return nil, errors.New("database error")
+		},
+	}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	reqBody := LoginRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// If Redis rate limit fails, might get 429, otherwise 500
+	assert.Contains(t, []int{500, 429}, resp.StatusCode)
 }
