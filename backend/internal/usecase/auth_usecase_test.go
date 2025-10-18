@@ -94,6 +94,65 @@ func TestHashPassword(t *testing.T) {
 	}
 }
 
+func TestVerifyPassword(t *testing.T) {
+	mockUserUC := &mockUserUsecase{}
+	usecase := NewAuthUsecase(mockUserUC)
+
+	// First, create a hash to test against
+	password := "password123"
+	hash, err := usecase.HashPassword(password)
+	if err != nil {
+		t.Fatalf("Failed to hash password: %v", err)
+	}
+
+	tests := []struct {
+		name     string
+		password string
+		hash     string
+		wantErr  bool
+	}{
+		{
+			name:     "correct password",
+			password: password,
+			hash:     hash,
+			wantErr:  false,
+		},
+		{
+			name:     "incorrect password",
+			password: "wrongpassword",
+			hash:     hash,
+			wantErr:  true,
+		},
+		{
+			name:     "empty password",
+			password: "",
+			hash:     hash,
+			wantErr:  true,
+		},
+		{
+			name:     "password with different case",
+			password: "PASSWORD123",
+			hash:     hash,
+			wantErr:  true,
+		},
+		{
+			name:     "invalid hash",
+			password: password,
+			hash:     "invalid_hash",
+			wantErr:  true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := usecase.VerifyPassword(tt.password, tt.hash)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("VerifyPassword() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func TestCheckEmailExists(t *testing.T) {
 	ctx := context.Background()
 	now := time.Now()
