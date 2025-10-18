@@ -34,8 +34,8 @@ type GetMeResponse struct {
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Success		200	{object}	GetMeResponse
-//	@Failure		401	{object}	ErrorResponse
-//	@Failure		500	{object}	ErrorResponse
+//	@Failure		401	{object}	helper.ErrorResponse
+//	@Failure		500	{object}	helper.ErrorResponse
 //	@Router			/api/v1/users/me [get]
 func (h *UserHandler) GetMe(c *fiber.Ctx) error {
 	// ミドルウェアでlocalsに設定されたuser_idを取得

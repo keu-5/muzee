@@ -51,9 +51,9 @@ func NewAuthHandler(authUC usecase.AuthUsecase, userUC usecase.UserUsecase, emai
 //	@Produce		json
 //	@Param			request	body		SendCodeRequest	true	"Email and password"
 //	@Success		200		{object}	SendCodeResponse
-//	@Failure		400		{object}	ErrorResponse
-//	@Failure		429		{object}	ErrorResponse
-//	@Failure		500		{object}	ErrorResponse
+//	@Failure		400		{object}	helper.ErrorResponse
+//	@Failure		429		{object}	helper.ErrorResponse
+//	@Failure		500		{object}	helper.ErrorResponse
 //	@Router			/api/v1/auth/signup/send-code [post]
 func (h *AuthHandler) SendCode(c *fiber.Ctx) error {
 	// 1. リクエストパース
@@ -164,8 +164,8 @@ type UserResponse struct {
 //	@Produce		json
 //	@Param			request	body		VerifyCodeRequest	true	"Email and verification code"
 //	@Success		201		{object}	VerifyCodeResponse
-//	@Failure		400		{object}	ErrorResponse
-//	@Failure		500		{object}	ErrorResponse
+//	@Failure		400		{object}	helper.ErrorResponse
+//	@Failure		500		{object}	helper.ErrorResponse
 //	@Router			/api/v1/auth/signup/verify-code [post]
 func (h *AuthHandler) VerifyCode(c *fiber.Ctx) error {
 	// 1. リクエストパース
@@ -281,10 +281,10 @@ type LoginResponse struct {
 //	@Produce		json
 //	@Param			request	body		LoginRequest	true	"Email and password"
 //	@Success		200		{object}	LoginResponse
-//	@Failure		400		{object}	ErrorResponse
-//	@Failure		401		{object}	ErrorResponse
-//	@Failure		429		{object}	ErrorResponse
-//	@Failure		500		{object}	ErrorResponse
+//	@Failure		400		{object}	helper.ErrorResponse
+//	@Failure		401		{object}	helper.ErrorResponse
+//	@Failure		429		{object}	helper.ErrorResponse
+//	@Failure		500		{object}	helper.ErrorResponse
 //	@Router			/api/v1/auth/login [post]
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	// 1. リクエストパース
@@ -396,9 +396,9 @@ type RefreshTokenResponse struct {
 //	@Produce		json
 //	@Param			request	body		RefreshTokenRequest	true	"Refresh token"
 //	@Success		200		{object}	RefreshTokenResponse
-//	@Failure		400		{object}	ErrorResponse
-//	@Failure		401		{object}	ErrorResponse
-//	@Failure		500		{object}	ErrorResponse
+//	@Failure		400		{object}	helper.ErrorResponse
+//	@Failure		401		{object}	helper.ErrorResponse
+//	@Failure		500		{object}	helper.ErrorResponse
 //	@Router			/api/v1/auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	// 1. リクエストパース
@@ -502,8 +502,8 @@ type LogoutResponse struct {
 //	@Produce		json
 //	@Param			request	body		LogoutRequest	true	"Refresh token"
 //	@Success		200		{object}	LogoutResponse
-//	@Failure		400		{object}	ErrorResponse
-//	@Failure		500		{object}	ErrorResponse
+//	@Failure		400		{object}	helper.ErrorResponse
+//	@Failure		500		{object}	helper.ErrorResponse
 //	@Router			/api/v1/auth/logout [post]
 func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	// 1. リクエストパース
