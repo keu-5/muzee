@@ -9,9 +9,13 @@ import (
 	"net/http/httptest"
 	"reflect"
 	"testing"
+	"time"
 
 	ut "github.com/go-playground/universal-translator"
 	"github.com/gofiber/fiber/v2"
+	"github.com/keu-5/muzee/backend/internal/domain"
+	"github.com/keu-5/muzee/backend/internal/helper"
+	"github.com/keu-5/muzee/backend/internal/util"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
@@ -36,6 +40,32 @@ func (m *mockAuthUsecase) CheckEmailExists(ctx context.Context, email string) (b
 	return false, nil
 }
 
+// Mock UserUsecase
+type mockUserUsecase struct {
+	createUserFunc      func(ctx context.Context, email, passwordHash string) (*domain.User, error)
+	getUserByEmailFunc  func(ctx context.Context, email string) (*domain.User, error)
+}
+
+func (m *mockUserUsecase) CreateUser(ctx context.Context, email, passwordHash string) (*domain.User, error) {
+	if m.createUserFunc != nil {
+		return m.createUserFunc(ctx, email, passwordHash)
+	}
+	return &domain.User{
+		ID:           1,
+		Email:        email,
+		PasswordHash: passwordHash,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}, nil
+}
+
+func (m *mockUserUsecase) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+	if m.getUserByEmailFunc != nil {
+		return m.getUserByEmailFunc(ctx, email)
+	}
+	return nil, nil
+}
+
 // Mock EmailUsecase
 type mockEmailUsecase struct {
 	sendVerificationCodeFunc func(email, code string) error
@@ -51,15 +81,18 @@ func (m *mockEmailUsecase) SendVerificationCode(email, code string) error {
 func setupTestApp(handler *AuthHandler) *fiber.App {
 	app := fiber.New()
 	app.Post("/api/v1/auth/signup/send-code", handler.SendCode)
+	app.Post("/api/v1/auth/signup/verify-code", handler.VerifyCode)
 	return app
 }
 
 func TestNewAuthHandler(t *testing.T) {
 	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
 	mockEmail := &mockEmailUsecase{}
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockEmail, mockRedis)
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
 
 	assert.NotNil(t, handler)
 	assert.NotNil(t, handler.validate)
@@ -83,9 +116,11 @@ func TestSendCode_Success(t *testing.T) {
 	}
 
 	// Use miniredis for testing
+	mockUser := &mockUserUsecase{}
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockEmail, mockRedis)
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
 	app := setupTestApp(handler)
 
 	// Create request
@@ -109,10 +144,12 @@ func TestSendCode_Success(t *testing.T) {
 
 func TestSendCode_InvalidJSON(t *testing.T) {
 	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
 	mockEmail := &mockEmailUsecase{}
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockEmail, mockRedis)
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
 	app := setupTestApp(handler)
 
 	// Invalid JSON
@@ -125,7 +162,7 @@ func TestSendCode_InvalidJSON(t *testing.T) {
 
 	assert.Equal(t, 400, resp.StatusCode)
 
-	var errResp ErrorResponse
+	var errResp helper.ErrorResponse
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &errResp)
 	assert.Equal(t, "invalid_request", errResp.Error)
@@ -133,10 +170,12 @@ func TestSendCode_InvalidJSON(t *testing.T) {
 
 func TestSendCode_ValidationError_MissingEmail(t *testing.T) {
 	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
 	mockEmail := &mockEmailUsecase{}
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockEmail, mockRedis)
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
 	app := setupTestApp(handler)
 
 	// Missing email
@@ -154,7 +193,7 @@ func TestSendCode_ValidationError_MissingEmail(t *testing.T) {
 
 	assert.Equal(t, 400, resp.StatusCode)
 
-	var errResp ErrorResponse
+	var errResp helper.ErrorResponse
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &errResp)
 	assert.Equal(t, "validation_error", errResp.Error)
@@ -163,10 +202,12 @@ func TestSendCode_ValidationError_MissingEmail(t *testing.T) {
 
 func TestSendCode_ValidationError_InvalidEmail(t *testing.T) {
 	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
 	mockEmail := &mockEmailUsecase{}
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockEmail, mockRedis)
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
 	app := setupTestApp(handler)
 
 	// Invalid email format
@@ -184,7 +225,7 @@ func TestSendCode_ValidationError_InvalidEmail(t *testing.T) {
 
 	assert.Equal(t, 400, resp.StatusCode)
 
-	var errResp ErrorResponse
+	var errResp helper.ErrorResponse
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &errResp)
 	assert.Equal(t, "validation_error", errResp.Error)
@@ -192,10 +233,12 @@ func TestSendCode_ValidationError_InvalidEmail(t *testing.T) {
 
 func TestSendCode_ValidationError_ShortPassword(t *testing.T) {
 	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
 	mockEmail := &mockEmailUsecase{}
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockEmail, mockRedis)
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
 	app := setupTestApp(handler)
 
 	// Password too short
@@ -213,7 +256,7 @@ func TestSendCode_ValidationError_ShortPassword(t *testing.T) {
 
 	assert.Equal(t, 400, resp.StatusCode)
 
-	var errResp ErrorResponse
+	var errResp helper.ErrorResponse
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &errResp)
 	assert.Equal(t, "validation_error", errResp.Error)
@@ -225,10 +268,12 @@ func TestSendCode_EmailAlreadyExists(t *testing.T) {
 			return true, nil // Email already exists
 		},
 	}
+	mockUser := &mockUserUsecase{}
 	mockEmail := &mockEmailUsecase{}
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockEmail, mockRedis)
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
 	app := setupTestApp(handler)
 
 	reqBody := SendCodeRequest{
@@ -245,7 +290,7 @@ func TestSendCode_EmailAlreadyExists(t *testing.T) {
 
 	assert.Equal(t, 400, resp.StatusCode)
 
-	var errResp ErrorResponse
+	var errResp helper.ErrorResponse
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &errResp)
 	assert.Equal(t, "email_already_exists", errResp.Error)
@@ -257,10 +302,12 @@ func TestSendCode_CheckEmailExistsError(t *testing.T) {
 			return false, errors.New("database error")
 		},
 	}
+	mockUser := &mockUserUsecase{}
 	mockEmail := &mockEmailUsecase{}
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockEmail, mockRedis)
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
 	app := setupTestApp(handler)
 
 	reqBody := SendCodeRequest{
@@ -277,14 +324,14 @@ func TestSendCode_CheckEmailExistsError(t *testing.T) {
 
 	assert.Equal(t, 500, resp.StatusCode)
 
-	var errResp ErrorResponse
+	var errResp helper.ErrorResponse
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &errResp)
 	assert.Equal(t, "internal_server_error", errResp.Error)
 }
 
 func TestGenerateVerificationCode(t *testing.T) {
-	code, err := generateVerificationCode()
+	code, err := util.GenerateVerificationCode()
 	assert.NoError(t, err)
 	assert.Len(t, code, 6)
 	assert.Regexp(t, "^[0-9]{6}$", code)
@@ -336,7 +383,7 @@ func TestGetValidationMessage(t *testing.T) {
 				tag:   tt.tag,
 				param: tt.param,
 			}
-			result := getValidationMessage(mockFieldError)
+			result := helper.GetValidationMessage(mockFieldError)
 			assert.Equal(t, tt.expected, result)
 		})
 	}
@@ -362,18 +409,15 @@ func (m *mockFieldError) Error() string                { return "" }
 func (m *mockFieldError) Translate(ut.Translator) string { return "" }
 
 func TestSaveSignupSession(t *testing.T) {
-	mockAuth := &mockAuthUsecase{}
-	mockEmail := &mockEmailUsecase{}
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
-
-	handler := NewAuthHandler(mockAuth, mockEmail, mockRedis)
+	sessionHelper := helper.NewSessionHelper(mockRedis)
 
 	ctx := context.Background()
 	email := "test@example.com"
 	passwordHash := "hashed_password"
 	code := "123456"
 
-	err := handler.saveSignupSession(ctx, email, passwordHash, code)
+	err := sessionHelper.SaveSignupSession(ctx, email, passwordHash, code)
 	// Will fail if Redis is not running, but we're testing the function logic
 	if err != nil {
 		assert.Contains(t, err.Error(), "connection refused")
@@ -381,18 +425,347 @@ func TestSaveSignupSession(t *testing.T) {
 }
 
 func TestCheckRateLimit(t *testing.T) {
-	mockAuth := &mockAuthUsecase{}
-	mockEmail := &mockEmailUsecase{}
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
-
-	handler := NewAuthHandler(mockAuth, mockEmail, mockRedis)
+	sessionHelper := helper.NewSessionHelper(mockRedis)
 
 	ctx := context.Background()
 	email := "test@example.com"
 
-	err := handler.checkRateLimit(ctx, email)
+	err := sessionHelper.CheckRateLimit(ctx, email)
 	// Will fail if Redis is not running, but we're testing the function logic
 	if err != nil {
 		assert.Contains(t, err.Error(), "connection refused")
 	}
+}
+
+// ========== VerifyCode Tests ==========
+
+func TestVerifyCode_Success(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{
+		createUserFunc: func(ctx context.Context, email, passwordHash string) (*domain.User, error) {
+			return &domain.User{
+				ID:           123,
+				Email:        email,
+				PasswordHash: passwordHash,
+				CreatedAt:    time.Now(),
+				UpdatedAt:    time.Now(),
+			}, nil
+		},
+	}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	app := setupTestApp(handler)
+
+	// Pre-save signup session in Redis (this will fail if Redis is not running)
+	ctx := context.Background()
+	email := "test@example.com"
+	passwordHash := "hashed_password_123"
+	code := "123456"
+
+	err := sessionHelper.SaveSignupSession(ctx, email, passwordHash, code)
+	if err != nil {
+		t.Skipf("Redis not available: %v", err)
+		return
+	}
+
+	// Create verify code request
+	reqBody := VerifyCodeRequest{
+		Email: email,
+		Code:  code,
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup/verify-code", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform request
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 201, resp.StatusCode)
+
+	var response VerifyCodeResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	err = json.Unmarshal(bodyBytes, &response)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, response.AccessToken)
+	assert.NotEmpty(t, response.RefreshToken)
+	assert.Equal(t, "Bearer", response.TokenType)
+	assert.Equal(t, int64(123), response.User.ID)
+	assert.Equal(t, email, response.User.Email)
+}
+
+func TestVerifyCode_InvalidJSON(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Invalid JSON
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup/verify-code", bytes.NewReader([]byte("invalid json")))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "invalid_request", errResp.Error)
+}
+
+func TestVerifyCode_ValidationError_MissingEmail(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Missing email
+	reqBody := VerifyCodeRequest{
+		Email: "",
+		Code:  "123456",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup/verify-code", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+}
+
+func TestVerifyCode_ValidationError_InvalidEmail(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Invalid email format
+	reqBody := VerifyCodeRequest{
+		Email: "invalid-email",
+		Code:  "123456",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup/verify-code", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+}
+
+func TestVerifyCode_ValidationError_InvalidCodeLength(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Code too short
+	reqBody := VerifyCodeRequest{
+		Email: "test@example.com",
+		Code:  "123",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup/verify-code", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+}
+
+func TestVerifyCode_ValidationError_MissingCode(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Missing code
+	reqBody := VerifyCodeRequest{
+		Email: "test@example.com",
+		Code:  "",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup/verify-code", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+}
+
+func TestVerifyCode_SessionNotFound(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// No session saved in Redis
+	reqBody := VerifyCodeRequest{
+		Email: "test@example.com",
+		Code:  "123456",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup/verify-code", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "session_not_found", errResp.Error)
+}
+
+func TestVerifyCode_InvalidCode(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Pre-save signup session with different code
+	ctx := context.Background()
+	email := "test@example.com"
+	passwordHash := "hashed_password_123"
+	correctCode := "123456"
+
+	err := sessionHelper.SaveSignupSession(ctx, email, passwordHash, correctCode)
+	if err != nil {
+		t.Skipf("Redis not available: %v", err)
+		return
+	}
+
+	// Send wrong code
+	reqBody := VerifyCodeRequest{
+		Email: email,
+		Code:  "999999",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup/verify-code", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "invalid_code", errResp.Error)
+}
+
+func TestVerifyCode_CreateUserError(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{
+		createUserFunc: func(ctx context.Context, email, passwordHash string) (*domain.User, error) {
+			return nil, errors.New("database error")
+		},
+	}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	app := setupTestApp(handler)
+
+	// Pre-save signup session
+	ctx := context.Background()
+	email := "test@example.com"
+	passwordHash := "hashed_password_123"
+	code := "123456"
+
+	err := sessionHelper.SaveSignupSession(ctx, email, passwordHash, code)
+	if err != nil {
+		t.Skipf("Redis not available: %v", err)
+		return
+	}
+
+	// Create verify code request
+	reqBody := VerifyCodeRequest{
+		Email: email,
+		Code:  code,
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup/verify-code", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 500, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "internal_server_error", errResp.Error)
 }
