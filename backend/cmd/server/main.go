@@ -39,8 +39,13 @@ func StartServer(lc fx.Lifecycle, app *fiber.App, cfg *config.Config) {
 	})
 }
 
-func RegisterRoutes(app *fiber.App, h *handler.TestHandler, cfg *config.Config) {
-	interfacepkg.RegisterRoutes(app, h, cfg)
+func RegisterRoutes(
+	app *fiber.App,
+	testHandler *handler.TestHandler,
+	authHandler *handler.AuthHandler,
+	cfg *config.Config,
+) {
+	interfacepkg.RegisterRoutes(app, testHandler, authHandler, cfg)
 }
 
 // @title						Muzee API
@@ -58,10 +63,20 @@ func main() {
 			infrastructure.NewDevelopmentLogger,
 			config.Load,
 			infrastructure.NewClient,
+			infrastructure.NewRedisClient,
 			NewFiberApp,
+			
+			// Repository
 			repository.NewTestRepository,
+			repository.NewUserRepository,
+			
+			// Usecase
 			usecase.NewTestUsecase,
+			usecase.NewAuthUsecase,
+			
+			// Handler
 			handler.NewTestHandler,
+			handler.NewAuthHandler,
 		),
 		fx.Invoke(
 			LogConfigLoaded,
