@@ -13,6 +13,7 @@ import (
 // Mock UserUsecase
 type mockUserUsecase struct {
 	getUserByEmailFunc func(ctx context.Context, email string) (*domain.User, error)
+	getUserByIDFunc    func(ctx context.Context, id int64) (*domain.User, error)
 	createUserFunc     func(ctx context.Context, email, passwordHash string) (*domain.User, error)
 }
 
@@ -21,6 +22,19 @@ func (m *mockUserUsecase) GetUserByEmail(ctx context.Context, email string) (*do
 		return m.getUserByEmailFunc(ctx, email)
 	}
 	return nil, nil
+}
+
+func (m *mockUserUsecase) GetUserByID(ctx context.Context, id int64) (*domain.User, error) {
+	if m.getUserByIDFunc != nil {
+		return m.getUserByIDFunc(ctx, id)
+	}
+	return &domain.User{
+		ID:           id,
+		Email:        "test@example.com",
+		PasswordHash: "hashed_password",
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}, nil
 }
 
 func (m *mockUserUsecase) CreateUser(ctx context.Context, email, passwordHash string) (*domain.User, error) {

@@ -13,6 +13,7 @@ import (
 type mockUserRepository struct {
 	createFunc     func(ctx context.Context, email, passwordHash string) (*domain.User, error)
 	getByEmailFunc func(ctx context.Context, email string) (*domain.User, error)
+	getByIDFunc    func(ctx context.Context, id int64) (*domain.User, error)
 }
 
 func (m *mockUserRepository) Create(ctx context.Context, email, passwordHash string) (*domain.User, error) {
@@ -33,6 +34,19 @@ func (m *mockUserRepository) GetByEmail(ctx context.Context, email string) (*dom
 		return m.getByEmailFunc(ctx, email)
 	}
 	return nil, nil
+}
+
+func (m *mockUserRepository) GetByID(ctx context.Context, id int64) (*domain.User, error) {
+	if m.getByIDFunc != nil {
+		return m.getByIDFunc(ctx, id)
+	}
+	return &domain.User{
+		ID:           id,
+		Email:        "test@example.com",
+		PasswordHash: "hashed_password",
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}, nil
 }
 
 func TestNewUserUsecase(t *testing.T) {
@@ -295,6 +309,101 @@ func TestGetUserByEmail(t *testing.T) {
 				}
 			} else if !tt.wantErr && user != nil {
 				t.Error("GetUserByEmail() expected nil user")
+			}
+		})
+	}
+}
+
+func TestGetUserByID(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now()
+
+	tests := []struct {
+		name        string
+		id          int64
+		mockGetByID func(ctx context.Context, id int64) (*domain.User, error)
+		wantID      int64
+		wantUser    bool
+		wantErr     bool
+	}{
+		{
+			name: "user found",
+			id:   123,
+			mockGetByID: func(ctx context.Context, id int64) (*domain.User, error) {
+				return &domain.User{
+					ID:           id,
+					Email:        "test@example.com",
+					PasswordHash: "hashed_password",
+					CreatedAt:    now,
+					UpdatedAt:    now,
+				}, nil
+			},
+			wantID:   123,
+			wantUser: true,
+			wantErr:  false,
+		},
+		{
+			name: "user not found",
+			id:   999,
+			mockGetByID: func(ctx context.Context, id int64) (*domain.User, error) {
+				return nil, nil
+			},
+			wantID:   0,
+			wantUser: false,
+			wantErr:  false,
+		},
+		{
+			name: "repository error",
+			id:   456,
+			mockGetByID: func(ctx context.Context, id int64) (*domain.User, error) {
+				return nil, errors.New("database error")
+			},
+			wantID:   0,
+			wantUser: false,
+			wantErr:  true,
+		},
+		{
+			name: "user with ID 1",
+			id:   1,
+			mockGetByID: func(ctx context.Context, id int64) (*domain.User, error) {
+				return &domain.User{
+					ID:           1,
+					Email:        "admin@example.com",
+					PasswordHash: "hashed_password",
+					CreatedAt:    now,
+					UpdatedAt:    now,
+				}, nil
+			},
+			wantID:   1,
+			wantUser: true,
+			wantErr:  false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &mockUserRepository{
+				getByIDFunc: tt.mockGetByID,
+			}
+			usecase := NewUserUsecase(mockRepo)
+
+			user, err := usecase.GetUserByID(ctx, tt.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetUserByID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantUser {
+				if user == nil {
+					t.Error("GetUserByID() returned nil user")
+					return
+				}
+
+				if user.ID != tt.wantID {
+					t.Errorf("GetUserByID() id = %v, want %v", user.ID, tt.wantID)
+				}
+			} else if !tt.wantErr && user != nil {
+				t.Error("GetUserByID() expected nil user")
 			}
 		})
 	}
