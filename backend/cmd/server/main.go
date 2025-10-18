@@ -39,8 +39,18 @@ func StartServer(lc fx.Lifecycle, app *fiber.App, cfg *config.Config) {
 	})
 }
 
-func RegisterRoutes(app *fiber.App, h *handler.TestHandler, cfg *config.Config) {
-	interfacepkg.RegisterRoutes(app, h, cfg)
+func RegisterRoutes(
+	app *fiber.App,
+	testHandler *handler.TestHandler,
+	authHandler *handler.AuthHandler,
+	cfg *config.Config,
+) {
+	interfacepkg.RegisterRoutes(app, testHandler, authHandler, cfg)
+}
+
+// NewEmailSender provides EmailClient as EmailSender interface for fx
+func NewEmailSender(emailClient *infrastructure.EmailClient) usecase.EmailSender {
+	return emailClient
 }
 
 // @title						Muzee API
@@ -58,10 +68,23 @@ func main() {
 			infrastructure.NewDevelopmentLogger,
 			config.Load,
 			infrastructure.NewClient,
+			infrastructure.NewRedisClient,
+			infrastructure.NewEmailClient,
+			NewEmailSender, // EmailClient -> EmailSender interface adapter
 			NewFiberApp,
+
+			// Repository
 			repository.NewTestRepository,
+			repository.NewUserRepository,
+
+			// Usecase
 			usecase.NewTestUsecase,
+			usecase.NewAuthUsecase,
+			usecase.NewEmailUsecase,
+
+			// Handler
 			handler.NewTestHandler,
+			handler.NewAuthHandler,
 		),
 		fx.Invoke(
 			LogConfigLoaded,

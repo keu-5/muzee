@@ -13,6 +13,13 @@ type Config struct {
 	DBPassword string
 	DBName     string
 	GOEnv      string
+
+	RedisAddr     string
+	RedisPassword string
+	RedisDB       int
+
+	ResendEmailDomain string
+	ResendAPIKey  string
 }
 
 func Load() *Config {
@@ -22,6 +29,13 @@ func Load() *Config {
 	viper.SetDefault("POSTGRES_PASSWORD", "apppassword")
 	viper.SetDefault("POSTGRES_DB", "appdb")
 	viper.SetDefault("GO_ENV", "development")
+
+	viper.SetDefault("REDIS_ADDR", "redis:6379")
+	viper.SetDefault("REDIS_PASSWORD", "redispassword")
+	viper.SetDefault("REDIS_DB", 0)
+
+	viper.SetDefault("RESEND_EMAIL_DOMAIN", "")
+	viper.SetDefault("RESEND_API_KEY", "")
 
 	viper.AutomaticEnv()
 
@@ -41,6 +55,13 @@ func Load() *Config {
 		DBPassword: viper.GetString("POSTGRES_PASSWORD"),
 		DBName:     viper.GetString("POSTGRES_DB"),
 		GOEnv:      viper.GetString("GO_ENV"),
+
+		RedisAddr:     viper.GetString("REDIS_ADDR"),
+		RedisPassword: viper.GetString("REDIS_PASSWORD"),
+		RedisDB:       viper.GetInt("REDIS_DB"),
+
+		ResendEmailDomain: viper.GetString("RESEND_EMAIL_DOMAIN"),
+		ResendAPIKey:  viper.GetString("RESEND_API_KEY"),
 	}
 }
 

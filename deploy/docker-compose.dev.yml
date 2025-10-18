@@ -16,6 +16,9 @@ services:
       - "8080:8080"
     env_file:
       - .env.dev
+    depends_on:
+      - db
+      - redis
     develop:
       watch:
         - action: sync
@@ -70,6 +73,15 @@ services:
         "shared_preload_libraries=pg_stat_statements",
       ]
 
+  redis:
+    <<: *common
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
   nginx:
     <<: *common
     build:
@@ -83,6 +95,8 @@ services:
 
 volumes:
   db_data:
+    driver: local
+  redis_data:
     driver: local
   go_mod_cache:
     driver: local
