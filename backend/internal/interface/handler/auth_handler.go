@@ -35,13 +35,15 @@ type ErrorResponse struct {
 
 type AuthHandler struct {
 	authUC      usecase.AuthUsecase
+	emailUC     usecase.EmailUsecase
 	redisClient *redis.Client
 	validate    *validator.Validate
 }
 
-func NewAuthHandler(authUC usecase.AuthUsecase, redisClient *redis.Client) *AuthHandler {
+func NewAuthHandler(authUC usecase.AuthUsecase, emailUC usecase.EmailUsecase, redisClient *redis.Client) *AuthHandler {
 	return &AuthHandler{
 		authUC:      authUC,
+		emailUC:     emailUC,
 		redisClient: redisClient,
 		validate:    validator.New(),
 	}
@@ -138,7 +140,7 @@ func (h *AuthHandler) SendCode(c *fiber.Ctx) error {
 	}
 
 	// 8. メール送信
-	if err := h.sendVerificationEmail(req.Email, code); err != nil {
+	if err := h.emailUC.SendVerificationCode(req.Email, code); err != nil {
 		fmt.Printf("メール送信エラー: %v\n", err)
 	}
 
@@ -186,16 +188,6 @@ func (h *AuthHandler) saveSignupSession(ctx context.Context, email, passwordHash
 
 	key := fmt.Sprintf("signup:%s", email)
 	return h.redisClient.Set(ctx, key, dataJSON, 15*time.Minute).Err()
-}
-
-func (h *AuthHandler) sendVerificationEmail(email, code string) error {
-	// TODO: 実際のメール送信実装
-	fmt.Printf("\n=== 確認コード送信 ===\n")
-	fmt.Printf("To: %s\n", email)
-	fmt.Printf("Code: %s\n", code)
-	fmt.Printf("有効期限: 15分\n")
-	fmt.Printf("===================\n\n")
-	return nil
 }
 
 // ユーティリティ関数
