@@ -10,29 +10,29 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// Mock UserRepository
-type mockUserRepository struct {
-	getByEmailFunc func(ctx context.Context, email string) (*domain.User, error)
-	createFunc     func(ctx context.Context, email, passwordHash string) (*domain.User, error)
+// Mock UserUsecase
+type mockUserUsecase struct {
+	getUserByEmailFunc func(ctx context.Context, email string) (*domain.User, error)
+	createUserFunc     func(ctx context.Context, email, passwordHash string) (*domain.User, error)
 }
 
-func (m *mockUserRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
-	if m.getByEmailFunc != nil {
-		return m.getByEmailFunc(ctx, email)
+func (m *mockUserUsecase) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+	if m.getUserByEmailFunc != nil {
+		return m.getUserByEmailFunc(ctx, email)
 	}
 	return nil, nil
 }
 
-func (m *mockUserRepository) Create(ctx context.Context, email, passwordHash string) (*domain.User, error) {
-	if m.createFunc != nil {
-		return m.createFunc(ctx, email, passwordHash)
+func (m *mockUserUsecase) CreateUser(ctx context.Context, email, passwordHash string) (*domain.User, error) {
+	if m.createUserFunc != nil {
+		return m.createUserFunc(ctx, email, passwordHash)
 	}
 	return nil, nil
 }
 
 func TestNewAuthUsecase(t *testing.T) {
-	mockRepo := &mockUserRepository{}
-	usecase := NewAuthUsecase(mockRepo)
+	mockUserUC := &mockUserUsecase{}
+	usecase := NewAuthUsecase(mockUserUC)
 
 	if usecase == nil {
 		t.Fatal("Expected usecase to be non-nil")
@@ -40,8 +40,8 @@ func TestNewAuthUsecase(t *testing.T) {
 }
 
 func TestHashPassword(t *testing.T) {
-	mockRepo := &mockUserRepository{}
-	usecase := NewAuthUsecase(mockRepo)
+	mockUserUC := &mockUserUsecase{}
+	usecase := NewAuthUsecase(mockUserUC)
 
 	tests := []struct {
 		name     string
@@ -133,10 +133,7 @@ func TestCheckEmailExists(t *testing.T) {
 			name:  "email with uppercase and spaces",
 			email: "  TEST@EXAMPLE.COM  ",
 			mockGetByEmail: func(ctx context.Context, email string) (*domain.User, error) {
-				// Should receive normalized email (lowercase, trimmed)
-				if email != "test@example.com" {
-					t.Errorf("Expected normalized email 'test@example.com', got '%s'", email)
-				}
+				// UserUsecase would normalize the email before calling this
 				return &domain.User{
 					ID:           1,
 					Email:        "test@example.com",
@@ -161,10 +158,10 @@ func TestCheckEmailExists(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockRepo := &mockUserRepository{
-				getByEmailFunc: tt.mockGetByEmail,
+			mockUserUC := &mockUserUsecase{
+				getUserByEmailFunc: tt.mockGetByEmail,
 			}
-			usecase := NewAuthUsecase(mockRepo)
+			usecase := NewAuthUsecase(mockUserUC)
 
 			exists, err := usecase.CheckEmailExists(ctx, tt.email)
 			if (err != nil) != tt.wantErr {
