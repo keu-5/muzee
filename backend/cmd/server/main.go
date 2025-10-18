@@ -6,12 +6,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/keu-5/muzee/backend/config"
 	_ "github.com/keu-5/muzee/backend/docs"
+	"github.com/keu-5/muzee/backend/internal/helper"
 	"github.com/keu-5/muzee/backend/internal/infrastructure"
 	interfacepkg "github.com/keu-5/muzee/backend/internal/interface"
 	"github.com/keu-5/muzee/backend/internal/interface/handler"
 	"github.com/keu-5/muzee/backend/internal/repository"
 	"github.com/keu-5/muzee/backend/internal/usecase"
 	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 )
 
@@ -53,6 +55,18 @@ func NewEmailSender(emailClient *infrastructure.EmailClient) usecase.EmailSender
 	return emailClient
 }
 
+// NewAuthHandlerWithConfig provides AuthHandler with config for fx
+func NewAuthHandlerWithConfig(
+	authUC usecase.AuthUsecase,
+	userUC usecase.UserUsecase,
+	emailUC usecase.EmailUsecase,
+	redisClient *redis.Client,
+	cfg *config.Config,
+) *handler.AuthHandler {
+	sessionHelper := helper.NewSessionHelper(redisClient)
+	return handler.NewAuthHandler(authUC, userUC, emailUC, sessionHelper, cfg.JWTSecret)
+}
+
 // @title						Muzee API
 // @version					1.0
 // @description				This is the API documentation for the Muzee application.
@@ -79,12 +93,13 @@ func main() {
 
 			// Usecase
 			usecase.NewTestUsecase,
+			usecase.NewUserUsecase,
 			usecase.NewAuthUsecase,
 			usecase.NewEmailUsecase,
 
 			// Handler
 			handler.NewTestHandler,
-			handler.NewAuthHandler,
+			NewAuthHandlerWithConfig,
 		),
 		fx.Invoke(
 			LogConfigLoaded,
