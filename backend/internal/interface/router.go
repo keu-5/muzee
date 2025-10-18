@@ -7,7 +7,12 @@ import (
 	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
-func RegisterRoutes(app *fiber.App, h *handler.TestHandler, cfg *config.Config) {
+func RegisterRoutes(
+	app *fiber.App,
+	testHandler *handler.TestHandler,
+	authHandler *handler.AuthHandler,
+	cfg *config.Config,
+) {
 	if cfg != nil && cfg.GOEnv == "development" {
 		app.Get("/docs/*", fiberSwagger.WrapHandler)
 	}
@@ -20,6 +25,11 @@ func RegisterRoutes(app *fiber.App, h *handler.TestHandler, cfg *config.Config) 
 		return c.SendString("ok")
 	})
 
-	app.Post("/tests", h.Create)
-	app.Get("/tests", h.GetAll)
+	app.Post("/tests", testHandler.Create)
+	app.Get("/tests", testHandler.GetAll)
+
+	v1 := app.Group("/v1")
+	auth := v1.Group("/auth/signup")
+	auth.Post("/send-code", authHandler.SendCode)
+	auth.Post("/verify-code", authHandler.VerifyCode)
 }

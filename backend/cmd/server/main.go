@@ -6,12 +6,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/keu-5/muzee/backend/config"
 	_ "github.com/keu-5/muzee/backend/docs"
+	"github.com/keu-5/muzee/backend/internal/helper"
 	"github.com/keu-5/muzee/backend/internal/infrastructure"
 	interfacepkg "github.com/keu-5/muzee/backend/internal/interface"
 	"github.com/keu-5/muzee/backend/internal/interface/handler"
 	"github.com/keu-5/muzee/backend/internal/repository"
 	"github.com/keu-5/muzee/backend/internal/usecase"
 	_ "github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/fx"
 )
 
@@ -39,8 +41,30 @@ func StartServer(lc fx.Lifecycle, app *fiber.App, cfg *config.Config) {
 	})
 }
 
-func RegisterRoutes(app *fiber.App, h *handler.TestHandler, cfg *config.Config) {
-	interfacepkg.RegisterRoutes(app, h, cfg)
+func RegisterRoutes(
+	app *fiber.App,
+	testHandler *handler.TestHandler,
+	authHandler *handler.AuthHandler,
+	cfg *config.Config,
+) {
+	interfacepkg.RegisterRoutes(app, testHandler, authHandler, cfg)
+}
+
+// NewEmailSender provides EmailClient as EmailSender interface for fx
+func NewEmailSender(emailClient *infrastructure.EmailClient) usecase.EmailSender {
+	return emailClient
+}
+
+// NewAuthHandlerWithConfig provides AuthHandler with config for fx
+func NewAuthHandlerWithConfig(
+	authUC usecase.AuthUsecase,
+	userUC usecase.UserUsecase,
+	emailUC usecase.EmailUsecase,
+	redisClient *redis.Client,
+	cfg *config.Config,
+) *handler.AuthHandler {
+	sessionHelper := helper.NewSessionHelper(redisClient)
+	return handler.NewAuthHandler(authUC, userUC, emailUC, sessionHelper, cfg.JWTSecret)
 }
 
 // @title						Muzee API
@@ -58,10 +82,24 @@ func main() {
 			infrastructure.NewDevelopmentLogger,
 			config.Load,
 			infrastructure.NewClient,
+			infrastructure.NewRedisClient,
+			infrastructure.NewEmailClient,
+			NewEmailSender, // EmailClient -> EmailSender interface adapter
 			NewFiberApp,
+
+			// Repository
 			repository.NewTestRepository,
+			repository.NewUserRepository,
+
+			// Usecase
 			usecase.NewTestUsecase,
+			usecase.NewUserUsecase,
+			usecase.NewAuthUsecase,
+			usecase.NewEmailUsecase,
+
+			// Handler
 			handler.NewTestHandler,
+			NewAuthHandlerWithConfig,
 		),
 		fx.Invoke(
 			LogConfigLoaded,
