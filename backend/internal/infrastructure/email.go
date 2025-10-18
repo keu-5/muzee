@@ -8,10 +8,10 @@ import (
 )
 
 type EmailClient struct {
-	client     *resend.Client
-	logger     *Logger
-	isDev      bool
-	fromEmail  string
+	client    *resend.Client
+	logger    *Logger
+	isDev     bool
+	fromEmail string
 }
 
 func NewEmailClient(cfg *config.Config, logger *Logger) *EmailClient {

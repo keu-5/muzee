@@ -15,6 +15,7 @@ type GetUserInput struct {
 type UserRepository interface {
 	Create(ctx context.Context, email, passwordHash string) (*domain.User, error)
 	GetByEmail(ctx context.Context, email string) (*domain.User, error)
+	GetByID(ctx context.Context, id int64) (*domain.User, error)
 }
 
 type userRepository struct {
@@ -46,6 +47,27 @@ func (r *userRepository) GetByEmail(ctx context.Context, email string) (*domain.
 	u, err := r.client.User.
 		Query().
 		Where(user.EmailEQ(email)).
+		Only(ctx)
+	if err != nil {
+		if ent.IsNotFound(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &domain.User{
+		ID:           u.ID,
+		Email:        u.Email,
+		PasswordHash: u.PasswordHash,
+		CreatedAt:    u.CreatedAt,
+		UpdatedAt:    u.UpdatedAt,
+	}, nil
+}
+
+func (r *userRepository) GetByID(ctx context.Context, id int64) (*domain.User, error) {
+	u, err := r.client.User.
+		Query().
+		Where(user.IDEQ(id)).
 		Only(ctx)
 	if err != nil {
 		if ent.IsNotFound(err) {

@@ -45,9 +45,10 @@ func RegisterRoutes(
 	app *fiber.App,
 	testHandler *handler.TestHandler,
 	authHandler *handler.AuthHandler,
+	userHandler *handler.UserHandler,
 	cfg *config.Config,
 ) {
-	interfacepkg.RegisterRoutes(app, testHandler, authHandler, cfg)
+	interfacepkg.RegisterRoutes(app, testHandler, authHandler, userHandler, cfg)
 }
 
 // NewEmailSender provides EmailClient as EmailSender interface for fx
@@ -100,6 +101,7 @@ func main() {
 			// Handler
 			handler.NewTestHandler,
 			NewAuthHandlerWithConfig,
+			handler.NewUserHandler,
 		),
 		fx.Invoke(
 			LogConfigLoaded,

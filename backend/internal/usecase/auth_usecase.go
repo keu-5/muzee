@@ -8,6 +8,7 @@ import (
 
 type AuthUsecase interface {
 	HashPassword(password string) (string, error)
+	VerifyPassword(password, hash string) error
 	CheckEmailExists(ctx context.Context, email string) (bool, error)
 }
 
@@ -25,6 +26,10 @@ func (a *authUsecase) HashPassword(password string) (string, error) {
 		return "", err
 	}
 	return string(bytes), nil
+}
+
+func (a *authUsecase) VerifyPassword(password, hash string) error {
+	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 }
 
 func (a *authUsecase) CheckEmailExists(ctx context.Context, email string) (bool, error) {
