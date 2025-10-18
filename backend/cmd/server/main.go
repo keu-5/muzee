@@ -48,6 +48,11 @@ func RegisterRoutes(
 	interfacepkg.RegisterRoutes(app, testHandler, authHandler, cfg)
 }
 
+// NewEmailSender provides EmailClient as EmailSender interface for fx
+func NewEmailSender(emailClient *infrastructure.EmailClient) usecase.EmailSender {
+	return emailClient
+}
+
 // @title						Muzee API
 // @version					1.0
 // @description				This is the API documentation for the Muzee application.
@@ -65,6 +70,7 @@ func main() {
 			infrastructure.NewClient,
 			infrastructure.NewRedisClient,
 			infrastructure.NewEmailClient,
+			NewEmailSender, // EmailClient -> EmailSender interface adapter
 			NewFiberApp,
 
 			// Repository

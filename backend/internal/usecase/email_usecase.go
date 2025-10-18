@@ -2,19 +2,21 @@ package usecase
 
 import (
 	"fmt"
-
-	"github.com/keu-5/muzee/backend/internal/infrastructure"
 )
+
+type EmailSender interface {
+	Send(to, subject, html string) error
+}
 
 type EmailUsecase interface {
 	SendVerificationCode(email, code string) error
 }
 
 type emailUsecase struct {
-	emailClient *infrastructure.EmailClient
+	emailClient EmailSender
 }
 
-func NewEmailUsecase(emailClient *infrastructure.EmailClient) EmailUsecase {
+func NewEmailUsecase(emailClient EmailSender) EmailUsecase {
 	return &emailUsecase{
 		emailClient: emailClient,
 	}
