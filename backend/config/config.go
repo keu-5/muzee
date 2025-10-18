@@ -20,6 +20,8 @@ type Config struct {
 
 	ResendEmailDomain string
 	ResendAPIKey  string
+
+	JWTSecret string
 }
 
 func Load() *Config {
@@ -36,6 +38,8 @@ func Load() *Config {
 
 	viper.SetDefault("RESEND_EMAIL_DOMAIN", "")
 	viper.SetDefault("RESEND_API_KEY", "")
+
+	viper.SetDefault("JWT_SECRET", "")
 
 	viper.AutomaticEnv()
 
@@ -62,6 +66,8 @@ func Load() *Config {
 
 		ResendEmailDomain: viper.GetString("RESEND_EMAIL_DOMAIN"),
 		ResendAPIKey:  viper.GetString("RESEND_API_KEY"),
+
+		JWTSecret: viper.GetString("JWT_SECRET"),
 	}
 }
 
