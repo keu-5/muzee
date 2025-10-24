@@ -38,8 +38,8 @@ gen-openapi-v3:
 gen-client:
 	@echo "[Clean] Remove old generated client"
 	rm -rf frontend/src/api/__generated__
-	@echo "[Generate] Running npm run gen:client"
-	cd frontend && npm run gen:client
+	@echo "[Generate] Running pnpm run gen:client"
+	cd frontend && pnpm run gen:client
 
 .PHONY: gen-all
 gen-all: gen-swagger-v2 gen-openapi-v3 gen-client
