@@ -6,6 +6,8 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface InternalInterfaceHandlerTestResponse {
+export interface InternalInterfaceHandlerUserResponse {
+  created_at?: string;
+  email?: string;
   id?: number;
 }
