@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LINK } from "@/lib/links";
 import { Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -109,7 +110,7 @@ export const LoginForm = () => {
           <p className="text-sm text-center text-muted-foreground">
             アカウントをお持ちでない方は{" "}
             <Link
-              href="/signup"
+              href={LINK.signup.base}
               className="text-primary hover:underline font-medium"
             >
               新規登録

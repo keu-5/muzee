@@ -241,7 +241,7 @@ const _SignupForm = () => {
           <p className="text-sm text-center text-muted-foreground">
             すでにアカウントをお持ちの方は{" "}
             <Link
-              href="/login"
+              href={LINK.login}
               className="text-primary hover:underline font-medium"
             >
               ログイン
