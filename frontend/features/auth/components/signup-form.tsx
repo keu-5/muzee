@@ -1,5 +1,6 @@
 "use client";
 
+import { Providers } from "@/app/providers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,11 +13,15 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LINK } from "@/lib/links";
+import { usePostV1AuthSignupSendCode } from "@/src/api/__generated__/auth/auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Mail } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 const COMMON_WEAK = [
@@ -106,9 +111,11 @@ const signupSchema = z
 
 type SignupFormValues = z.infer<typeof signupSchema>;
 
-export const SignupForm = () => {
+const _SignupForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const { mutate: sendCode } = usePostV1AuthSignupSendCode();
+  const router = useRouter();
 
   const {
     register,
@@ -119,20 +126,27 @@ export const SignupForm = () => {
     mode: "onBlur",
   });
 
-  const onSubmit = async (data: SignupFormValues) => {
-    try {
-      setIsLoading(true);
-      setError("");
+  const onSubmit = (data: SignupFormValues) => {
+    setIsLoading(true);
+    setError("");
 
-      console.log("送信データ:", data);
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      alert("認証コードを送信しました！");
-    } catch (e) {
-      setError("登録に失敗しました。もう一度お試しください。");
-    } finally {
-      setIsLoading(false);
-    }
+    sendCode(
+      { data: { email: data.email, password: data.password } },
+      {
+        onSuccess: (res) => {
+          toast(res.message || "認証コードを送信しました！");
+          router.push(LINK.signup.verify);
+        },
+        onError: (err) => {
+          setError(
+            err.message || "登録に失敗しました。もう一度お試しください。",
+          );
+        },
+        onSettled: () => {
+          setIsLoading(false);
+        },
+      },
+    );
   };
 
   return (
@@ -236,5 +250,13 @@ export const SignupForm = () => {
         </CardFooter>
       </form>
     </Card>
+  );
+};
+
+export const SignupForm = () => {
+  return (
+    <Providers>
+      <_SignupForm />
+    </Providers>
   );
 };
