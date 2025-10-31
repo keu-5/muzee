@@ -15,7 +15,66 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/v1/auth/login": {
+        "/tests": {
+            "get": {
+                "description": "Returns all test records",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tests"
+                ],
+                "summary": "List all tests",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_interface_handler.TestResponse"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "Creates a test record and returns it",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tests"
+                ],
+                "summary": "Create a new test",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_interface_handler.TestResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/auth/login": {
             "post": {
                 "description": "Authenticates user with email and password, returns access and refresh tokens",
                 "consumes": [
@@ -73,7 +132,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/logout": {
+        "/v1/auth/logout": {
             "post": {
                 "description": "Invalidates the refresh token by deleting it from Redis, ending the user's session",
                 "consumes": [
@@ -119,7 +178,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/refresh": {
+        "/v1/auth/refresh": {
             "post": {
                 "description": "Uses a refresh token to generate a new access token and refresh token. The old refresh token is invalidated.",
                 "consumes": [
@@ -171,7 +230,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/signup/send-code": {
+        "/v1/auth/signup/send-code": {
             "post": {
                 "description": "Sends a 6-digit verification code to the email for signup",
                 "consumes": [
@@ -223,7 +282,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/auth/signup/verify-code": {
+        "/v1/auth/signup/verify-code": {
             "post": {
                 "description": "Verifies the 6-digit code and creates a user account, returning access and refresh tokens",
                 "consumes": [
@@ -269,7 +328,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/api/v1/users/me": {
+        "/v1/users/me": {
             "get": {
                 "security": [
                     {
@@ -304,65 +363,6 @@ const docTemplate = `{
                         "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/tests": {
-            "get": {
-                "description": "Returns all test records",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tests"
-                ],
-                "summary": "List all tests",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/internal_interface_handler.TestResponse"
-                            }
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Creates a test record and returns it",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tests"
-                ],
-                "summary": "Create a new test",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/internal_interface_handler.TestResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
                         }
                     }
                 }

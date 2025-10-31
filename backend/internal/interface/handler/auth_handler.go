@@ -54,7 +54,7 @@ func NewAuthHandler(authUC usecase.AuthUsecase, userUC usecase.UserUsecase, emai
 //	@Failure		400		{object}	helper.ErrorResponse
 //	@Failure		429		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/api/v1/auth/signup/send-code [post]
+//	@Router			/v1/auth/signup/send-code [post]
 func (h *AuthHandler) SendCode(c *fiber.Ctx) error {
 	// 1. リクエストパース
 	var req SendCodeRequest
@@ -166,7 +166,7 @@ type UserResponse struct {
 //	@Success		201		{object}	VerifyCodeResponse
 //	@Failure		400		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/api/v1/auth/signup/verify-code [post]
+//	@Router			/v1/auth/signup/verify-code [post]
 func (h *AuthHandler) VerifyCode(c *fiber.Ctx) error {
 	// 1. リクエストパース
 	var req VerifyCodeRequest
@@ -285,7 +285,7 @@ type LoginResponse struct {
 //	@Failure		401		{object}	helper.ErrorResponse
 //	@Failure		429		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/api/v1/auth/login [post]
+//	@Router			/v1/auth/login [post]
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	// 1. リクエストパース
 	var req LoginRequest
@@ -399,7 +399,7 @@ type RefreshTokenResponse struct {
 //	@Failure		400		{object}	helper.ErrorResponse
 //	@Failure		401		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/api/v1/auth/refresh [post]
+//	@Router			/v1/auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	// 1. リクエストパース
 	var req RefreshTokenRequest
@@ -504,7 +504,7 @@ type LogoutResponse struct {
 //	@Success		200		{object}	LogoutResponse
 //	@Failure		400		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/api/v1/auth/logout [post]
+//	@Router			/v1/auth/logout [post]
 func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	// 1. リクエストパース
 	var req LogoutRequest

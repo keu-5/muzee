@@ -32,56 +32,56 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * Returns the current authenticated user's information
  * @summary Get current user
  */
-export const getApiV1UsersMe = (
+export const getV1UsersMe = (
     
  options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
 ) => {
       
       
       return customAxios<InternalInterfaceHandlerGetMeResponse>(
-      {url: `/api/v1/users/me`, method: 'GET', signal
+      {url: `/v1/users/me`, method: 'GET', signal
     },
       options);
     }
   
 
-export const getGetApiV1UsersMeQueryKey = () => {
-    return [`/api/v1/users/me`] as const;
+export const getGetV1UsersMeQueryKey = () => {
+    return [`/v1/users/me`] as const;
     }
 
     
-export const getGetApiV1UsersMeQueryOptions = <TData = Awaited<ReturnType<typeof getApiV1UsersMe>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMe>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
+export const getGetV1UsersMeQueryOptions = <TData = Awaited<ReturnType<typeof getV1UsersMe>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getV1UsersMe>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetApiV1UsersMeQueryKey();
+  const queryKey =  queryOptions?.queryKey ?? getGetV1UsersMeQueryKey();
 
   
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getApiV1UsersMe>>> = ({ signal }) => getApiV1UsersMe(requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getV1UsersMe>>> = ({ signal }) => getV1UsersMe(requestOptions, signal);
 
       
 
       
 
-   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMe>>, TError, TData> & { queryKey: QueryKey }
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getV1UsersMe>>, TError, TData> & { queryKey: QueryKey }
 }
 
-export type GetApiV1UsersMeQueryResult = NonNullable<Awaited<ReturnType<typeof getApiV1UsersMe>>>
-export type GetApiV1UsersMeQueryError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
+export type GetV1UsersMeQueryResult = NonNullable<Awaited<ReturnType<typeof getV1UsersMe>>>
+export type GetV1UsersMeQueryError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
 
 
 /**
  * @summary Get current user
  */
 
-export function useGetApiV1UsersMe<TData = Awaited<ReturnType<typeof getApiV1UsersMe>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>(
-  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMe>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
+export function useGetV1UsersMe<TData = Awaited<ReturnType<typeof getV1UsersMe>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getV1UsersMe>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
   
  ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
 
-  const queryOptions = getGetApiV1UsersMeQueryOptions(options)
+  const queryOptions = getGetV1UsersMeQueryOptions(options)
 
   const query = useQuery(queryOptions ) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
 
@@ -93,12 +93,12 @@ export function useGetApiV1UsersMe<TData = Awaited<ReturnType<typeof getApiV1Use
 /**
  * @summary Get current user
  */
-export const prefetchGetApiV1UsersMeQuery = async <TData = Awaited<ReturnType<typeof getApiV1UsersMe>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>(
- queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getApiV1UsersMe>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
+export const prefetchGetV1UsersMeQuery = async <TData = Awaited<ReturnType<typeof getV1UsersMe>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>(
+ queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getV1UsersMe>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
 
   ): Promise<QueryClient> => {
 
-  const queryOptions = getGetApiV1UsersMeQueryOptions(options)
+  const queryOptions = getGetV1UsersMeQueryOptions(options)
 
   await queryClient.prefetchQuery(queryOptions);
 

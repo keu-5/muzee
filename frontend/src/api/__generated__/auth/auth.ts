@@ -39,14 +39,14 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
  * Authenticates user with email and password, returns access and refresh tokens
  * @summary User login
  */
-export const postApiV1AuthLogin = (
+export const postV1AuthLogin = (
     internalInterfaceHandlerLoginRequest: InternalInterfaceHandlerLoginRequest,
  options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
 ) => {
       
       
       return customAxios<InternalInterfaceHandlerLoginResponse>(
-      {url: `/api/v1/auth/login`, method: 'POST',
+      {url: `/v1/auth/login`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: internalInterfaceHandlerLoginRequest, signal
     },
@@ -55,11 +55,11 @@ export const postApiV1AuthLogin = (
   
 
 
-export const getPostApiV1AuthLoginMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthLogin>>, TError,{data: InternalInterfaceHandlerLoginRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
-): UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthLogin>>, TError,{data: InternalInterfaceHandlerLoginRequest}, TContext> => {
+export const getPostV1AuthLoginMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1AuthLogin>>, TError,{data: InternalInterfaceHandlerLoginRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+): UseMutationOptions<Awaited<ReturnType<typeof postV1AuthLogin>>, TError,{data: InternalInterfaceHandlerLoginRequest}, TContext> => {
 
-const mutationKey = ['postApiV1AuthLogin'];
+const mutationKey = ['postV1AuthLogin'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -69,10 +69,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1AuthLogin>>, {data: InternalInterfaceHandlerLoginRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postV1AuthLogin>>, {data: InternalInterfaceHandlerLoginRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiV1AuthLogin(data,requestOptions)
+          return  postV1AuthLogin(data,requestOptions)
         }
 
         
@@ -80,23 +80,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type PostApiV1AuthLoginMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1AuthLogin>>>
-    export type PostApiV1AuthLoginMutationBody = InternalInterfaceHandlerLoginRequest
-    export type PostApiV1AuthLoginMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
+    export type PostV1AuthLoginMutationResult = NonNullable<Awaited<ReturnType<typeof postV1AuthLogin>>>
+    export type PostV1AuthLoginMutationBody = InternalInterfaceHandlerLoginRequest
+    export type PostV1AuthLoginMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
 
     /**
  * @summary User login
  */
-export const usePostApiV1AuthLogin = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthLogin>>, TError,{data: InternalInterfaceHandlerLoginRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+export const usePostV1AuthLogin = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1AuthLogin>>, TError,{data: InternalInterfaceHandlerLoginRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof postApiV1AuthLogin>>,
+        Awaited<ReturnType<typeof postV1AuthLogin>>,
         TError,
         {data: InternalInterfaceHandlerLoginRequest},
         TContext
       > => {
 
-      const mutationOptions = getPostApiV1AuthLoginMutationOptions(options);
+      const mutationOptions = getPostV1AuthLoginMutationOptions(options);
 
       return useMutation(mutationOptions );
     }
@@ -104,14 +104,14 @@ export const usePostApiV1AuthLogin = <TError = GithubComKeu5MuzeeBackendInternal
  * Invalidates the refresh token by deleting it from Redis, ending the user's session
  * @summary User logout
  */
-export const postApiV1AuthLogout = (
+export const postV1AuthLogout = (
     internalInterfaceHandlerLogoutRequest: InternalInterfaceHandlerLogoutRequest,
  options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
 ) => {
       
       
       return customAxios<InternalInterfaceHandlerLogoutResponse>(
-      {url: `/api/v1/auth/logout`, method: 'POST',
+      {url: `/v1/auth/logout`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: internalInterfaceHandlerLogoutRequest, signal
     },
@@ -120,11 +120,11 @@ export const postApiV1AuthLogout = (
   
 
 
-export const getPostApiV1AuthLogoutMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthLogout>>, TError,{data: InternalInterfaceHandlerLogoutRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
-): UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthLogout>>, TError,{data: InternalInterfaceHandlerLogoutRequest}, TContext> => {
+export const getPostV1AuthLogoutMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1AuthLogout>>, TError,{data: InternalInterfaceHandlerLogoutRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+): UseMutationOptions<Awaited<ReturnType<typeof postV1AuthLogout>>, TError,{data: InternalInterfaceHandlerLogoutRequest}, TContext> => {
 
-const mutationKey = ['postApiV1AuthLogout'];
+const mutationKey = ['postV1AuthLogout'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -134,10 +134,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1AuthLogout>>, {data: InternalInterfaceHandlerLogoutRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postV1AuthLogout>>, {data: InternalInterfaceHandlerLogoutRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiV1AuthLogout(data,requestOptions)
+          return  postV1AuthLogout(data,requestOptions)
         }
 
         
@@ -145,23 +145,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type PostApiV1AuthLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1AuthLogout>>>
-    export type PostApiV1AuthLogoutMutationBody = InternalInterfaceHandlerLogoutRequest
-    export type PostApiV1AuthLogoutMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
+    export type PostV1AuthLogoutMutationResult = NonNullable<Awaited<ReturnType<typeof postV1AuthLogout>>>
+    export type PostV1AuthLogoutMutationBody = InternalInterfaceHandlerLogoutRequest
+    export type PostV1AuthLogoutMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
 
     /**
  * @summary User logout
  */
-export const usePostApiV1AuthLogout = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthLogout>>, TError,{data: InternalInterfaceHandlerLogoutRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+export const usePostV1AuthLogout = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1AuthLogout>>, TError,{data: InternalInterfaceHandlerLogoutRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof postApiV1AuthLogout>>,
+        Awaited<ReturnType<typeof postV1AuthLogout>>,
         TError,
         {data: InternalInterfaceHandlerLogoutRequest},
         TContext
       > => {
 
-      const mutationOptions = getPostApiV1AuthLogoutMutationOptions(options);
+      const mutationOptions = getPostV1AuthLogoutMutationOptions(options);
 
       return useMutation(mutationOptions );
     }
@@ -169,14 +169,14 @@ export const usePostApiV1AuthLogout = <TError = GithubComKeu5MuzeeBackendInterna
  * Uses a refresh token to generate a new access token and refresh token. The old refresh token is invalidated.
  * @summary Refresh access token
  */
-export const postApiV1AuthRefresh = (
+export const postV1AuthRefresh = (
     internalInterfaceHandlerRefreshTokenRequest: InternalInterfaceHandlerRefreshTokenRequest,
  options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
 ) => {
       
       
       return customAxios<InternalInterfaceHandlerRefreshTokenResponse>(
-      {url: `/api/v1/auth/refresh`, method: 'POST',
+      {url: `/v1/auth/refresh`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: internalInterfaceHandlerRefreshTokenRequest, signal
     },
@@ -185,11 +185,11 @@ export const postApiV1AuthRefresh = (
   
 
 
-export const getPostApiV1AuthRefreshMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthRefresh>>, TError,{data: InternalInterfaceHandlerRefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
-): UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthRefresh>>, TError,{data: InternalInterfaceHandlerRefreshTokenRequest}, TContext> => {
+export const getPostV1AuthRefreshMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1AuthRefresh>>, TError,{data: InternalInterfaceHandlerRefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+): UseMutationOptions<Awaited<ReturnType<typeof postV1AuthRefresh>>, TError,{data: InternalInterfaceHandlerRefreshTokenRequest}, TContext> => {
 
-const mutationKey = ['postApiV1AuthRefresh'];
+const mutationKey = ['postV1AuthRefresh'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -199,10 +199,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1AuthRefresh>>, {data: InternalInterfaceHandlerRefreshTokenRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postV1AuthRefresh>>, {data: InternalInterfaceHandlerRefreshTokenRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiV1AuthRefresh(data,requestOptions)
+          return  postV1AuthRefresh(data,requestOptions)
         }
 
         
@@ -210,23 +210,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type PostApiV1AuthRefreshMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1AuthRefresh>>>
-    export type PostApiV1AuthRefreshMutationBody = InternalInterfaceHandlerRefreshTokenRequest
-    export type PostApiV1AuthRefreshMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
+    export type PostV1AuthRefreshMutationResult = NonNullable<Awaited<ReturnType<typeof postV1AuthRefresh>>>
+    export type PostV1AuthRefreshMutationBody = InternalInterfaceHandlerRefreshTokenRequest
+    export type PostV1AuthRefreshMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
 
     /**
  * @summary Refresh access token
  */
-export const usePostApiV1AuthRefresh = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthRefresh>>, TError,{data: InternalInterfaceHandlerRefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+export const usePostV1AuthRefresh = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1AuthRefresh>>, TError,{data: InternalInterfaceHandlerRefreshTokenRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof postApiV1AuthRefresh>>,
+        Awaited<ReturnType<typeof postV1AuthRefresh>>,
         TError,
         {data: InternalInterfaceHandlerRefreshTokenRequest},
         TContext
       > => {
 
-      const mutationOptions = getPostApiV1AuthRefreshMutationOptions(options);
+      const mutationOptions = getPostV1AuthRefreshMutationOptions(options);
 
       return useMutation(mutationOptions );
     }
@@ -234,14 +234,14 @@ export const usePostApiV1AuthRefresh = <TError = GithubComKeu5MuzeeBackendIntern
  * Sends a 6-digit verification code to the email for signup
  * @summary Send verification code
  */
-export const postApiV1AuthSignupSendCode = (
+export const postV1AuthSignupSendCode = (
     internalInterfaceHandlerSendCodeRequest: InternalInterfaceHandlerSendCodeRequest,
  options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
 ) => {
       
       
       return customAxios<InternalInterfaceHandlerSendCodeResponse>(
-      {url: `/api/v1/auth/signup/send-code`, method: 'POST',
+      {url: `/v1/auth/signup/send-code`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: internalInterfaceHandlerSendCodeRequest, signal
     },
@@ -250,11 +250,11 @@ export const postApiV1AuthSignupSendCode = (
   
 
 
-export const getPostApiV1AuthSignupSendCodeMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthSignupSendCode>>, TError,{data: InternalInterfaceHandlerSendCodeRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
-): UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthSignupSendCode>>, TError,{data: InternalInterfaceHandlerSendCodeRequest}, TContext> => {
+export const getPostV1AuthSignupSendCodeMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1AuthSignupSendCode>>, TError,{data: InternalInterfaceHandlerSendCodeRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+): UseMutationOptions<Awaited<ReturnType<typeof postV1AuthSignupSendCode>>, TError,{data: InternalInterfaceHandlerSendCodeRequest}, TContext> => {
 
-const mutationKey = ['postApiV1AuthSignupSendCode'];
+const mutationKey = ['postV1AuthSignupSendCode'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -264,10 +264,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1AuthSignupSendCode>>, {data: InternalInterfaceHandlerSendCodeRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postV1AuthSignupSendCode>>, {data: InternalInterfaceHandlerSendCodeRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiV1AuthSignupSendCode(data,requestOptions)
+          return  postV1AuthSignupSendCode(data,requestOptions)
         }
 
         
@@ -275,23 +275,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type PostApiV1AuthSignupSendCodeMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1AuthSignupSendCode>>>
-    export type PostApiV1AuthSignupSendCodeMutationBody = InternalInterfaceHandlerSendCodeRequest
-    export type PostApiV1AuthSignupSendCodeMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
+    export type PostV1AuthSignupSendCodeMutationResult = NonNullable<Awaited<ReturnType<typeof postV1AuthSignupSendCode>>>
+    export type PostV1AuthSignupSendCodeMutationBody = InternalInterfaceHandlerSendCodeRequest
+    export type PostV1AuthSignupSendCodeMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
 
     /**
  * @summary Send verification code
  */
-export const usePostApiV1AuthSignupSendCode = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthSignupSendCode>>, TError,{data: InternalInterfaceHandlerSendCodeRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+export const usePostV1AuthSignupSendCode = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1AuthSignupSendCode>>, TError,{data: InternalInterfaceHandlerSendCodeRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof postApiV1AuthSignupSendCode>>,
+        Awaited<ReturnType<typeof postV1AuthSignupSendCode>>,
         TError,
         {data: InternalInterfaceHandlerSendCodeRequest},
         TContext
       > => {
 
-      const mutationOptions = getPostApiV1AuthSignupSendCodeMutationOptions(options);
+      const mutationOptions = getPostV1AuthSignupSendCodeMutationOptions(options);
 
       return useMutation(mutationOptions );
     }
@@ -299,14 +299,14 @@ export const usePostApiV1AuthSignupSendCode = <TError = GithubComKeu5MuzeeBacken
  * Verifies the 6-digit code and creates a user account, returning access and refresh tokens
  * @summary Verify code and create account
  */
-export const postApiV1AuthSignupVerifyCode = (
+export const postV1AuthSignupVerifyCode = (
     internalInterfaceHandlerVerifyCodeRequest: InternalInterfaceHandlerVerifyCodeRequest,
  options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
 ) => {
       
       
       return customAxios<InternalInterfaceHandlerVerifyCodeResponse>(
-      {url: `/api/v1/auth/signup/verify-code`, method: 'POST',
+      {url: `/v1/auth/signup/verify-code`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: internalInterfaceHandlerVerifyCodeRequest, signal
     },
@@ -315,11 +315,11 @@ export const postApiV1AuthSignupVerifyCode = (
   
 
 
-export const getPostApiV1AuthSignupVerifyCodeMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthSignupVerifyCode>>, TError,{data: InternalInterfaceHandlerVerifyCodeRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
-): UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthSignupVerifyCode>>, TError,{data: InternalInterfaceHandlerVerifyCodeRequest}, TContext> => {
+export const getPostV1AuthSignupVerifyCodeMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1AuthSignupVerifyCode>>, TError,{data: InternalInterfaceHandlerVerifyCodeRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+): UseMutationOptions<Awaited<ReturnType<typeof postV1AuthSignupVerifyCode>>, TError,{data: InternalInterfaceHandlerVerifyCodeRequest}, TContext> => {
 
-const mutationKey = ['postApiV1AuthSignupVerifyCode'];
+const mutationKey = ['postV1AuthSignupVerifyCode'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
       options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
       options
@@ -329,10 +329,10 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postApiV1AuthSignupVerifyCode>>, {data: InternalInterfaceHandlerVerifyCodeRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postV1AuthSignupVerifyCode>>, {data: InternalInterfaceHandlerVerifyCodeRequest}> = (props) => {
           const {data} = props ?? {};
 
-          return  postApiV1AuthSignupVerifyCode(data,requestOptions)
+          return  postV1AuthSignupVerifyCode(data,requestOptions)
         }
 
         
@@ -340,23 +340,23 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
 
   return  { mutationFn, ...mutationOptions }}
 
-    export type PostApiV1AuthSignupVerifyCodeMutationResult = NonNullable<Awaited<ReturnType<typeof postApiV1AuthSignupVerifyCode>>>
-    export type PostApiV1AuthSignupVerifyCodeMutationBody = InternalInterfaceHandlerVerifyCodeRequest
-    export type PostApiV1AuthSignupVerifyCodeMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
+    export type PostV1AuthSignupVerifyCodeMutationResult = NonNullable<Awaited<ReturnType<typeof postV1AuthSignupVerifyCode>>>
+    export type PostV1AuthSignupVerifyCodeMutationBody = InternalInterfaceHandlerVerifyCodeRequest
+    export type PostV1AuthSignupVerifyCodeMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
 
     /**
  * @summary Verify code and create account
  */
-export const usePostApiV1AuthSignupVerifyCode = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postApiV1AuthSignupVerifyCode>>, TError,{data: InternalInterfaceHandlerVerifyCodeRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+export const usePostV1AuthSignupVerifyCode = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1AuthSignupVerifyCode>>, TError,{data: InternalInterfaceHandlerVerifyCodeRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
  ): UseMutationResult<
-        Awaited<ReturnType<typeof postApiV1AuthSignupVerifyCode>>,
+        Awaited<ReturnType<typeof postV1AuthSignupVerifyCode>>,
         TError,
         {data: InternalInterfaceHandlerVerifyCodeRequest},
         TContext
       > => {
 
-      const mutationOptions = getPostApiV1AuthSignupVerifyCodeMutationOptions(options);
+      const mutationOptions = getPostV1AuthSignupVerifyCodeMutationOptions(options);
 
       return useMutation(mutationOptions );
     }
