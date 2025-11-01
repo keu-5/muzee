@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { Providers } from "@/app/providers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,7 +38,7 @@ const verifySchema = z.object({
 
 type VerifyFormValues = z.infer<typeof verifySchema>;
 
-export function VerifyCodeForm() {
+const _VerifyCodeForm = () => {
   const router = useRouter();
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -72,6 +73,7 @@ export function VerifyCodeForm() {
       {
         onSuccess: (res) => {
           localStorage.setItem("refreshToken", res.refresh_token || "");
+          sessionStorage.removeItem("signupEmail");
           router.push("/"); //TODO: redirect to home
         },
         onError: (err) => {
@@ -116,7 +118,7 @@ export function VerifyCodeForm() {
       </CardHeader>
 
       <form onSubmit={form.handleSubmit(handleVerifyCode)}>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 my-6">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -150,7 +152,7 @@ export function VerifyCodeForm() {
             )}
 
             <p className="text-xs text-muted-foreground text-center">
-              {email || "メールアドレス未設定"} に送信されました
+              {email ? `${email} に送信されました` : "メールアドレス未設定"}
             </p>
           </div>
         </CardContent>
@@ -187,4 +189,12 @@ export function VerifyCodeForm() {
       </form>
     </Card>
   );
-}
+};
+
+export const VerifyCodeForm = () => {
+  return (
+    <Providers>
+      <_VerifyCodeForm />
+    </Providers>
+  );
+};
