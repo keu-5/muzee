@@ -12,5 +12,5 @@ export interface InternalInterfaceHandlerRefreshTokenRequest {
    * @maxLength 255
    */
   client_id: string;
-  refresh_token: string;
+  refresh_token?: string;
 }
