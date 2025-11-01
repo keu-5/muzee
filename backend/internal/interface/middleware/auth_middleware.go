@@ -11,22 +11,27 @@ import (
 // AuthMiddleware verifies JWT tokens and sets user information in context
 func AuthMiddleware(jwtSecret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Authorizationヘッダーを取得
-		authHeader := c.Get("Authorization")
-		if authHeader == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
-				Error:   "unauthorized",
-				Message: "認証が必要です",
-			})
-		}
+		var tokenString string
 
-		// "Bearer "プレフィックスを削除
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
-			return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
-				Error:   "invalid_token_format",
-				Message: "トークンの形式が正しくありません",
-			})
+		tokenString = c.Cookies("access_token")
+
+		if tokenString == "" {
+			authHeader := c.Get("Authorization")
+
+			if authHeader == "" {
+				return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
+					Error:   "unauthorized",
+					Message: "認証が必要です",
+				})
+			}
+
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+			if tokenString == authHeader {
+				return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
+					Error:   "invalid_token_format",
+					Message: "トークンの形式が正しくありません",
+				})
+			}
 		}
 
 		// JWTを検証

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -29,9 +30,10 @@ type AuthHandler struct {
 	sessionHelper *helper.SessionHelper
 	validate      *validator.Validate
 	jwtSecret     string
+	goEnv         string
 }
 
-func NewAuthHandler(authUC usecase.AuthUsecase, userUC usecase.UserUsecase, emailUC usecase.EmailUsecase, sessionHelper *helper.SessionHelper, jwtSecret string) *AuthHandler {
+func NewAuthHandler(authUC usecase.AuthUsecase, userUC usecase.UserUsecase, emailUC usecase.EmailUsecase, sessionHelper *helper.SessionHelper, jwtSecret string, goEnv string) *AuthHandler {
 	return &AuthHandler{
 		authUC:        authUC,
 		userUC:        userUC,
@@ -39,6 +41,7 @@ func NewAuthHandler(authUC usecase.AuthUsecase, userUC usecase.UserUsecase, emai
 		sessionHelper: sessionHelper,
 		validate:      validator.New(),
 		jwtSecret:     jwtSecret,
+		goEnv:         goEnv,
 	}
 }
 
@@ -54,7 +57,7 @@ func NewAuthHandler(authUC usecase.AuthUsecase, userUC usecase.UserUsecase, emai
 //	@Failure		400		{object}	helper.ErrorResponse
 //	@Failure		429		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/api/v1/auth/signup/send-code [post]
+//	@Router			/v1/auth/signup/send-code [post]
 func (h *AuthHandler) SendCode(c *fiber.Ctx) error {
 	// 1. リクエストパース
 	var req SendCodeRequest
@@ -134,6 +137,93 @@ func (h *AuthHandler) SendCode(c *fiber.Ctx) error {
 	})
 }
 
+type ResendCodeRequest struct {
+	Email string `json:"email" validate:"required,email,max=255"`
+}
+
+type ResendCodeResponse struct {
+	Message   string `json:"message"`
+	Email     string `json:"email"`
+	ExpiresIn int    `json:"expires_in"`
+}
+
+// ResendCode resends verification code to email
+//
+//	@Summary		Resend verification code
+//	@Description	Resends a new 6-digit verification code to the email for signup
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		ResendCodeRequest	true	"Email"
+//	@Success		200		{object}	ResendCodeResponse
+//	@Failure		400		{object}	helper.ErrorResponse
+//	@Failure		429		{object}	helper.ErrorResponse
+//	@Failure		500		{object}	helper.ErrorResponse
+//	@Router			/v1/auth/signup/resend-code [post]
+func (h *AuthHandler) ResendCode(c *fiber.Ctx) error {
+	// 1. リクエストパース
+	var req ResendCodeRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "invalid_request",
+			Message: "リクエストの形式が正しくありません",
+		})
+	}
+
+	// 2. バリデーション
+	if err := h.validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
+	}
+
+	ctx := c.Context()
+
+	// 3. レート制限チェック
+	if err := h.sessionHelper.CheckRateLimit(ctx, req.Email); err != nil {
+		return c.Status(fiber.StatusTooManyRequests).JSON(helper.ErrorResponse{
+			Error:   "rate_limit_exceeded",
+			Message: "送信回数が多すぎます。しばらく待ってから再度お試しください",
+		})
+	}
+
+	// 4. Redisから既存のサインアップセッションを取得
+	sessionData, err := h.sessionHelper.GetSignupSession(ctx, req.Email)
+	if err != nil || sessionData == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "session_not_found",
+			Message: "確認コードが無効または期限切れです。最初からやり直してください",
+		})
+	}
+
+	// 5. 新しい6桁の確認コード生成
+	code, err := util.GenerateVerificationCode()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "サーバーエラーが発生しました",
+		})
+	}
+
+	// 6. Redisに保存（15分間）
+	if err := h.sessionHelper.SaveSignupSession(ctx, req.Email, sessionData.PasswordHash, code); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "サーバーエラーが発生しました",
+		})
+	}
+
+	// 7. メール送信
+	if err := h.emailUC.SendVerificationCode(req.Email, code); err != nil {
+		fmt.Printf("メール送信エラー: %v\n", err)
+	}
+
+	// 8. レスポンス返却
+	return c.JSON(ResendCodeResponse{
+		Message:   "確認コードを再送信しました。メールを確認してください。",
+		Email:     req.Email,
+		ExpiresIn: 900,
+	})
+}
+
 type VerifyCodeRequest struct {
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Code     string `json:"code" validate:"required,len=6"`
@@ -158,15 +248,15 @@ type UserResponse struct {
 // VerifyCode verifies the code and creates user account
 //
 //	@Summary		Verify code and create account
-//	@Description	Verifies the 6-digit code and creates a user account, returning access and refresh tokens
+//	@Description	Verifies the 6-digit code and creates a user account. Returns tokens in JSON for mobile clients, and sets HttpOnly cookies for web browsers. Requires client_id for session tracking.
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		VerifyCodeRequest	true	"Email and verification code"
+//	@Param			request	body		VerifyCodeRequest	true	"Email, verification code, and client ID"
 //	@Success		201		{object}	VerifyCodeResponse
 //	@Failure		400		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/api/v1/auth/signup/verify-code [post]
+//	@Router			/v1/auth/signup/verify-code [post]
 func (h *AuthHandler) VerifyCode(c *fiber.Ctx) error {
 	// 1. リクエストパース
 	var req VerifyCodeRequest
@@ -238,11 +328,37 @@ func (h *AuthHandler) VerifyCode(c *fiber.Ctx) error {
 
 	// 9. サインアップセッションを削除
 	if err := h.sessionHelper.DeleteSignupSession(ctx, req.Email); err != nil {
-		// ログには記録するが、ユーザーにはエラーを返さない
 		fmt.Printf("サインアップセッション削除エラー: %v\n", err)
 	}
 
-	// 10. レスポンス返却
+	// 10. webの場合cookieに設定
+	userAgent := c.Get("User-Agent")
+	isWebBrowser := strings.Contains(userAgent, "Mozilla") && !strings.Contains(userAgent, "Mobile")
+	isProduction := h.goEnv == "production"
+
+	if isWebBrowser {
+		c.Cookie(&fiber.Cookie{
+			Name:     "access_token",
+			Value:    accessToken,
+			HTTPOnly: true,
+			Secure:   isProduction,
+			SameSite: "Lax",
+			MaxAge:   15 * 60,
+			Path:     "/",
+		})
+
+		c.Cookie(&fiber.Cookie{
+			Name:     "refresh_token",
+			Value:    refreshToken,
+			HTTPOnly: true,
+			Secure:   isProduction,
+			SameSite: "Lax",
+			MaxAge:   7 * 24 * 60 * 60,
+			Path:     "/",
+		})
+	}
+
+	// 11. レスポンス返却
 	return c.Status(fiber.StatusCreated).JSON(VerifyCodeResponse{
 		Message:      "アカウントが作成されました",
 		AccessToken:  accessToken,
@@ -275,17 +391,17 @@ type LoginResponse struct {
 // Login authenticates a user with email and password
 //
 //	@Summary		User login
-//	@Description	Authenticates user with email and password, returns access and refresh tokens
+//	@Description	Authenticates user with email and password. Returns tokens in JSON for mobile clients, and sets HttpOnly cookies for web browsers. Requires client_id for session tracking.
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		LoginRequest	true	"Email and password"
+//	@Param			request	body		LoginRequest	true	"Email, password, and client ID"
 //	@Success		200		{object}	LoginResponse
 //	@Failure		400		{object}	helper.ErrorResponse
 //	@Failure		401		{object}	helper.ErrorResponse
 //	@Failure		429		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/api/v1/auth/login [post]
+//	@Router			/v1/auth/login [post]
 func (h *AuthHandler) Login(c *fiber.Ctx) error {
 	// 1. リクエストパース
 	var req LoginRequest
@@ -360,7 +476,34 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// 9. レスポンス返却
+	// 9. webの場合cookieに設定
+	userAgent := c.Get("User-Agent")
+	isWebBrowser := strings.Contains(userAgent, "Mozilla") && !strings.Contains(userAgent, "Mobile")
+	isProduction := h.goEnv == "production"
+
+	if isWebBrowser {
+		c.Cookie(&fiber.Cookie{
+			Name:     "access_token",
+			Value:    accessToken,
+			HTTPOnly: true,
+			Secure:   isProduction,
+			SameSite: "Lax",
+			MaxAge:   15 * 60,
+			Path:     "/",
+		})
+
+		c.Cookie(&fiber.Cookie{
+			Name:     "refresh_token",
+			Value:    refreshToken,
+			HTTPOnly: true,
+			Secure:   isProduction,
+			SameSite: "Lax",
+			MaxAge:   7 * 24 * 60 * 60,
+			Path:     "/",
+		})
+	}
+
+	// 10. レスポンス返却
 	return c.JSON(LoginResponse{
 		Message:      "ログインに成功しました",
 		AccessToken:  accessToken,
@@ -376,7 +519,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 }
 
 type RefreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token" validate:"required"`
+	RefreshToken string `json:"refresh_token"`
 	ClientID     string `json:"client_id" validate:"required,min=1,max=255"`
 }
 
@@ -390,16 +533,16 @@ type RefreshTokenResponse struct {
 // RefreshToken refreshes the access token using a refresh token
 //
 //	@Summary		Refresh access token
-//	@Description	Uses a refresh token to generate a new access token and refresh token. The old refresh token is invalidated.
+//	@Description	Generates new access and refresh tokens. Accepts refresh token from either HttpOnly cookie (web) or request body (mobile). The old refresh token is invalidated. Requires client_id for session validation.
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		RefreshTokenRequest	true	"Refresh token"
+//	@Param			request	body		RefreshTokenRequest	true	"Refresh token and client ID (refresh_token optional if using cookies)"
 //	@Success		200		{object}	RefreshTokenResponse
 //	@Failure		400		{object}	helper.ErrorResponse
 //	@Failure		401		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/api/v1/auth/refresh [post]
+//	@Router			/v1/auth/refresh [post]
 func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 	// 1. リクエストパース
 	var req RefreshTokenRequest
@@ -415,10 +558,25 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
 	}
 
+	// 3. リフレッシュトークンの取得（リクエストボディ優先、なければCookie）
+	var refreshToken string
+	if req.RefreshToken != "" {
+		refreshToken = req.RefreshToken
+	} else {
+		refreshToken = c.Cookies("refresh_token")
+	}
+
+	if refreshToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "missing_refresh_token",
+			Message: "リフレッシュトークンが指定されていません",
+		})
+	}
+
 	ctx := c.Context()
 
-	// 3. Redisからリフレッシュトークンを取得
-	tokenData, err := h.sessionHelper.GetRefreshToken(ctx, req.RefreshToken)
+	// 4. Redisからリフレッシュトークンを取得
+	tokenData, err := h.sessionHelper.GetRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
 			Error:   "refresh_token_invalid",
@@ -426,17 +584,17 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 4. ClientIDの検証
+	// 5. ClientIDの検証
 	if tokenData.ClientID != req.ClientID {
 		// ClientIDが一致しない場合、トークンが盗まれた可能性があるため削除
-		h.sessionHelper.DeleteRefreshToken(ctx, req.RefreshToken)
+		h.sessionHelper.DeleteRefreshToken(ctx, refreshToken)
 		return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
 			Error:   "client_id_mismatch",
 			Message: "認証情報が一致しません。再度ログインしてください。",
 		})
 	}
 
-	// 5. ユーザー情報を取得
+	// 6. ユーザー情報を取得
 	user, err := h.userUC.GetUserByID(ctx, tokenData.UserID)
 	if err != nil || user == nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
@@ -445,12 +603,12 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 6. 古いリフレッシュトークンを削除
-	if err := h.sessionHelper.DeleteRefreshToken(ctx, req.RefreshToken); err != nil {
+	// 7. 古いリフレッシュトークンを削除
+	if err := h.sessionHelper.DeleteRefreshToken(ctx, refreshToken); err != nil {
 		fmt.Printf("リフレッシュトークン削除エラー: %v\n", err)
 	}
 
-	// 7. 新しいアクセストークンを生成
+	// 8. 新しいアクセストークンを生成
 	newAccessToken, err := util.GenerateAccessToken(user.ID, user.Email, h.jwtSecret)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
@@ -459,7 +617,7 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 8. 新しいリフレッシュトークンを生成
+	// 9. 新しいリフレッシュトークンを生成
 	newRefreshToken, err := util.GenerateRefreshToken()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
@@ -468,7 +626,7 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 9. Redisに新しいリフレッシュトークンを保存（30日間）
+	// 10. Redisに新しいリフレッシュトークンを保存（30日間）
 	if err := h.sessionHelper.SaveRefreshToken(ctx, newRefreshToken, user.ID, req.ClientID); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
@@ -476,7 +634,34 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 10. レスポンス返却
+	// 11. webの場合cookieに設定
+	userAgent := c.Get("User-Agent")
+	isWebBrowser := strings.Contains(userAgent, "Mozilla") && !strings.Contains(userAgent, "Mobile")
+	isProduction := h.goEnv == "production"
+
+	if isWebBrowser {
+		c.Cookie(&fiber.Cookie{
+			Name:     "access_token",
+			Value:    newAccessToken,
+			HTTPOnly: true,
+			Secure:   isProduction,
+			SameSite: "Lax",
+			MaxAge:   15 * 60,
+			Path:     "/",
+		})
+
+		c.Cookie(&fiber.Cookie{
+			Name:     "refresh_token",
+			Value:    newRefreshToken,
+			HTTPOnly: true,
+			Secure:   isProduction,
+			SameSite: "Lax",
+			MaxAge:   7 * 24 * 60 * 60,
+			Path:     "/",
+		})
+	}
+
+	// 12. レスポンス返却
 	return c.JSON(RefreshTokenResponse{
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
@@ -486,7 +671,7 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 }
 
 type LogoutRequest struct {
-	RefreshToken string `json:"refresh_token" validate:"required"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 type LogoutResponse struct {
@@ -496,15 +681,15 @@ type LogoutResponse struct {
 // Logout invalidates a refresh token
 //
 //	@Summary		User logout
-//	@Description	Invalidates the refresh token by deleting it from Redis, ending the user's session
+//	@Description	Invalidates the refresh token and ends the user's session. Accepts refresh token from either HttpOnly cookie (web) or request body (mobile). Also clears cookies for web browsers.
 //	@Tags			auth
 //	@Accept			json
 //	@Produce		json
-//	@Param			request	body		LogoutRequest	true	"Refresh token"
+//	@Param			request	body		LogoutRequest	true	"Refresh token (optional if using cookies)"
 //	@Success		200		{object}	LogoutResponse
 //	@Failure		400		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/api/v1/auth/logout [post]
+//	@Router			/v1/auth/logout [post]
 func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	// 1. リクエストパース
 	var req LogoutRequest
@@ -515,15 +700,25 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 		})
 	}
 
-	// 2. バリデーション
-	if err := h.validate.Struct(req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
+	// 2. リフレッシュトークンの取得（リクエストボディ優先、なければCookie）
+	var refreshToken string
+	if req.RefreshToken != "" {
+		refreshToken = req.RefreshToken
+	} else {
+		refreshToken = c.Cookies("refresh_token")
+	}
+
+	if refreshToken == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "missing_refresh_token",
+			Message: "リフレッシュトークンが指定されていません",
+		})
 	}
 
 	ctx := c.Context()
 
 	// 3. トークンの存在確認
-	_, err := h.sessionHelper.GetRefreshToken(ctx, req.RefreshToken)
+	_, err := h.sessionHelper.GetRefreshToken(ctx, refreshToken)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
 			Error:   "token_not_found",
@@ -532,14 +727,40 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	}
 
 	// 4. Redisからリフレッシュトークンを削除
-	if err := h.sessionHelper.DeleteRefreshToken(ctx, req.RefreshToken); err != nil {
+	if err := h.sessionHelper.DeleteRefreshToken(ctx, refreshToken); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
 			Message: "サーバー内部でエラーが発生しました",
 		})
 	}
 
-	// 5. レスポンス返却
+	// 5. クッキー削除処理
+	userAgent := c.Get("User-Agent")
+	isWebBrowser := strings.Contains(userAgent, "Mozilla") && !strings.Contains(userAgent, "Mobile")
+	isProduction := h.goEnv == "production"
+
+	if isWebBrowser {
+		c.Cookie(&fiber.Cookie{
+			Name:     "access_token",
+			Value:    "",
+			Path:     "/",
+			MaxAge:   -1,
+			HTTPOnly: true,
+			Secure:   isProduction,
+			SameSite: "Lax",
+		})
+		c.Cookie(&fiber.Cookie{
+			Name:     "refresh_token",
+			Value:    "",
+			Path:     "/",
+			MaxAge:   -1,
+			HTTPOnly: true,
+			Secure:   isProduction,
+			SameSite: "Lax",
+		})
+	}
+
+	// 6. レスポンス返却
 	return c.JSON(LogoutResponse{
 		Message: "ログアウトしました",
 	})

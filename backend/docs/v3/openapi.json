@@ -10,343 +10,6 @@
     "url" : "http://localhost/api"
   } ],
   "paths" : {
-    "/api/v1/auth/login" : {
-      "post" : {
-        "description" : "Authenticates user with email and password, returns access and refresh tokens",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/internal_interface_handler.LoginRequest"
-              }
-            }
-          },
-          "description" : "Email and password",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/internal_interface_handler.LoginResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "401" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Unauthorized"
-          },
-          "429" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Too Many Requests"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "User login",
-        "tags" : [ "auth" ],
-        "x-codegen-request-body-name" : "request"
-      }
-    },
-    "/api/v1/auth/logout" : {
-      "post" : {
-        "description" : "Invalidates the refresh token by deleting it from Redis, ending the user's session",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/internal_interface_handler.LogoutRequest"
-              }
-            }
-          },
-          "description" : "Refresh token",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/internal_interface_handler.LogoutResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "User logout",
-        "tags" : [ "auth" ],
-        "x-codegen-request-body-name" : "request"
-      }
-    },
-    "/api/v1/auth/refresh" : {
-      "post" : {
-        "description" : "Uses a refresh token to generate a new access token and refresh token. The old refresh token is invalidated.",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/internal_interface_handler.RefreshTokenRequest"
-              }
-            }
-          },
-          "description" : "Refresh token",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/internal_interface_handler.RefreshTokenResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "401" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Unauthorized"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Refresh access token",
-        "tags" : [ "auth" ],
-        "x-codegen-request-body-name" : "request"
-      }
-    },
-    "/api/v1/auth/signup/send-code" : {
-      "post" : {
-        "description" : "Sends a 6-digit verification code to the email for signup",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/internal_interface_handler.SendCodeRequest"
-              }
-            }
-          },
-          "description" : "Email and password",
-          "required" : true
-        },
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/internal_interface_handler.SendCodeResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "429" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Too Many Requests"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Send verification code",
-        "tags" : [ "auth" ],
-        "x-codegen-request-body-name" : "request"
-      }
-    },
-    "/api/v1/auth/signup/verify-code" : {
-      "post" : {
-        "description" : "Verifies the 6-digit code and creates a user account, returning access and refresh tokens",
-        "requestBody" : {
-          "content" : {
-            "application/json" : {
-              "schema" : {
-                "$ref" : "#/components/schemas/internal_interface_handler.VerifyCodeRequest"
-              }
-            }
-          },
-          "description" : "Email and verification code",
-          "required" : true
-        },
-        "responses" : {
-          "201" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/internal_interface_handler.VerifyCodeResponse"
-                }
-              }
-            },
-            "description" : "Created"
-          },
-          "400" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Bad Request"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Verify code and create account",
-        "tags" : [ "auth" ],
-        "x-codegen-request-body-name" : "request"
-      }
-    },
-    "/api/v1/users/me" : {
-      "get" : {
-        "description" : "Returns the current authenticated user's information",
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/internal_interface_handler.GetMeResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "401" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Unauthorized"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "security" : [ {
-          "BearerAuth" : [ ]
-        } ],
-        "summary" : "Get current user",
-        "tags" : [ "users" ]
-      }
-    },
     "/tests" : {
       "get" : {
         "description" : "Returns all test records",
@@ -410,6 +73,406 @@
         },
         "summary" : "Create a new test",
         "tags" : [ "tests" ]
+      }
+    },
+    "/v1/auth/login" : {
+      "post" : {
+        "description" : "Authenticates user with email and password. Returns tokens in JSON for mobile clients, and sets HttpOnly cookies for web browsers. Requires client_id for session tracking.",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/internal_interface_handler.LoginRequest"
+              }
+            }
+          },
+          "description" : "Email, password, and client ID",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.LoginResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Too Many Requests"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "User login",
+        "tags" : [ "auth" ],
+        "x-codegen-request-body-name" : "request"
+      }
+    },
+    "/v1/auth/logout" : {
+      "post" : {
+        "description" : "Invalidates the refresh token and ends the user's session. Accepts refresh token from either HttpOnly cookie (web) or request body (mobile). Also clears cookies for web browsers.",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/internal_interface_handler.LogoutRequest"
+              }
+            }
+          },
+          "description" : "Refresh token (optional if using cookies)",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.LogoutResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "User logout",
+        "tags" : [ "auth" ],
+        "x-codegen-request-body-name" : "request"
+      }
+    },
+    "/v1/auth/refresh" : {
+      "post" : {
+        "description" : "Generates new access and refresh tokens. Accepts refresh token from either HttpOnly cookie (web) or request body (mobile). The old refresh token is invalidated. Requires client_id for session validation.",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/internal_interface_handler.RefreshTokenRequest"
+              }
+            }
+          },
+          "description" : "Refresh token and client ID (refresh_token optional if using cookies)",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.RefreshTokenResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Refresh access token",
+        "tags" : [ "auth" ],
+        "x-codegen-request-body-name" : "request"
+      }
+    },
+    "/v1/auth/signup/resend-code" : {
+      "post" : {
+        "description" : "Resends a new 6-digit verification code to the email for signup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/internal_interface_handler.ResendCodeRequest"
+              }
+            }
+          },
+          "description" : "Email",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.ResendCodeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Too Many Requests"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Resend verification code",
+        "tags" : [ "auth" ],
+        "x-codegen-request-body-name" : "request"
+      }
+    },
+    "/v1/auth/signup/send-code" : {
+      "post" : {
+        "description" : "Sends a 6-digit verification code to the email for signup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/internal_interface_handler.SendCodeRequest"
+              }
+            }
+          },
+          "description" : "Email and password",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.SendCodeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Too Many Requests"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Send verification code",
+        "tags" : [ "auth" ],
+        "x-codegen-request-body-name" : "request"
+      }
+    },
+    "/v1/auth/signup/verify-code" : {
+      "post" : {
+        "description" : "Verifies the 6-digit code and creates a user account. Returns tokens in JSON for mobile clients, and sets HttpOnly cookies for web browsers. Requires client_id for session tracking.",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/internal_interface_handler.VerifyCodeRequest"
+              }
+            }
+          },
+          "description" : "Email, verification code, and client ID",
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.VerifyCodeResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Verify code and create account",
+        "tags" : [ "auth" ],
+        "x-codegen-request-body-name" : "request"
+      }
+    },
+    "/v1/users/me" : {
+      "get" : {
+        "description" : "Returns the current authenticated user's information. Accepts authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.GetMeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "security" : [ {
+          "BearerAuth" : [ ]
+        }, {
+          "CookieAuth" : [ ]
+        } ],
+        "summary" : "Get current user",
+        "tags" : [ "users" ]
       }
     }
   },
@@ -499,7 +562,6 @@
             "type" : "string"
           }
         },
-        "required" : [ "refresh_token" ],
         "type" : "object"
       },
       "internal_interface_handler.LogoutResponse" : {
@@ -521,7 +583,7 @@
             "type" : "string"
           }
         },
-        "required" : [ "client_id", "refresh_token" ],
+        "required" : [ "client_id" ],
         "type" : "object"
       },
       "internal_interface_handler.RefreshTokenResponse" : {
@@ -536,6 +598,30 @@
             "type" : "string"
           },
           "token_type" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "internal_interface_handler.ResendCodeRequest" : {
+        "properties" : {
+          "email" : {
+            "maxLength" : 255,
+            "type" : "string"
+          }
+        },
+        "required" : [ "email" ],
+        "type" : "object"
+      },
+      "internal_interface_handler.ResendCodeResponse" : {
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "expires_in" : {
+            "type" : "integer"
+          },
+          "message" : {
             "type" : "string"
           }
         },
