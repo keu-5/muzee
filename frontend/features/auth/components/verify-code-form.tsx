@@ -71,8 +71,7 @@ const _VerifyCodeForm = () => {
         },
       },
       {
-        onSuccess: (res) => {
-          localStorage.setItem("refreshToken", res.refresh_token || "");
+        onSuccess: () => {
           sessionStorage.removeItem("signupEmail");
           router.push("/"); //TODO: redirect to home
         },

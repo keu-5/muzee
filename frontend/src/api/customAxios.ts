@@ -1,6 +1,14 @@
-import axios, { AxiosError, AxiosRequestConfig } from "axios";
+import { LINK } from "@/lib/links";
+import axios, {
+  AxiosError,
+  AxiosRequestConfig,
+  InternalAxiosRequestConfig,
+} from "axios";
 
 const isServer = typeof window === "undefined";
+
+let isRefreshing = false;
+let refreshQueue: (() => void)[] = [];
 
 const customAxios = async <T = unknown>(
   config: AxiosRequestConfig,
@@ -8,7 +16,78 @@ const customAxios = async <T = unknown>(
 ): Promise<T> => {
   const instance = axios.create({
     baseURL: isServer ? "http://backend:8080" : "/api",
+    withCredentials: true,
   });
+
+  // レスポンスインターセプター：401エラー時にリフレッシュ
+  instance.interceptors.response.use(
+    (response) => response,
+    async (error: AxiosError) => {
+      const originalRequest = error.config as InternalAxiosRequestConfig & {
+        _retry?: boolean;
+      };
+
+      // 401エラーで、まだリトライしていない場合
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        originalRequest._retry = true;
+
+        // リフレッシュエンドポイント自体の401は処理しない
+        if (originalRequest.url?.includes("/auth/refresh")) {
+          if (!isServer) {
+            document.cookie = "access_token=; Max-Age=0; path=/";
+            document.cookie = "refresh_token=; Max-Age=0; path=/";
+            window.location.href = LINK.login;
+          }
+          return Promise.reject(error);
+        }
+
+        // 既にリフレッシュ中の場合は、キューに追加
+        if (isRefreshing) {
+          return new Promise((resolve) => {
+            refreshQueue.push(() => {
+              resolve(instance(originalRequest));
+            });
+          });
+        }
+
+        isRefreshing = true;
+
+        try {
+          // 動的インポートで循環依存を回避
+          const { postV1AuthRefresh } = await import(
+            "./__generated__/auth/auth"
+          );
+
+          // リフレッシュAPIを呼び出し
+          await postV1AuthRefresh({
+            refresh_token: undefined,
+            client_id: process.env.NEXT_PUBLIC_CLIENT_ID || "",
+          });
+
+          // 新しいトークンが Cookie に設定された
+          // キューに溜まっているリクエストを再実行
+          refreshQueue.forEach((callback) => callback());
+          refreshQueue = [];
+
+          // 元のリクエストを再実行
+          return instance(originalRequest);
+        } catch (refreshError) {
+          // リフレッシュ失敗時は Cookie をクリアしてログインページへ
+          refreshQueue = [];
+          if (!isServer) {
+            document.cookie = "access_token=; Max-Age=0; path=/";
+            document.cookie = "refresh_token=; Max-Age=0; path=/";
+            window.location.href = LINK.login;
+          }
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      }
+
+      return Promise.reject(error);
+    },
+  );
 
   try {
     const res = await instance.request({
