@@ -22,7 +22,11 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
-import { usePostV1AuthSignupVerifyCode } from "@/src/api/__generated__/auth/auth";
+import {
+  usePostV1AuthSignupResendCode,
+  usePostV1AuthSignupVerifyCode,
+} from "@/src/api/__generated__/auth/auth";
+import { toast } from "sonner";
 
 const verifySchema = z.object({
   code: z
@@ -40,6 +44,7 @@ export function VerifyCodeForm() {
   const [email, setEmail] = useState("");
   const [mockCode, setMockCode] = useState("");
   const { mutate: verifyCode } = usePostV1AuthSignupVerifyCode();
+  const { mutate: resendCode } = usePostV1AuthSignupResendCode();
 
   const form = useForm<VerifyFormValues>({
     resolver: zodResolver(verifySchema),
@@ -74,28 +79,24 @@ export function VerifyCodeForm() {
     );
   };
 
-  // TODO: enable to send code without password
   const handleResendCode = async () => {
     setError("");
     setIsLoading(true);
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const generatedCode = Math.floor(
-        100000 + Math.random() * 900000,
-      ).toString();
-
-      sessionStorage.setItem("mockCode", generatedCode);
-      setMockCode(generatedCode);
-      form.reset({ code: "" });
-
-      alert("新しい認証コードを送信しました");
-    } catch {
-      setError("認証コードの再送信に失敗しました");
-    } finally {
-      setIsLoading(false);
-    }
+    resendCode(
+      { data: { email } },
+      {
+        onSuccess: (res) => {
+          toast(res.message || "認証コードを再送信しました！");
+        },
+        onError: (err) => {
+          setError(err.message || "認証コードの再送信に失敗しました");
+        },
+        onSettled: () => {
+          setIsLoading(false);
+        },
+      },
+    );
   };
 
   return (
