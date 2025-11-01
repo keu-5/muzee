@@ -119,7 +119,7 @@ func TestNewAuthHandler(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 
 	assert.NotNil(t, handler)
 	assert.NotNil(t, handler.validate)
@@ -147,7 +147,7 @@ func TestSendCode_Success(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Create request
@@ -176,7 +176,7 @@ func TestSendCode_InvalidJSON(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Invalid JSON
@@ -202,7 +202,7 @@ func TestSendCode_ValidationError_MissingEmail(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Missing email
@@ -234,7 +234,7 @@ func TestSendCode_ValidationError_InvalidEmail(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Invalid email format
@@ -265,7 +265,7 @@ func TestSendCode_ValidationError_ShortPassword(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Password too short
@@ -300,7 +300,7 @@ func TestSendCode_EmailAlreadyExists(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	reqBody := SendCodeRequest{
@@ -334,7 +334,7 @@ func TestSendCode_CheckEmailExistsError(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	reqBody := SendCodeRequest{
@@ -478,7 +478,7 @@ func TestResendCode_Success(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save existing signup session
@@ -524,7 +524,7 @@ func TestResendCode_InvalidJSON(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Invalid JSON
@@ -551,7 +551,7 @@ func TestResendCode_ValidationError_MissingEmail(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Missing email
@@ -582,7 +582,7 @@ func TestResendCode_ValidationError_InvalidEmail(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Invalid email format
@@ -612,7 +612,7 @@ func TestResendCode_RateLimitExceeded(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	ctx := context.Background()
@@ -666,7 +666,7 @@ func TestResendCode_SessionNotFound(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Use a unique email to avoid rate limit from other tests
@@ -708,7 +708,7 @@ func TestResendCode_EmailSendFailure(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save existing signup session
@@ -758,7 +758,7 @@ func TestResendCode_NewCodeGenerated(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save existing signup session with old code
@@ -818,7 +818,7 @@ func TestResendCode_UpdateRouteSetup(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 
 	// Create app with ResendCode route
 	app := fiber.New()
@@ -858,7 +858,7 @@ func TestVerifyCode_Success(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save signup session in Redis (this will fail if Redis is not running)
@@ -908,7 +908,7 @@ func TestVerifyCode_InvalidJSON(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Invalid JSON
@@ -934,7 +934,7 @@ func TestVerifyCode_ValidationError_MissingEmail(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Missing email
@@ -959,6 +959,38 @@ func TestVerifyCode_ValidationError_MissingEmail(t *testing.T) {
 	assert.Equal(t, "validation_error", errResp.Error)
 }
 
+func TestVerifyCode_ValidationError_MissingClientID(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
+	app := setupTestApp(handler)
+
+	// Missing client_id
+	reqBody := VerifyCodeRequest{
+		Email:    "test@example.com",
+		Code:     "123456",
+		ClientID: "",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/signup/verify-code", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+}
+
 func TestVerifyCode_ValidationError_InvalidEmail(t *testing.T) {
 	mockAuth := &mockAuthUsecase{}
 	mockUser := &mockUserUsecase{}
@@ -966,7 +998,7 @@ func TestVerifyCode_ValidationError_InvalidEmail(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Invalid email format
@@ -998,7 +1030,7 @@ func TestVerifyCode_ValidationError_InvalidCodeLength(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Code too short
@@ -1030,7 +1062,7 @@ func TestVerifyCode_ValidationError_MissingCode(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Missing code
@@ -1062,7 +1094,7 @@ func TestVerifyCode_SessionNotFound(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// No session saved in Redis
@@ -1094,7 +1126,7 @@ func TestVerifyCode_InvalidCode(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save signup session with different code
@@ -1142,7 +1174,7 @@ func TestVerifyCode_CreateUserError(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save signup session
@@ -1202,7 +1234,7 @@ func TestLogin_Success(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key", "development")
 	app := setupTestApp(handler)
 
 	// Create login request
@@ -1245,7 +1277,7 @@ func TestLogin_InvalidJSON(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Invalid JSON
@@ -1271,7 +1303,7 @@ func TestLogin_ValidationError_MissingEmail(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Missing email
@@ -1297,6 +1329,39 @@ func TestLogin_ValidationError_MissingEmail(t *testing.T) {
 	assert.NotEmpty(t, errResp.Details)
 }
 
+func TestLogin_ValidationError_MissingClientID(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
+	app := setupTestApp(handler)
+
+	// Missing client_id
+	reqBody := LoginRequest{
+		Email:    "test@example.com",
+		Password: "password123",
+		ClientID: "",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/login", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+	assert.NotEmpty(t, errResp.Details)
+}
+
 func TestLogin_ValidationError_InvalidEmail(t *testing.T) {
 	mockAuth := &mockAuthUsecase{}
 	mockUser := &mockUserUsecase{}
@@ -1304,7 +1369,7 @@ func TestLogin_ValidationError_InvalidEmail(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Invalid email format
@@ -1336,7 +1401,7 @@ func TestLogin_ValidationError_ShortPassword(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Password too short
@@ -1372,7 +1437,7 @@ func TestLogin_UserNotFound(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	reqBody := LoginRequest{
@@ -1420,7 +1485,7 @@ func TestLogin_InvalidPassword(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	reqBody := LoginRequest{
@@ -1459,7 +1524,7 @@ func TestLogin_GetUserByEmailError(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	reqBody := LoginRequest{
@@ -1498,7 +1563,7 @@ func TestRefreshToken_Success(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save refresh token in Redis
@@ -1546,7 +1611,7 @@ func TestRefreshToken_InvalidJSON(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Invalid JSON
@@ -1565,6 +1630,38 @@ func TestRefreshToken_InvalidJSON(t *testing.T) {
 	assert.Equal(t, "invalid_request", errResp.Error)
 }
 
+func TestRefreshToken_ValidationError_MissingClientID(t *testing.T) {
+	mockAuth := &mockAuthUsecase{}
+	mockUser := &mockUserUsecase{}
+	mockEmail := &mockEmailUsecase{}
+	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
+	sessionHelper := helper.NewSessionHelper(mockRedis)
+
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
+	app := setupTestApp(handler)
+
+	// Missing client_id
+	reqBody := RefreshTokenRequest{
+		RefreshToken: "some-refresh-token",
+		ClientID:     "",
+	}
+	body, _ := json.Marshal(reqBody)
+	req := httptest.NewRequest("POST", "/api/v1/auth/refresh", bytes.NewReader(body))
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+	assert.NotEmpty(t, errResp.Details)
+}
+
 func TestRefreshToken_InvalidToken(t *testing.T) {
 	mockAuth := &mockAuthUsecase{}
 	mockUser := &mockUserUsecase{}
@@ -1572,7 +1669,7 @@ func TestRefreshToken_InvalidToken(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Token not in Redis
@@ -1603,7 +1700,7 @@ func TestRefreshToken_ClientIDMismatch(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save refresh token with different client_id
@@ -1650,7 +1747,7 @@ func TestRefreshToken_UserNotFound(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save refresh token
@@ -1695,7 +1792,7 @@ func TestLogout_Success(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save refresh token in Redis
@@ -1743,7 +1840,7 @@ func TestLogout_InvalidJSON(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Invalid JSON
@@ -1769,10 +1866,10 @@ func TestLogout_ValidationError_MissingToken(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
-	// Missing refresh token
+	// Missing refresh token (both in body and cookies)
 	reqBody := LogoutRequest{
 		RefreshToken: "",
 	}
@@ -1789,7 +1886,7 @@ func TestLogout_ValidationError_MissingToken(t *testing.T) {
 	var errResp helper.ErrorResponse
 	bodyBytes, _ := io.ReadAll(resp.Body)
 	json.Unmarshal(bodyBytes, &errResp)
-	assert.Equal(t, "validation_error", errResp.Error)
+	assert.Equal(t, "missing_refresh_token", errResp.Error)
 }
 
 func TestLogout_TokenNotFound(t *testing.T) {
@@ -1799,7 +1896,7 @@ func TestLogout_TokenNotFound(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret", "development")
 	app := setupTestApp(handler)
 
 	// Token not in Redis
@@ -1833,7 +1930,7 @@ func TestLogout_AlreadyLoggedOut(t *testing.T) {
 	mockRedis := redis.NewClient(&redis.Options{Addr: "localhost:6379"})
 	sessionHelper := helper.NewSessionHelper(mockRedis)
 
-	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key")
+	handler := NewAuthHandler(mockAuth, mockUser, mockEmail, sessionHelper, "test-secret-key", "development")
 	app := setupTestApp(handler)
 
 	// Pre-save and then delete refresh token
