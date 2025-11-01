@@ -42,7 +42,6 @@ export function VerifyCodeForm() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
-  const [mockCode, setMockCode] = useState("");
   const { mutate: verifyCode } = usePostV1AuthSignupVerifyCode();
   const { mutate: resendCode } = usePostV1AuthSignupResendCode();
 
@@ -63,7 +62,13 @@ export function VerifyCodeForm() {
     setIsLoading(true);
 
     verifyCode(
-      { data: { client_id: "111", email, code: data.code } }, //TODO: remove client_id
+      {
+        data: {
+          client_id: process.env.NEXT_PUBLIC_CLIENT_ID || "",
+          email,
+          code: data.code,
+        },
+      },
       {
         onSuccess: (res) => {
           localStorage.setItem("refreshToken", res.refresh_token || "");
