@@ -65,7 +65,7 @@ func NewAuthHandlerWithConfig(
 	cfg *config.Config,
 ) *handler.AuthHandler {
 	sessionHelper := helper.NewSessionHelper(redisClient)
-	return handler.NewAuthHandler(authUC, userUC, emailUC, sessionHelper, cfg.JWTSecret)
+	return handler.NewAuthHandler(authUC, userUC, emailUC, sessionHelper, cfg.JWTSecret, cfg.GOEnv)
 }
 
 // @title						Muzee API

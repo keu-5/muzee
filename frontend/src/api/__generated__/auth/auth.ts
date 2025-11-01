@@ -38,7 +38,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Authenticates user with email and password, returns access and refresh tokens
+ * Authenticates user with email and password. Returns tokens in JSON for mobile clients, and sets HttpOnly cookies for web browsers. Requires client_id for session tracking.
  * @summary User login
  */
 export const postV1AuthLogin = (
@@ -103,7 +103,7 @@ export const usePostV1AuthLogin = <TError = GithubComKeu5MuzeeBackendInternalHel
       return useMutation(mutationOptions );
     }
     /**
- * Invalidates the refresh token by deleting it from Redis, ending the user's session
+ * Invalidates the refresh token and ends the user's session. Accepts refresh token from either HttpOnly cookie (web) or request body (mobile). Also clears cookies for web browsers.
  * @summary User logout
  */
 export const postV1AuthLogout = (
@@ -168,7 +168,7 @@ export const usePostV1AuthLogout = <TError = GithubComKeu5MuzeeBackendInternalHe
       return useMutation(mutationOptions );
     }
     /**
- * Uses a refresh token to generate a new access token and refresh token. The old refresh token is invalidated.
+ * Generates new access and refresh tokens. Accepts refresh token from either HttpOnly cookie (web) or request body (mobile). The old refresh token is invalidated. Requires client_id for session validation.
  * @summary Refresh access token
  */
 export const postV1AuthRefresh = (
@@ -363,7 +363,7 @@ export const usePostV1AuthSignupSendCode = <TError = GithubComKeu5MuzeeBackendIn
       return useMutation(mutationOptions );
     }
     /**
- * Verifies the 6-digit code and creates a user account, returning access and refresh tokens
+ * Verifies the 6-digit code and creates a user account. Returns tokens in JSON for mobile clients, and sets HttpOnly cookies for web browsers. Requires client_id for session tracking.
  * @summary Verify code and create account
  */
 export const postV1AuthSignupVerifyCode = (

@@ -76,7 +76,7 @@ const docTemplate = `{
         },
         "/v1/auth/login": {
             "post": {
-                "description": "Authenticates user with email and password, returns access and refresh tokens",
+                "description": "Authenticates user with email and password. Returns tokens in JSON for mobile clients, and sets HttpOnly cookies for web browsers. Requires client_id for session tracking.",
                 "consumes": [
                     "application/json"
                 ],
@@ -89,7 +89,7 @@ const docTemplate = `{
                 "summary": "User login",
                 "parameters": [
                     {
-                        "description": "Email and password",
+                        "description": "Email, password, and client ID",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -134,7 +134,7 @@ const docTemplate = `{
         },
         "/v1/auth/logout": {
             "post": {
-                "description": "Invalidates the refresh token by deleting it from Redis, ending the user's session",
+                "description": "Invalidates the refresh token and ends the user's session. Accepts refresh token from either HttpOnly cookie (web) or request body (mobile). Also clears cookies for web browsers.",
                 "consumes": [
                     "application/json"
                 ],
@@ -147,7 +147,7 @@ const docTemplate = `{
                 "summary": "User logout",
                 "parameters": [
                     {
-                        "description": "Refresh token",
+                        "description": "Refresh token (optional if using cookies)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -180,7 +180,7 @@ const docTemplate = `{
         },
         "/v1/auth/refresh": {
             "post": {
-                "description": "Uses a refresh token to generate a new access token and refresh token. The old refresh token is invalidated.",
+                "description": "Generates new access and refresh tokens. Accepts refresh token from either HttpOnly cookie (web) or request body (mobile). The old refresh token is invalidated. Requires client_id for session validation.",
                 "consumes": [
                     "application/json"
                 ],
@@ -193,7 +193,7 @@ const docTemplate = `{
                 "summary": "Refresh access token",
                 "parameters": [
                     {
-                        "description": "Refresh token",
+                        "description": "Refresh token and client ID (refresh_token optional if using cookies)",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -336,7 +336,7 @@ const docTemplate = `{
         },
         "/v1/auth/signup/verify-code": {
             "post": {
-                "description": "Verifies the 6-digit code and creates a user account, returning access and refresh tokens",
+                "description": "Verifies the 6-digit code and creates a user account. Returns tokens in JSON for mobile clients, and sets HttpOnly cookies for web browsers. Requires client_id for session tracking.",
                 "consumes": [
                     "application/json"
                 ],
@@ -349,7 +349,7 @@ const docTemplate = `{
                 "summary": "Verify code and create account",
                 "parameters": [
                     {
-                        "description": "Email and verification code",
+                        "description": "Email, verification code, and client ID",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -385,9 +385,12 @@ const docTemplate = `{
                 "security": [
                     {
                         "BearerAuth": []
+                    },
+                    {
+                        "CookieAuth": []
                     }
                 ],
-                "description": "Returns the current authenticated user's information",
+                "description": "Returns the current authenticated user's information. Accepts authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).",
                 "consumes": [
                     "application/json"
                 ],
@@ -506,9 +509,6 @@ const docTemplate = `{
         },
         "internal_interface_handler.LogoutRequest": {
             "type": "object",
-            "required": [
-                "refresh_token"
-            ],
             "properties": {
                 "refresh_token": {
                     "type": "string"
@@ -526,8 +526,7 @@ const docTemplate = `{
         "internal_interface_handler.RefreshTokenRequest": {
             "type": "object",
             "required": [
-                "client_id",
-                "refresh_token"
+                "client_id"
             ],
             "properties": {
                 "client_id": {

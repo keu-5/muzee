@@ -60,8 +60,6 @@ definitions:
     properties:
       refresh_token:
         type: string
-    required:
-    - refresh_token
     type: object
   internal_interface_handler.LogoutResponse:
     properties:
@@ -78,7 +76,6 @@ definitions:
         type: string
     required:
     - client_id
-    - refresh_token
     type: object
   internal_interface_handler.RefreshTokenResponse:
     properties:
@@ -225,10 +222,11 @@ paths:
     post:
       consumes:
       - application/json
-      description: Authenticates user with email and password, returns access and
-        refresh tokens
+      description: Authenticates user with email and password. Returns tokens in JSON
+        for mobile clients, and sets HttpOnly cookies for web browsers. Requires client_id
+        for session tracking.
       parameters:
-      - description: Email and password
+      - description: Email, password, and client ID
         in: body
         name: request
         required: true
@@ -264,10 +262,11 @@ paths:
     post:
       consumes:
       - application/json
-      description: Invalidates the refresh token by deleting it from Redis, ending
-        the user's session
+      description: Invalidates the refresh token and ends the user's session. Accepts
+        refresh token from either HttpOnly cookie (web) or request body (mobile).
+        Also clears cookies for web browsers.
       parameters:
-      - description: Refresh token
+      - description: Refresh token (optional if using cookies)
         in: body
         name: request
         required: true
@@ -295,10 +294,12 @@ paths:
     post:
       consumes:
       - application/json
-      description: Uses a refresh token to generate a new access token and refresh
-        token. The old refresh token is invalidated.
+      description: Generates new access and refresh tokens. Accepts refresh token
+        from either HttpOnly cookie (web) or request body (mobile). The old refresh
+        token is invalidated. Requires client_id for session validation.
       parameters:
-      - description: Refresh token
+      - description: Refresh token and client ID (refresh_token optional if using
+          cookies)
         in: body
         name: request
         required: true
@@ -398,10 +399,11 @@ paths:
     post:
       consumes:
       - application/json
-      description: Verifies the 6-digit code and creates a user account, returning
-        access and refresh tokens
+      description: Verifies the 6-digit code and creates a user account. Returns tokens
+        in JSON for mobile clients, and sets HttpOnly cookies for web browsers. Requires
+        client_id for session tracking.
       parameters:
-      - description: Email and verification code
+      - description: Email, verification code, and client ID
         in: body
         name: request
         required: true
@@ -429,7 +431,8 @@ paths:
     get:
       consumes:
       - application/json
-      description: Returns the current authenticated user's information
+      description: Returns the current authenticated user's information. Accepts authentication
+        via Bearer token (Authorization header) or HttpOnly cookie (access_token).
       produces:
       - application/json
       responses:
@@ -447,6 +450,7 @@ paths:
             $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
       security:
       - BearerAuth: []
+      - CookieAuth: []
       summary: Get current user
       tags:
       - users

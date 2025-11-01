@@ -52,14 +52,15 @@ paths:
       - tests
   /v1/auth/login:
     post:
-      description: "Authenticates user with email and password, returns access and\
-        \ refresh tokens"
+      description: "Authenticates user with email and password. Returns tokens in\
+        \ JSON for mobile clients, and sets HttpOnly cookies for web browsers. Requires\
+        \ client_id for session tracking."
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/internal_interface_handler.LoginRequest"
-        description: Email and password
+        description: "Email, password, and client ID"
         required: true
       responses:
         "200":
@@ -98,14 +99,15 @@ paths:
       x-codegen-request-body-name: request
   /v1/auth/logout:
     post:
-      description: "Invalidates the refresh token by deleting it from Redis, ending\
-        \ the user's session"
+      description: Invalidates the refresh token and ends the user's session. Accepts
+        refresh token from either HttpOnly cookie (web) or request body (mobile).
+        Also clears cookies for web browsers.
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/internal_interface_handler.LogoutRequest"
-        description: Refresh token
+        description: Refresh token (optional if using cookies)
         required: true
       responses:
         "200":
@@ -132,14 +134,16 @@ paths:
       x-codegen-request-body-name: request
   /v1/auth/refresh:
     post:
-      description: Uses a refresh token to generate a new access token and refresh
-        token. The old refresh token is invalidated.
+      description: Generates new access and refresh tokens. Accepts refresh token
+        from either HttpOnly cookie (web) or request body (mobile). The old refresh
+        token is invalidated. Requires client_id for session validation.
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/internal_interface_handler.RefreshTokenRequest"
-        description: Refresh token
+        description: Refresh token and client ID (refresh_token optional if using
+          cookies)
         required: true
       responses:
         "200":
@@ -250,14 +254,15 @@ paths:
       x-codegen-request-body-name: request
   /v1/auth/signup/verify-code:
     post:
-      description: "Verifies the 6-digit code and creates a user account, returning\
-        \ access and refresh tokens"
+      description: "Verifies the 6-digit code and creates a user account. Returns\
+        \ tokens in JSON for mobile clients, and sets HttpOnly cookies for web browsers.\
+        \ Requires client_id for session tracking."
       requestBody:
         content:
           application/json:
             schema:
               $ref: "#/components/schemas/internal_interface_handler.VerifyCodeRequest"
-        description: Email and verification code
+        description: "Email, verification code, and client ID"
         required: true
       responses:
         "201":
@@ -284,7 +289,8 @@ paths:
       x-codegen-request-body-name: request
   /v1/users/me:
     get:
-      description: Returns the current authenticated user's information
+      description: Returns the current authenticated user's information. Accepts authentication
+        via Bearer token (Authorization header) or HttpOnly cookie (access_token).
       responses:
         "200":
           content:
@@ -306,6 +312,7 @@ paths:
           description: Internal Server Error
       security:
       - BearerAuth: []
+      - CookieAuth: []
       summary: Get current user
       tags:
       - users
@@ -392,8 +399,6 @@ components:
       properties:
         refresh_token:
           type: string
-      required:
-      - refresh_token
       type: object
     internal_interface_handler.LogoutResponse:
       example:
@@ -412,7 +417,6 @@ components:
           type: string
       required:
       - client_id
-      - refresh_token
       type: object
     internal_interface_handler.RefreshTokenResponse:
       example:

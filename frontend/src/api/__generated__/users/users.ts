@@ -29,7 +29,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Returns the current authenticated user's information
+ * Returns the current authenticated user's information. Accepts authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).
  * @summary Get current user
  */
 export const getV1UsersMe = (

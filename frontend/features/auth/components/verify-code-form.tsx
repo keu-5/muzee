@@ -23,6 +23,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
+import { LINK } from "@/lib/links";
 import {
   usePostV1AuthSignupResendCode,
   usePostV1AuthSignupVerifyCode,
@@ -71,10 +72,9 @@ const _VerifyCodeForm = () => {
         },
       },
       {
-        onSuccess: (res) => {
-          localStorage.setItem("refreshToken", res.refresh_token || "");
+        onSuccess: () => {
           sessionStorage.removeItem("signupEmail");
-          router.push("/"); //TODO: redirect to home
+          router.push(LINK.home);
         },
         onError: (err) => {
           setError(err.message || "アカウントの作成に失敗しました");
@@ -180,7 +180,7 @@ const _VerifyCodeForm = () => {
             type="button"
             variant="ghost"
             className="w-full"
-            onClick={() => router.push("/signup")}
+            onClick={() => router.push(LINK.signup.base)}
             disabled={isLoading}
           >
             戻る

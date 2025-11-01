@@ -28,11 +28,12 @@ type GetMeResponse struct {
 // GetMe returns the current authenticated user's information
 //
 //	@Summary		Get current user
-//	@Description	Returns the current authenticated user's information
+//	@Description	Returns the current authenticated user's information. Accepts authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).
 //	@Tags			users
 //	@Accept			json
 //	@Produce		json
 //	@Security		BearerAuth
+//	@Security		CookieAuth
 //	@Success		200	{object}	GetMeResponse
 //	@Failure		401	{object}	helper.ErrorResponse
 //	@Failure		500	{object}	helper.ErrorResponse

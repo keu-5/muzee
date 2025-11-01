@@ -7,5 +7,5 @@
  */
 
 export interface InternalInterfaceHandlerLogoutRequest {
-  refresh_token: string;
+  refresh_token?: string;
 }
