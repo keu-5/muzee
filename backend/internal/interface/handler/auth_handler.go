@@ -134,6 +134,94 @@ func (h *AuthHandler) SendCode(c *fiber.Ctx) error {
 	})
 }
 
+type ResendCodeRequest struct {
+	Email string `json:"email" validate:"required,email,max=255"`
+}
+
+type ResendCodeResponse struct {
+	Message   string `json:"message"`
+	Email     string `json:"email"`
+	ExpiresIn int    `json:"expires_in"`
+}
+
+// ResendCode resends verification code to email
+//
+//	@Summary		Resend verification code
+//	@Description	Resends a new 6-digit verification code to the email for signup
+//	@Tags			auth
+//	@Accept			json
+//	@Produce		json
+//	@Param			request	body		ResendCodeRequest	true	"Email"
+//	@Success		200		{object}	ResendCodeResponse
+//	@Failure		400		{object}	helper.ErrorResponse
+//	@Failure		429		{object}	helper.ErrorResponse
+//	@Failure		500		{object}	helper.ErrorResponse
+//	@Router			/v1/auth/signup/resend-code [post]
+func (h *AuthHandler) ResendCode(c *fiber.Ctx) error {
+	// password省略
+	// 1. リクエストパース
+	var req ResendCodeRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "invalid_request",
+			Message: "リクエストの形式が正しくありません",
+		})
+	}
+
+	// 2. バリデーション
+	if err := h.validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
+	}
+
+	ctx := c.Context()
+
+	// 3. レート制限チェック
+	if err := h.sessionHelper.CheckRateLimit(ctx, req.Email); err != nil {
+		return c.Status(fiber.StatusTooManyRequests).JSON(helper.ErrorResponse{
+			Error:   "rate_limit_exceeded",
+			Message: "送信回数が多すぎます。しばらく待ってから再度お試しください",
+		})
+	}
+
+	// 4. Redisから既存のサインアップセッションを取得
+	sessionData, err := h.sessionHelper.GetSignupSession(ctx, req.Email)
+	if err != nil || sessionData == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "session_not_found",
+			Message: "確認コードが無効または期限切れです。最初からやり直してください",
+		})
+	}
+
+	// 5. 新しい6桁の確認コード生成
+	code, err := util.GenerateVerificationCode()
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "サーバーエラーが発生しました",
+		})
+	}
+
+	// 6. Redisに保存（15分間）
+	if err := h.sessionHelper.SaveSignupSession(ctx, req.Email, sessionData.PasswordHash, code); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "サーバーエラーが発生しました",
+		})
+	}
+
+	// 7. メール送信
+	if err := h.emailUC.SendVerificationCode(req.Email, code); err != nil {
+		fmt.Printf("メール送信エラー: %v\n", err)
+	}
+
+	// 8. レスポンス返却
+	return c.JSON(ResendCodeResponse{
+		Message:   "確認コードを再送信しました。メールを確認してください。",
+		Email:     req.Email,
+		ExpiresIn: 900,
+	})
+}
+
 type VerifyCodeRequest struct {
 	Email    string `json:"email" validate:"required,email,max=255"`
 	Code     string `json:"code" validate:"required,len=6"`

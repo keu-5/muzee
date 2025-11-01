@@ -38,6 +38,7 @@ func RegisterRoutes(
 
 	signup := auth.Group("/signup")
 	signup.Post("/send-code", authHandler.SendCode)
+	signup.Post("/resend-code", authHandler.ResendCode)
 	signup.Post("/verify-code", authHandler.VerifyCode)
 
 	users := v1.Group("/users", middleware.AuthMiddleware(cfg.JWTSecret))
