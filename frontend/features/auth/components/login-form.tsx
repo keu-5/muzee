@@ -28,7 +28,7 @@ const loginSchema = z.object({
     .email("正しいメールアドレスを入力してください")
     .trim()
     .min(1, "メールアドレスを入力してください"),
-  password: z.string(),
+  password: z.string().min(1, "パスワードを入力してください"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -110,6 +110,9 @@ const _LoginForm = () => {
                 className="pl-10"
               />
             </div>
+            {errors.email && (
+              <p className="text-sm text-red-500">{errors.email.message}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">パスワード</Label>
@@ -133,7 +136,7 @@ const _LoginForm = () => {
           )}
         </CardContent>
 
-        <CardFooter className="flex flex-col space-y-4">
+        <CardFooter className="flex flex-col space-y-4 my-6">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "ログイン中..." : "ログイン"}
           </Button>
