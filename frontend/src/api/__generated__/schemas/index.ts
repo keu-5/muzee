@@ -16,6 +16,8 @@ export * from './internalInterfaceHandlerLogoutRequest';
 export * from './internalInterfaceHandlerLogoutResponse';
 export * from './internalInterfaceHandlerRefreshTokenRequest';
 export * from './internalInterfaceHandlerRefreshTokenResponse';
+export * from './internalInterfaceHandlerResendCodeRequest';
+export * from './internalInterfaceHandlerResendCodeResponse';
 export * from './internalInterfaceHandlerSendCodeRequest';
 export * from './internalInterfaceHandlerSendCodeResponse';
 export * from './internalInterfaceHandlerTestResponse';

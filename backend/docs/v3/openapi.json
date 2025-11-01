@@ -258,6 +258,67 @@
         "x-codegen-request-body-name" : "request"
       }
     },
+    "/v1/auth/signup/resend-code" : {
+      "post" : {
+        "description" : "Resends a new 6-digit verification code to the email for signup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/internal_interface_handler.ResendCodeRequest"
+              }
+            }
+          },
+          "description" : "Email",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.ResendCodeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Too Many Requests"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Resend verification code",
+        "tags" : [ "auth" ],
+        "x-codegen-request-body-name" : "request"
+      }
+    },
     "/v1/auth/signup/send-code" : {
       "post" : {
         "description" : "Sends a 6-digit verification code to the email for signup",
@@ -536,6 +597,30 @@
             "type" : "string"
           },
           "token_type" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "internal_interface_handler.ResendCodeRequest" : {
+        "properties" : {
+          "email" : {
+            "maxLength" : 255,
+            "type" : "string"
+          }
+        },
+        "required" : [ "email" ],
+        "type" : "object"
+      },
+      "internal_interface_handler.ResendCodeResponse" : {
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "expires_in" : {
+            "type" : "integer"
+          },
+          "message" : {
             "type" : "string"
           }
         },

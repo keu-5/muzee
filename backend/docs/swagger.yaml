@@ -91,6 +91,23 @@ definitions:
       token_type:
         type: string
     type: object
+  internal_interface_handler.ResendCodeRequest:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+    required:
+    - email
+    type: object
+  internal_interface_handler.ResendCodeResponse:
+    properties:
+      email:
+        type: string
+      expires_in:
+        type: integer
+      message:
+        type: string
+    type: object
   internal_interface_handler.SendCodeRequest:
     properties:
       email:
@@ -307,6 +324,40 @@ paths:
           schema:
             $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
       summary: Refresh access token
+      tags:
+      - auth
+  /v1/auth/signup/resend-code:
+    post:
+      consumes:
+      - application/json
+      description: Resends a new 6-digit verification code to the email for signup
+      parameters:
+      - description: Email
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.ResendCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.ResendCodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      summary: Resend verification code
       tags:
       - auth
   /v1/auth/signup/send-code:
