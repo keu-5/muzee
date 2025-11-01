@@ -1,7 +1,6 @@
 "use client";
 
-import type React from "react";
-
+import { Providers } from "@/app/providers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,42 +14,66 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LINK } from "@/lib/links";
+import { usePostV1AuthLogin } from "@/src/api/__generated__/auth/auth";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Lock, Mail } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
+import z from "zod";
 
-export const LoginForm = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+const loginSchema = z.object({
+  email: z
+    .email("正しいメールアドレスを入力してください")
+    .trim()
+    .min(1, "メールアドレスを入力してください"),
+  password: z.string(),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
+const _LoginForm = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { mutate: login } = usePostV1AuthLogin();
+  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    mode: "onBlur",
+  });
+
+  const onSubmit = (data: LoginFormValues) => {
     setError("");
     setIsLoading(true);
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      if (password.length < 6) {
-        throw new Error("パスワードは6文字以上である必要があります");
-      }
-
-      const mockData = {
-        access_token: "mock_access_token_" + Date.now(),
-        refresh_token: "mock_refresh_token_" + Date.now(),
-      };
-
-      localStorage.setItem("accessToken", mockData.access_token);
-      localStorage.setItem("refreshToken", mockData.refresh_token);
-
-      window.location.href = "/dashboard";
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "ログインに失敗しました");
-    } finally {
-      setIsLoading(false);
-    }
+    login(
+      {
+        data: {
+          email: data.email,
+          password: data.password,
+          client_id: process.env.NEXT_PUBLIC_CLIENT_ID || "",
+        },
+      },
+      {
+        onSuccess: () => {
+          router.push(LINK.home);
+        },
+        onError: (err) => {
+          setError(
+            err.message || "ログインに失敗しました。もう一度お試しください。",
+          );
+        },
+        onSettled: () => {
+          setIsLoading(false);
+        },
+      },
+    );
   };
 
   return (
@@ -63,13 +86,15 @@ export const LoginForm = () => {
           メールアドレスとパスワードを入力してください
         </CardDescription>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+
+      <form onSubmit={handleSubmit(onSubmit)} noValidate>
         <CardContent className="space-y-4">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+
           <div className="space-y-2">
             <Label htmlFor="email">メールアドレス</Label>
             <div className="relative">
@@ -78,10 +103,10 @@ export const LoginForm = () => {
                 id="email"
                 type="email"
                 placeholder="example@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
                 disabled={isLoading}
+                {...register("email")}
+                autoComplete="email"
+                inputMode="email"
                 className="pl-10"
               />
             </div>
@@ -94,15 +119,20 @@ export const LoginForm = () => {
                 id="password"
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
                 disabled={isLoading}
+                {...register("password")}
                 className="pl-10"
+                autoComplete="current-password"
               />
             </div>
           </div>
+          {errors.password && (
+            <ul className="mt-1 space-y-0.5 text-sm text-red-500">
+              <li>{errors.password.message}</li>
+            </ul>
+          )}
         </CardContent>
+
         <CardFooter className="flex flex-col space-y-4">
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "ログイン中..." : "ログイン"}
@@ -119,5 +149,13 @@ export const LoginForm = () => {
         </CardFooter>
       </form>
     </Card>
+  );
+};
+
+export const LoginForm = () => {
+  return (
+    <Providers>
+      <_LoginForm />
+    </Providers>
   );
 };

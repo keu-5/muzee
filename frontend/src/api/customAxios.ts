@@ -41,6 +41,11 @@ const customAxios = async <T = unknown>(
           return Promise.reject(error);
         }
 
+        // ログインエンドポイントの401は処理しない（ログイン失敗はそのまま返す）
+        if (originalRequest.url?.includes("/auth/login")) {
+          return Promise.reject(error);
+        }
+
         // 既にリフレッシュ中の場合は、キューに追加
         if (isRefreshing) {
           return new Promise((resolve) => {
