@@ -134,6 +134,7 @@ const _SignupForm = () => {
       { data: { email: data.email, password: data.password } },
       {
         onSuccess: (res) => {
+          sessionStorage.setItem("signupEmail", data.email);
           toast(res.message || "認証コードを送信しました！");
           router.push(LINK.signup.verify);
         },

@@ -1,0 +1,184 @@
+"use client";
+
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { Label } from "@/components/ui/label";
+import { usePostV1AuthSignupVerifyCode } from "@/src/api/__generated__/auth/auth";
+
+const verifySchema = z.object({
+  code: z
+    .string()
+    .length(6, "6桁の認証コードを入力してください")
+    .regex(/^\d{6}$/, "数字のみで入力してください"),
+});
+
+type VerifyFormValues = z.infer<typeof verifySchema>;
+
+export function VerifyCodeForm() {
+  const router = useRouter();
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [mockCode, setMockCode] = useState("");
+  const { mutate: verifyCode } = usePostV1AuthSignupVerifyCode();
+
+  const form = useForm<VerifyFormValues>({
+    resolver: zodResolver(verifySchema),
+    defaultValues: { code: "" },
+  });
+
+  const code = form.watch("code");
+
+  useEffect(() => {
+    const storedEmail = sessionStorage.getItem("signupEmail") || "";
+    setEmail(storedEmail);
+  }, []);
+
+  const handleVerifyCode = async (data: VerifyFormValues) => {
+    setError("");
+    setIsLoading(true);
+
+    verifyCode(
+      { data: { client_id: "111", email, code: data.code } }, //TODO: remove client_id
+      {
+        onSuccess: (res) => {
+          localStorage.setItem("refreshToken", res.refresh_token || "");
+          router.push("/"); //TODO: redirect to home
+        },
+        onError: (err) => {
+          setError(err.message || "アカウントの作成に失敗しました");
+        },
+        onSettled: () => {
+          setIsLoading(false);
+        },
+      },
+    );
+  };
+
+  // TODO: enable to send code without password
+  const handleResendCode = async () => {
+    setError("");
+    setIsLoading(true);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const generatedCode = Math.floor(
+        100000 + Math.random() * 900000,
+      ).toString();
+
+      sessionStorage.setItem("mockCode", generatedCode);
+      setMockCode(generatedCode);
+      form.reset({ code: "" });
+
+      alert("新しい認証コードを送信しました");
+    } catch {
+      setError("認証コードの再送信に失敗しました");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Card className="w-full max-w-md shadow-xl">
+      <CardHeader className="space-y-1">
+        <CardTitle className="text-2xl font-bold text-center">
+          メール認証
+        </CardTitle>
+        <CardDescription className="text-center">
+          メールに送信された6桁の認証コードを入力してください
+        </CardDescription>
+      </CardHeader>
+
+      <form onSubmit={form.handleSubmit(handleVerifyCode)}>
+        <CardContent className="space-y-4">
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+
+          <div className="space-y-2">
+            <Label htmlFor="code" className="text-center block">
+              認証コード
+            </Label>
+            <div className="flex justify-center">
+              <InputOTP
+                maxLength={6}
+                {...form.register("code")}
+                value={code}
+                onChange={(value) => form.setValue("code", value)}
+                disabled={isLoading}
+              >
+                <InputOTPGroup>
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                    <InputOTPSlot key={i} index={i} />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            {form.formState.errors.code && (
+              <p className="text-sm text-red-500 text-center">
+                {form.formState.errors.code.message}
+              </p>
+            )}
+
+            <p className="text-xs text-muted-foreground text-center">
+              {email || "メールアドレス未設定"} に送信されました
+            </p>
+          </div>
+        </CardContent>
+
+        <CardFooter className="flex flex-col space-y-3">
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isLoading || code.length !== 6}
+          >
+            {isLoading ? "確認中..." : "アカウントを作成"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full bg-transparent"
+            onClick={handleResendCode}
+            disabled={isLoading}
+          >
+            認証コードを再送信
+          </Button>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full"
+            onClick={() => router.push("/signup")}
+            disabled={isLoading}
+          >
+            戻る
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
+  );
+}
