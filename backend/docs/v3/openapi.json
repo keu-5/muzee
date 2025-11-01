@@ -10,7 +10,72 @@
     "url" : "http://localhost/api"
   } ],
   "paths" : {
-    "/api/v1/auth/login" : {
+    "/tests" : {
+      "get" : {
+        "description" : "Returns all test records",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "items" : {
+                    "$ref" : "#/components/schemas/internal_interface_handler.TestResponse"
+                  },
+                  "type" : "array"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "additionalProperties" : {
+                    "type" : "string"
+                  },
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "List all tests",
+        "tags" : [ "tests" ]
+      },
+      "post" : {
+        "description" : "Creates a test record and returns it",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.TestResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "additionalProperties" : {
+                    "type" : "string"
+                  },
+                  "type" : "object"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Create a new test",
+        "tags" : [ "tests" ]
+      }
+    },
+    "/v1/auth/login" : {
       "post" : {
         "description" : "Authenticates user with email and password, returns access and refresh tokens",
         "requestBody" : {
@@ -81,7 +146,7 @@
         "x-codegen-request-body-name" : "request"
       }
     },
-    "/api/v1/auth/logout" : {
+    "/v1/auth/logout" : {
       "post" : {
         "description" : "Invalidates the refresh token by deleting it from Redis, ending the user's session",
         "requestBody" : {
@@ -132,7 +197,7 @@
         "x-codegen-request-body-name" : "request"
       }
     },
-    "/api/v1/auth/refresh" : {
+    "/v1/auth/refresh" : {
       "post" : {
         "description" : "Uses a refresh token to generate a new access token and refresh token. The old refresh token is invalidated.",
         "requestBody" : {
@@ -193,7 +258,68 @@
         "x-codegen-request-body-name" : "request"
       }
     },
-    "/api/v1/auth/signup/send-code" : {
+    "/v1/auth/signup/resend-code" : {
+      "post" : {
+        "description" : "Resends a new 6-digit verification code to the email for signup",
+        "requestBody" : {
+          "content" : {
+            "application/json" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/internal_interface_handler.ResendCodeRequest"
+              }
+            }
+          },
+          "description" : "Email",
+          "required" : true
+        },
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.ResendCodeResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "429" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Too Many Requests"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Resend verification code",
+        "tags" : [ "auth" ],
+        "x-codegen-request-body-name" : "request"
+      }
+    },
+    "/v1/auth/signup/send-code" : {
       "post" : {
         "description" : "Sends a 6-digit verification code to the email for signup",
         "requestBody" : {
@@ -254,7 +380,7 @@
         "x-codegen-request-body-name" : "request"
       }
     },
-    "/api/v1/auth/signup/verify-code" : {
+    "/v1/auth/signup/verify-code" : {
       "post" : {
         "description" : "Verifies the 6-digit code and creates a user account, returning access and refresh tokens",
         "requestBody" : {
@@ -305,7 +431,7 @@
         "x-codegen-request-body-name" : "request"
       }
     },
-    "/api/v1/users/me" : {
+    "/v1/users/me" : {
       "get" : {
         "description" : "Returns the current authenticated user's information",
         "responses" : {
@@ -345,71 +471,6 @@
         } ],
         "summary" : "Get current user",
         "tags" : [ "users" ]
-      }
-    },
-    "/tests" : {
-      "get" : {
-        "description" : "Returns all test records",
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "items" : {
-                    "$ref" : "#/components/schemas/internal_interface_handler.TestResponse"
-                  },
-                  "type" : "array"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "additionalProperties" : {
-                    "type" : "string"
-                  },
-                  "type" : "object"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "List all tests",
-        "tags" : [ "tests" ]
-      },
-      "post" : {
-        "description" : "Creates a test record and returns it",
-        "responses" : {
-          "200" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "$ref" : "#/components/schemas/internal_interface_handler.TestResponse"
-                }
-              }
-            },
-            "description" : "OK"
-          },
-          "500" : {
-            "content" : {
-              "application/json" : {
-                "schema" : {
-                  "additionalProperties" : {
-                    "type" : "string"
-                  },
-                  "type" : "object"
-                }
-              }
-            },
-            "description" : "Internal Server Error"
-          }
-        },
-        "summary" : "Create a new test",
-        "tags" : [ "tests" ]
       }
     }
   },
@@ -536,6 +597,30 @@
             "type" : "string"
           },
           "token_type" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "internal_interface_handler.ResendCodeRequest" : {
+        "properties" : {
+          "email" : {
+            "maxLength" : 255,
+            "type" : "string"
+          }
+        },
+        "required" : [ "email" ],
+        "type" : "object"
+      },
+      "internal_interface_handler.ResendCodeResponse" : {
+        "properties" : {
+          "email" : {
+            "type" : "string"
+          },
+          "expires_in" : {
+            "type" : "integer"
+          },
+          "message" : {
             "type" : "string"
           }
         },

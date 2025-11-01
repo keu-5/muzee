@@ -6,6 +6,4 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface InternalInterfaceHandlerTestResponse {
-  id?: number;
-}
+export type GithubComKeu5MuzeeBackendInternalHelperErrorResponseDetailsItem = { [key: string]: unknown };

@@ -6,6 +6,11 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface InternalInterfaceHandlerTestResponse {
-  id?: number;
+export interface InternalInterfaceHandlerRefreshTokenRequest {
+  /**
+   * @minLength 1
+   * @maxLength 255
+   */
+  client_id: string;
+  refresh_token: string;
 }

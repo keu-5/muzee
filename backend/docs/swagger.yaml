@@ -91,6 +91,23 @@ definitions:
       token_type:
         type: string
     type: object
+  internal_interface_handler.ResendCodeRequest:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+    required:
+    - email
+    type: object
+  internal_interface_handler.ResendCodeResponse:
+    properties:
+      email:
+        type: string
+      expires_in:
+        type: integer
+      message:
+        type: string
+    type: object
   internal_interface_handler.SendCodeRequest:
     properties:
       email:
@@ -165,201 +182,6 @@ info:
   title: Muzee API
   version: "1.0"
 paths:
-  /api/v1/auth/login:
-    post:
-      consumes:
-      - application/json
-      description: Authenticates user with email and password, returns access and
-        refresh tokens
-      parameters:
-      - description: Email and password
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_interface_handler.LoginRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_interface_handler.LoginResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "429":
-          description: Too Many Requests
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-      summary: User login
-      tags:
-      - auth
-  /api/v1/auth/logout:
-    post:
-      consumes:
-      - application/json
-      description: Invalidates the refresh token by deleting it from Redis, ending
-        the user's session
-      parameters:
-      - description: Refresh token
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_interface_handler.LogoutRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_interface_handler.LogoutResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-      summary: User logout
-      tags:
-      - auth
-  /api/v1/auth/refresh:
-    post:
-      consumes:
-      - application/json
-      description: Uses a refresh token to generate a new access token and refresh
-        token. The old refresh token is invalidated.
-      parameters:
-      - description: Refresh token
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_interface_handler.RefreshTokenRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_interface_handler.RefreshTokenResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-      summary: Refresh access token
-      tags:
-      - auth
-  /api/v1/auth/signup/send-code:
-    post:
-      consumes:
-      - application/json
-      description: Sends a 6-digit verification code to the email for signup
-      parameters:
-      - description: Email and password
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_interface_handler.SendCodeRequest'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_interface_handler.SendCodeResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "429":
-          description: Too Many Requests
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-      summary: Send verification code
-      tags:
-      - auth
-  /api/v1/auth/signup/verify-code:
-    post:
-      consumes:
-      - application/json
-      description: Verifies the 6-digit code and creates a user account, returning
-        access and refresh tokens
-      parameters:
-      - description: Email and verification code
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/internal_interface_handler.VerifyCodeRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/internal_interface_handler.VerifyCodeResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-      summary: Verify code and create account
-      tags:
-      - auth
-  /api/v1/users/me:
-    get:
-      consumes:
-      - application/json
-      description: Returns the current authenticated user's information
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_interface_handler.GetMeResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Get current user
-      tags:
-      - users
   /tests:
     get:
       description: Returns all test records
@@ -399,6 +221,235 @@ paths:
       summary: Create a new test
       tags:
       - tests
+  /v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user with email and password, returns access and
+        refresh tokens
+      parameters:
+      - description: Email and password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      summary: User login
+      tags:
+      - auth
+  /v1/auth/logout:
+    post:
+      consumes:
+      - application/json
+      description: Invalidates the refresh token by deleting it from Redis, ending
+        the user's session
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.LogoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.LogoutResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      summary: User logout
+      tags:
+      - auth
+  /v1/auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Uses a refresh token to generate a new access token and refresh
+        token. The old refresh token is invalidated.
+      parameters:
+      - description: Refresh token
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.RefreshTokenResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      summary: Refresh access token
+      tags:
+      - auth
+  /v1/auth/signup/resend-code:
+    post:
+      consumes:
+      - application/json
+      description: Resends a new 6-digit verification code to the email for signup
+      parameters:
+      - description: Email
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.ResendCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.ResendCodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      summary: Resend verification code
+      tags:
+      - auth
+  /v1/auth/signup/send-code:
+    post:
+      consumes:
+      - application/json
+      description: Sends a 6-digit verification code to the email for signup
+      parameters:
+      - description: Email and password
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.SendCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.SendCodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "429":
+          description: Too Many Requests
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      summary: Send verification code
+      tags:
+      - auth
+  /v1/auth/signup/verify-code:
+    post:
+      consumes:
+      - application/json
+      description: Verifies the 6-digit code and creates a user account, returning
+        access and refresh tokens
+      parameters:
+      - description: Email and verification code
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.VerifyCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_interface_handler.VerifyCodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      summary: Verify code and create account
+      tags:
+      - auth
+  /v1/users/me:
+    get:
+      consumes:
+      - application/json
+      description: Returns the current authenticated user's information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.GetMeResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user
+      tags:
+      - users
 schemes:
 - http
 securityDefinitions:

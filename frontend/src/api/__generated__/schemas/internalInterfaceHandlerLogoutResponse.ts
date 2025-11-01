@@ -6,6 +6,6 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface InternalInterfaceHandlerTestResponse {
-  id?: number;
+export interface InternalInterfaceHandlerLogoutResponse {
+  message?: string;
 }

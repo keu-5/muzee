@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosError } from "axios";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 
 const isServer = typeof window === "undefined";
 
@@ -22,7 +22,11 @@ const customAxios = async <T = unknown>(
 
     return res.data;
   } catch (err) {
-    const error = err as AxiosError;
+    const error = err as AxiosError<{ error?: string; message?: string }>;
+
+    if (error.response?.data?.message) {
+      (error as any).message = error.response.data.message;
+    }
 
     if (isServer) {
       console.error("Failed to request:", {

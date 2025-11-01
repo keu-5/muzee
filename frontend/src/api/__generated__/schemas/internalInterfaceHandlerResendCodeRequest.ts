@@ -6,6 +6,7 @@
  * OpenAPI spec version: 1.0
  */
 
-export interface InternalInterfaceHandlerTestResponse {
-  id?: number;
+export interface InternalInterfaceHandlerResendCodeRequest {
+  /** @maxLength 255 */
+  email: string;
 }
