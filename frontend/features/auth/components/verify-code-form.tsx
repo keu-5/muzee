@@ -97,7 +97,7 @@ const _VerifyCodeForm = () => {
           toast(res.message || "認証コードを再送信しました！");
         },
         onError: (err) => {
-          setError(err.message || "認証コードの再送信に失敗しました");
+          toast(err.message || "認証コードの再送信に失敗しました");
         },
         onSettled: () => {
           setIsLoading(false);
