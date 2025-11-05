@@ -7,6 +7,7 @@ import (
 
 	"github.com/keu-5/muzee/backend/ent/schema"
 	"github.com/keu-5/muzee/backend/ent/user"
+	"github.com/keu-5/muzee/backend/ent/userprofile"
 )
 
 // The init function reads all schema descriptors with runtime code
@@ -61,4 +62,56 @@ func init() {
 	user.DefaultUpdatedAt = userDescUpdatedAt.Default.(func() time.Time)
 	// user.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
 	user.UpdateDefaultUpdatedAt = userDescUpdatedAt.UpdateDefault.(func() time.Time)
+	userprofileFields := schema.UserProfile{}.Fields()
+	_ = userprofileFields
+	// userprofileDescName is the schema descriptor for name field.
+	userprofileDescName := userprofileFields[1].Descriptor()
+	// userprofile.NameValidator is a validator for the "name" field. It is called by the builders before save.
+	userprofile.NameValidator = func() func(string) error {
+		validators := userprofileDescName.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(name string) error {
+			for _, fn := range fns {
+				if err := fn(name); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// userprofileDescUsername is the schema descriptor for username field.
+	userprofileDescUsername := userprofileFields[2].Descriptor()
+	// userprofile.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
+	userprofile.UsernameValidator = func() func(string) error {
+		validators := userprofileDescUsername.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(username string) error {
+			for _, fn := range fns {
+				if err := fn(username); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+	// userprofileDescIconPath is the schema descriptor for icon_path field.
+	userprofileDescIconPath := userprofileFields[3].Descriptor()
+	// userprofile.IconPathValidator is a validator for the "icon_path" field. It is called by the builders before save.
+	userprofile.IconPathValidator = userprofileDescIconPath.Validators[0].(func(string) error)
+	// userprofileDescCreatedAt is the schema descriptor for created_at field.
+	userprofileDescCreatedAt := userprofileFields[4].Descriptor()
+	// userprofile.DefaultCreatedAt holds the default value on creation for the created_at field.
+	userprofile.DefaultCreatedAt = userprofileDescCreatedAt.Default.(func() time.Time)
+	// userprofileDescUpdatedAt is the schema descriptor for updated_at field.
+	userprofileDescUpdatedAt := userprofileFields[5].Descriptor()
+	// userprofile.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	userprofile.DefaultUpdatedAt = userprofileDescUpdatedAt.Default.(func() time.Time)
+	// userprofile.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	userprofile.UpdateDefaultUpdatedAt = userprofileDescUpdatedAt.UpdateDefault.(func() time.Time)
 }
