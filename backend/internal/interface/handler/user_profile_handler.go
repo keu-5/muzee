@@ -9,7 +9,7 @@ import (
 
 type UserProfileHandler struct {
 	userProfileUC usecase.UserProfileUsecase
-	validate *validator.Validate
+	validate      *validator.Validate
 }
 
 func NewUserProfileHandler(userProfileUC usecase.UserProfileUsecase) *UserProfileHandler {
@@ -20,20 +20,20 @@ func NewUserProfileHandler(userProfileUC usecase.UserProfileUsecase) *UserProfil
 }
 
 type UserProfileResponse struct {
-	ID        int64  `json:"id"`
-	Name      string `json:"name"`
-	Username  string `json:"username"`
-	IconPath  string `json:"icon_path"`
+	ID       int64  `json:"id"`
+	Name     string `json:"name"`
+	Username string `json:"username"`
+	IconPath string `json:"icon_path"`
 }
 
 type CreateMyProfileRequest struct {
-	Name string `json:"name" validate:"required,min=1,max=100"`
+	Name     string `json:"name" validate:"required,min=1,max=100"`
 	Username string `json:"username" validate:"required,min=1,max=50"`
 	IconPath string `json:"icon_path" validate:"max=255"`
 }
 
 type CreateMyProfileResponse struct {
-	Message string `json:"message"`
+	Message     string              `json:"message"`
 	UserProfile UserProfileResponse `json:"user_profile"`
 }
 
@@ -57,7 +57,7 @@ func (h *UserProfileHandler) CreateMyProfile(c *fiber.Ctx) error {
 	var req CreateMyProfileRequest
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "bad_request",
+			"error":   "bad_request",
 			"message": "無効なリクエストボディです",
 		})
 	}
@@ -97,10 +97,10 @@ func (h *UserProfileHandler) CreateMyProfile(c *fiber.Ctx) error {
 	res := CreateMyProfileResponse{
 		Message: "ユーザープロフィールが作成されました",
 		UserProfile: UserProfileResponse{
-			ID:        profile.ID,
-			Name:      profile.Name,
-			Username:  profile.Username,
-			IconPath:  iconPathStr,
+			ID:       profile.ID,
+			Name:     profile.Name,
+			Username: profile.Username,
+			IconPath: iconPathStr,
 		},
 	}
 	return c.Status(fiber.StatusCreated).JSON(res)

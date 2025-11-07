@@ -9,6 +9,8 @@
 export * from './getTests500';
 export * from './githubComKeu5MuzeeBackendInternalHelperErrorResponse';
 export * from './githubComKeu5MuzeeBackendInternalHelperErrorResponseDetailsItem';
+export * from './internalInterfaceHandlerCreateMyProfileRequest';
+export * from './internalInterfaceHandlerCreateMyProfileResponse';
 export * from './internalInterfaceHandlerGetMeResponse';
 export * from './internalInterfaceHandlerLoginRequest';
 export * from './internalInterfaceHandlerLoginResponse';
@@ -21,6 +23,7 @@ export * from './internalInterfaceHandlerResendCodeResponse';
 export * from './internalInterfaceHandlerSendCodeRequest';
 export * from './internalInterfaceHandlerSendCodeResponse';
 export * from './internalInterfaceHandlerTestResponse';
+export * from './internalInterfaceHandlerUserProfileResponse';
 export * from './internalInterfaceHandlerUserResponse';
 export * from './internalInterfaceHandlerVerifyCodeRequest';
 export * from './internalInterfaceHandlerVerifyCodeResponse';

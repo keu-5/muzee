@@ -316,6 +316,50 @@ paths:
       summary: Get current user
       tags:
       - users
+  /v1/users/me/profile:
+    post:
+      description: Creates a user profile for the currently authenticated user. Requires
+        authentication via Bearer token (Authorization header) or HttpOnly cookie
+        (access_token).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/internal_interface_handler.CreateMyProfileRequest"
+        description: User profile information
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_interface_handler.CreateMyProfileResponse"
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      - CookieAuth: []
+      summary: Create user profile
+      tags:
+      - user-profiles
+      x-codegen-request-body-name: request
 components:
   schemas:
     github_com_keu-5_muzee_backend_internal_helper.ErrorResponse:
@@ -335,6 +379,37 @@ components:
           type: string
         message:
           type: string
+      type: object
+    internal_interface_handler.CreateMyProfileRequest:
+      properties:
+        icon_path:
+          maxLength: 255
+          type: string
+        name:
+          maxLength: 100
+          minLength: 1
+          type: string
+        username:
+          maxLength: 50
+          minLength: 1
+          type: string
+      required:
+      - name
+      - username
+      type: object
+    internal_interface_handler.CreateMyProfileResponse:
+      example:
+        user_profile:
+          icon_path: icon_path
+          name: name
+          id: 0
+          username: username
+        message: message
+      properties:
+        message:
+          type: string
+        user_profile:
+          $ref: "#/components/schemas/internal_interface_handler.UserProfileResponse"
       type: object
     internal_interface_handler.GetMeResponse:
       example:
@@ -487,6 +562,22 @@ components:
       properties:
         id:
           type: integer
+      type: object
+    internal_interface_handler.UserProfileResponse:
+      example:
+        icon_path: icon_path
+        name: name
+        id: 0
+        username: username
+      properties:
+        icon_path:
+          type: string
+        id:
+          type: integer
+        name:
+          type: string
+        username:
+          type: string
       type: object
     internal_interface_handler.UserResponse:
       example:

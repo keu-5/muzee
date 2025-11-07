@@ -12,6 +12,30 @@ definitions:
       message:
         type: string
     type: object
+  internal_interface_handler.CreateMyProfileRequest:
+    properties:
+      icon_path:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+      username:
+        maxLength: 50
+        minLength: 1
+        type: string
+    required:
+    - name
+    - username
+    type: object
+  internal_interface_handler.CreateMyProfileResponse:
+    properties:
+      message:
+        type: string
+      user_profile:
+        $ref: '#/definitions/internal_interface_handler.UserProfileResponse'
+    type: object
   internal_interface_handler.GetMeResponse:
     properties:
       created_at:
@@ -131,6 +155,17 @@ definitions:
     properties:
       id:
         type: integer
+    type: object
+  internal_interface_handler.UserProfileResponse:
+    properties:
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      username:
+        type: string
     type: object
   internal_interface_handler.UserResponse:
     properties:
@@ -454,6 +489,45 @@ paths:
       summary: Get current user
       tags:
       - users
+  /v1/users/me/profile:
+    post:
+      consumes:
+      - application/json
+      description: Creates a user profile for the currently authenticated user. Requires
+        authentication via Bearer token (Authorization header) or HttpOnly cookie
+        (access_token).
+      parameters:
+      - description: User profile information
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_interface_handler.CreateMyProfileRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_interface_handler.CreateMyProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - CookieAuth: []
+      summary: Create user profile
+      tags:
+      - user-profiles
 schemes:
 - http
 securityDefinitions:
