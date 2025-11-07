@@ -15,6 +15,7 @@ type UserProfileHandler struct {
 func NewUserProfileHandler(userProfileUC usecase.UserProfileUsecase) *UserProfileHandler {
 	return &UserProfileHandler{
 		userProfileUC: userProfileUC,
+		validate:      validator.New(),
 	}
 }
 
