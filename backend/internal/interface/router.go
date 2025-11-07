@@ -13,6 +13,7 @@ func RegisterRoutes(
 	testHandler *handler.TestHandler,
 	authHandler *handler.AuthHandler,
 	userHandler *handler.UserHandler,
+	userProfileHandler *handler.UserProfileHandler,
 	cfg *config.Config,
 ) {
 	if cfg != nil && cfg.GOEnv == "development" {
@@ -43,4 +44,7 @@ func RegisterRoutes(
 
 	users := v1.Group("/users", middleware.AuthMiddleware(cfg.JWTSecret))
 	users.Get("/me", userHandler.GetMe)
+
+	me := v1.Group("/me", middleware.AuthMiddleware(cfg.JWTSecret))
+	me.Post("/profile", userProfileHandler.CreateMyProfile)
 }
