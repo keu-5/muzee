@@ -17,23 +17,6 @@ definitions:
       available:
         type: boolean
     type: object
-  internal_interface_handler.CreateMyProfileRequest:
-    properties:
-      icon_path:
-        maxLength: 255
-        type: string
-      name:
-        maxLength: 100
-        minLength: 1
-        type: string
-      username:
-        maxLength: 50
-        minLength: 1
-        type: string
-    required:
-    - name
-    - username
-    type: object
   internal_interface_handler.CreateMyProfileResponse:
     properties:
       message:
@@ -470,17 +453,25 @@ paths:
   /v1/me/profile:
     post:
       consumes:
-      - application/json
+      - multipart/form-data
       description: Creates a user profile for the currently authenticated user. Requires
         authentication via Bearer token (Authorization header) or HttpOnly cookie
-        (access_token).
+        (access_token). Accepts multipart form data with optional icon image file.
       parameters:
-      - description: User profile information
-        in: body
-        name: request
+      - description: User name (1-100 characters)
+        in: formData
+        name: name
         required: true
-        schema:
-          $ref: '#/definitions/internal_interface_handler.CreateMyProfileRequest'
+        type: string
+      - description: Username (1-50 characters)
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Profile icon image (max 5MB, JPEG/PNG/GIF/WebP)
+        in: formData
+        name: icon
+        type: file
       produces:
       - application/json
       responses:

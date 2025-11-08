@@ -390,9 +390,9 @@ const docTemplate = `{
                         "CookieAuth": []
                     }
                 ],
-                "description": "Creates a user profile for the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).",
+                "description": "Creates a user profile for the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token). Accepts multipart form data with optional icon image file.",
                 "consumes": [
-                    "application/json"
+                    "multipart/form-data"
                 ],
                 "produces": [
                     "application/json"
@@ -403,13 +403,24 @@ const docTemplate = `{
                 "summary": "Create user profile",
                 "parameters": [
                     {
-                        "description": "User profile information",
-                        "name": "request",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/internal_interface_handler.CreateMyProfileRequest"
-                        }
+                        "type": "string",
+                        "description": "User name (1-100 characters)",
+                        "name": "name",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Username (1-50 characters)",
+                        "name": "username",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Profile icon image (max 5MB, JPEG/PNG/GIF/WebP)",
+                        "name": "icon",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
@@ -552,29 +563,6 @@ const docTemplate = `{
             "properties": {
                 "available": {
                     "type": "boolean"
-                }
-            }
-        },
-        "internal_interface_handler.CreateMyProfileRequest": {
-            "type": "object",
-            "required": [
-                "name",
-                "username"
-            ],
-            "properties": {
-                "icon_path": {
-                    "type": "string",
-                    "maxLength": 255
-                },
-                "name": {
-                    "type": "string",
-                    "maxLength": 100,
-                    "minLength": 1
-                },
-                "username": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 1
                 }
             }
         },

@@ -18,12 +18,12 @@ type Config struct {
 	RedisPassword string
 	RedisDB       int
 
-	S3Endpoint  string
-	S3AccessKey string
-	S3SecretKey string
-	S3UseSSL    bool
-	S3PublicBucket    string
-	S3PrivateBucket   string
+	S3Endpoint      string
+	S3AccessKey     string
+	S3SecretKey     string
+	S3UseSSL        bool
+	S3PublicBucket  string
+	S3PrivateBucket string
 
 	ResendEmailDomain string
 	ResendAPIKey      string
@@ -78,12 +78,12 @@ func Load() *Config {
 		RedisPassword: viper.GetString("REDIS_PASSWORD"),
 		RedisDB:       viper.GetInt("REDIS_DB"),
 
-		S3Endpoint:  viper.GetString("S3_ENDPOINT"),
-		S3AccessKey: viper.GetString("S3_ACCESS_KEY"),
-		S3SecretKey: viper.GetString("S3_SECRET_KEY"),
-		S3UseSSL:    viper.GetBool("S3_USE_SSL"),
-		S3PublicBucket:    viper.GetString("S3_PUBLIC_BUCKET"),
-		S3PrivateBucket:   viper.GetString("S3_PRIVATE_BUCKET"),
+		S3Endpoint:      viper.GetString("S3_ENDPOINT"),
+		S3AccessKey:     viper.GetString("S3_ACCESS_KEY"),
+		S3SecretKey:     viper.GetString("S3_SECRET_KEY"),
+		S3UseSSL:        viper.GetBool("S3_USE_SSL"),
+		S3PublicBucket:  viper.GetString("S3_PUBLIC_BUCKET"),
+		S3PrivateBucket: viper.GetString("S3_PRIVATE_BUCKET"),
 
 		ResendEmailDomain: viper.GetString("RESEND_EMAIL_DOMAIN"),
 		ResendAPIKey:      viper.GetString("RESEND_API_KEY"),

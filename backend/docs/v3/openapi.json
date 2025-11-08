@@ -433,16 +433,15 @@
     },
     "/v1/me/profile" : {
       "post" : {
-        "description" : "Creates a user profile for the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).",
+        "description" : "Creates a user profile for the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token). Accepts multipart form data with optional icon image file.",
         "requestBody" : {
           "content" : {
-            "application/json" : {
+            "multipart/form-data" : {
               "schema" : {
-                "$ref" : "#/components/schemas/internal_interface_handler.CreateMyProfileRequest"
+                "$ref" : "#/components/schemas/_v1_me_profile_post_request"
               }
             }
           },
-          "description" : "User profile information",
           "required" : true
         },
         "responses" : {
@@ -493,8 +492,7 @@
           "CookieAuth" : [ ]
         } ],
         "summary" : "Create user profile",
-        "tags" : [ "user-profiles" ],
-        "x-codegen-request-body-name" : "request"
+        "tags" : [ "user-profiles" ]
       }
     },
     "/v1/user-profiles/check-username" : {
@@ -616,26 +614,6 @@
             "type" : "boolean"
           }
         },
-        "type" : "object"
-      },
-      "internal_interface_handler.CreateMyProfileRequest" : {
-        "properties" : {
-          "icon_path" : {
-            "maxLength" : 255,
-            "type" : "string"
-          },
-          "name" : {
-            "maxLength" : 100,
-            "minLength" : 1,
-            "type" : "string"
-          },
-          "username" : {
-            "maxLength" : 50,
-            "minLength" : 1,
-            "type" : "string"
-          }
-        },
-        "required" : [ "name", "username" ],
         "type" : "object"
       },
       "internal_interface_handler.CreateMyProfileResponse" : {
@@ -887,6 +865,25 @@
             "$ref" : "#/components/schemas/internal_interface_handler.UserResponse"
           }
         },
+        "type" : "object"
+      },
+      "_v1_me_profile_post_request" : {
+        "properties" : {
+          "name" : {
+            "description" : "User name (1-100 characters)",
+            "type" : "string"
+          },
+          "username" : {
+            "description" : "Username (1-50 characters)",
+            "type" : "string"
+          },
+          "icon" : {
+            "description" : "Profile icon image (max 5MB, JPEG/PNG/GIF/WebP)",
+            "format" : "binary",
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "username" ],
         "type" : "object"
       }
     },

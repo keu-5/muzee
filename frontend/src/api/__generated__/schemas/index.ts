@@ -6,12 +6,12 @@
  * OpenAPI spec version: 1.0
  */
 
+export * from './_v1MeProfilePostRequest';
 export * from './getTests500';
 export * from './getV1UserProfilesCheckUsernameParams';
 export * from './githubComKeu5MuzeeBackendInternalHelperErrorResponse';
 export * from './githubComKeu5MuzeeBackendInternalHelperErrorResponseDetailsItem';
 export * from './internalInterfaceHandlerCheckUsernameAvailabilityResponse';
-export * from './internalInterfaceHandlerCreateMyProfileRequest';
 export * from './internalInterfaceHandlerCreateMyProfileResponse';
 export * from './internalInterfaceHandlerGetMeResponse';
 export * from './internalInterfaceHandlerLoginRequest';

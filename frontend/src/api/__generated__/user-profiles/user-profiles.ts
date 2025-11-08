@@ -24,8 +24,8 @@ import type {
   GetV1UserProfilesCheckUsernameParams,
   GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
   InternalInterfaceHandlerCheckUsernameAvailabilityResponse,
-  InternalInterfaceHandlerCreateMyProfileRequest,
-  InternalInterfaceHandlerCreateMyProfileResponse
+  InternalInterfaceHandlerCreateMyProfileResponse,
+  _V1MeProfilePostRequest
 } from '.././schemas';
 
 import customAxios from '../../customAxios';
@@ -36,19 +36,25 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * Creates a user profile for the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).
+ * Creates a user profile for the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token). Accepts multipart form data with optional icon image file.
  * @summary Create user profile
  */
 export const postV1MeProfile = (
-    internalInterfaceHandlerCreateMyProfileRequest: InternalInterfaceHandlerCreateMyProfileRequest,
+    _v1MeProfilePostRequest: _V1MeProfilePostRequest,
  options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
 ) => {
       
-      
+      const formData = new FormData();
+formData.append(`name`, _v1MeProfilePostRequest.name)
+formData.append(`username`, _v1MeProfilePostRequest.username)
+if(_v1MeProfilePostRequest.icon !== undefined) {
+ formData.append(`icon`, _v1MeProfilePostRequest.icon)
+ }
+
       return customAxios<InternalInterfaceHandlerCreateMyProfileResponse>(
       {url: `/v1/me/profile`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: internalInterfaceHandlerCreateMyProfileRequest, signal
+      headers: {'Content-Type': 'multipart/form-data', },
+       data: formData, signal
     },
       options);
     }
@@ -56,8 +62,8 @@ export const postV1MeProfile = (
 
 
 export const getPostV1MeProfileMutationOptions = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1MeProfile>>, TError,{data: InternalInterfaceHandlerCreateMyProfileRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
-): UseMutationOptions<Awaited<ReturnType<typeof postV1MeProfile>>, TError,{data: InternalInterfaceHandlerCreateMyProfileRequest}, TContext> => {
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1MeProfile>>, TError,{data: _V1MeProfilePostRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+): UseMutationOptions<Awaited<ReturnType<typeof postV1MeProfile>>, TError,{data: _V1MeProfilePostRequest}, TContext> => {
 
 const mutationKey = ['postV1MeProfile'];
 const {mutation: mutationOptions, request: requestOptions} = options ?
@@ -69,7 +75,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
       
 
 
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postV1MeProfile>>, {data: InternalInterfaceHandlerCreateMyProfileRequest}> = (props) => {
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof postV1MeProfile>>, {data: _V1MeProfilePostRequest}> = (props) => {
           const {data} = props ?? {};
 
           return  postV1MeProfile(data,requestOptions)
@@ -81,18 +87,18 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
   return  { mutationFn, ...mutationOptions }}
 
     export type PostV1MeProfileMutationResult = NonNullable<Awaited<ReturnType<typeof postV1MeProfile>>>
-    export type PostV1MeProfileMutationBody = InternalInterfaceHandlerCreateMyProfileRequest
+    export type PostV1MeProfileMutationBody = _V1MeProfilePostRequest
     export type PostV1MeProfileMutationError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
 
     /**
  * @summary Create user profile
  */
 export const usePostV1MeProfile = <TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1MeProfile>>, TError,{data: InternalInterfaceHandlerCreateMyProfileRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof postV1MeProfile>>, TError,{data: _V1MeProfilePostRequest}, TContext>, request?: SecondParameter<typeof customAxios>}
  ): UseMutationResult<
         Awaited<ReturnType<typeof postV1MeProfile>>,
         TError,
-        {data: InternalInterfaceHandlerCreateMyProfileRequest},
+        {data: _V1MeProfilePostRequest},
         TContext
       > => {
 

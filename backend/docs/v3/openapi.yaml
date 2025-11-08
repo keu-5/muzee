@@ -291,13 +291,12 @@ paths:
     post:
       description: Creates a user profile for the currently authenticated user. Requires
         authentication via Bearer token (Authorization header) or HttpOnly cookie
-        (access_token).
+        (access_token). Accepts multipart form data with optional icon image file.
       requestBody:
         content:
-          application/json:
+          multipart/form-data:
             schema:
-              $ref: "#/components/schemas/internal_interface_handler.CreateMyProfileRequest"
-        description: User profile information
+              $ref: "#/components/schemas/_v1_me_profile_post_request"
         required: true
       responses:
         "201":
@@ -330,7 +329,6 @@ paths:
       summary: Create user profile
       tags:
       - user-profiles
-      x-codegen-request-body-name: request
   /v1/user-profiles/check-username:
     get:
       description: Checks whether the specified username is available for registration.
@@ -419,23 +417,6 @@ components:
       properties:
         available:
           type: boolean
-      type: object
-    internal_interface_handler.CreateMyProfileRequest:
-      properties:
-        icon_path:
-          maxLength: 255
-          type: string
-        name:
-          maxLength: 100
-          minLength: 1
-          type: string
-        username:
-          maxLength: 50
-          minLength: 1
-          type: string
-      required:
-      - name
-      - username
       type: object
     internal_interface_handler.CreateMyProfileResponse:
       example:
@@ -672,6 +653,22 @@ components:
           type: string
         user:
           $ref: "#/components/schemas/internal_interface_handler.UserResponse"
+      type: object
+    _v1_me_profile_post_request:
+      properties:
+        name:
+          description: User name (1-100 characters)
+          type: string
+        username:
+          description: Username (1-50 characters)
+          type: string
+        icon:
+          description: "Profile icon image (max 5MB, JPEG/PNG/GIF/WebP)"
+          format: binary
+          type: string
+      required:
+      - name
+      - username
       type: object
   securitySchemes:
     ApiKeyAuth:
