@@ -287,36 +287,7 @@ paths:
       tags:
       - auth
       x-codegen-request-body-name: request
-  /v1/users/me:
-    get:
-      description: Returns the current authenticated user's information. Accepts authentication
-        via Bearer token (Authorization header) or HttpOnly cookie (access_token).
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/internal_interface_handler.GetMeResponse"
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-          description: Unauthorized
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
-          description: Internal Server Error
-      security:
-      - BearerAuth: []
-      - CookieAuth: []
-      summary: Get current user
-      tags:
-      - users
-  /v1/users/me/profile:
+  /v1/me/profile:
     post:
       description: Creates a user profile for the currently authenticated user. Requires
         authentication via Bearer token (Authorization header) or HttpOnly cookie
@@ -360,6 +331,35 @@ paths:
       tags:
       - user-profiles
       x-codegen-request-body-name: request
+  /v1/users/me:
+    get:
+      description: Returns the current authenticated user's information. Accepts authentication
+        via Bearer token (Authorization header) or HttpOnly cookie (access_token).
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_interface_handler.GetMeResponse"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+          description: Unauthorized
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      - CookieAuth: []
+      summary: Get current user
+      tags:
+      - users
 components:
   schemas:
     github_com_keu-5_muzee_backend_internal_helper.ErrorResponse:

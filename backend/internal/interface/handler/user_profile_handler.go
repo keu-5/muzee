@@ -51,7 +51,7 @@ type CreateMyProfileResponse struct {
 //	@Failure		400		{object}	helper.ErrorResponse
 //	@Failure		401		{object}	helper.ErrorResponse
 //	@Failure		500		{object}	helper.ErrorResponse
-//	@Router			/v1/users/me/profile [post]
+//	@Router			/v1/me/profile [post]
 func (h *UserProfileHandler) CreateMyProfile(c *fiber.Ctx) error {
 	// 1. リクエストパース、バリデーション
 	var req CreateMyProfileRequest

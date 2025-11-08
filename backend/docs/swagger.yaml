@@ -462,34 +462,7 @@ paths:
       summary: Verify code and create account
       tags:
       - auth
-  /v1/users/me:
-    get:
-      consumes:
-      - application/json
-      description: Returns the current authenticated user's information. Accepts authentication
-        via Bearer token (Authorization header) or HttpOnly cookie (access_token).
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/internal_interface_handler.GetMeResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
-      security:
-      - BearerAuth: []
-      - CookieAuth: []
-      summary: Get current user
-      tags:
-      - users
-  /v1/users/me/profile:
+  /v1/me/profile:
     post:
       consumes:
       - application/json
@@ -528,6 +501,33 @@ paths:
       summary: Create user profile
       tags:
       - user-profiles
+  /v1/users/me:
+    get:
+      consumes:
+      - application/json
+      description: Returns the current authenticated user's information. Accepts authentication
+        via Bearer token (Authorization header) or HttpOnly cookie (access_token).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.GetMeResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - CookieAuth: []
+      summary: Get current user
+      tags:
+      - users
 schemes:
 - http
 securityDefinitions:
