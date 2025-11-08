@@ -9,6 +9,7 @@ import (
 
 type UserProfileUsecase interface {
 	CreateUserProfile(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
+	IsUsernameAvailable(ctx context.Context, username string) (bool, error)
 }
 
 type userProfileUsecase struct {
@@ -27,4 +28,12 @@ func (u *userProfileUsecase) CreateUserProfile(ctx context.Context, userID int64
 		return nil, err
 	}
 	return userProfile, nil
+}
+
+func (u *userProfileUsecase) IsUsernameAvailable(ctx context.Context, username string) (bool, error) {
+	exists, err := u.userProfileRepo.ExistsByUsername(ctx, username)
+	if err != nil {
+		return false, err
+	}
+	return !exists, nil
 }

@@ -45,6 +45,9 @@ func RegisterRoutes(
 	users := v1.Group("/users", middleware.AuthMiddleware(cfg.JWTSecret))
 	users.Get("/me", userHandler.GetMe)
 
+	userProfiles := v1.Group("/user-profiles")
+	userProfiles.Get("/check-username", userProfileHandler.CheckUsernameAvailability)
+
 	me := v1.Group("/me", middleware.AuthMiddleware(cfg.JWTSecret))
 	me.Post("/profile", userProfileHandler.CreateMyProfile)
 }

@@ -105,3 +105,54 @@ func (h *UserProfileHandler) CreateMyProfile(c *fiber.Ctx) error {
 	}
 	return c.Status(fiber.StatusCreated).JSON(res)
 }
+
+type CheckUsernameAvailabilityRequest struct {
+	Username string `query:"username" validate:"required,min=1,max=50"`
+}
+
+type CheckUsernameAvailabilityResponse struct {
+	Available bool `json:"available"`
+}
+
+// CheckUsernameAvailability checks if a given username is available
+//
+//	@Summary		Check username availability
+//	@Description	Checks whether the specified username is available for registration. This endpoint does not require authentication.
+//	@Tags			user-profiles
+//	@Accept			json
+//	@Produce		json
+//	@Param			username	query		string	true	"Username to check (1–50 characters)"
+//	@Success		200		{object}	CheckUsernameAvailabilityResponse
+//	@Failure		400		{object}	helper.ErrorResponse
+//	@Failure		500		{object}	helper.ErrorResponse
+//	@Router			/v1/user-profiles/check-username [get]
+func (h *UserProfileHandler) CheckUsernameAvailability(c *fiber.Ctx) error {
+	// 1. リクエストパース、バリデーション
+	var req CheckUsernameAvailabilityRequest
+	if err := c.QueryParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "bad_request",
+			"message": "無効なクエリパラメータです",
+		})
+	}
+	if err := h.validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
+	}
+
+	ctx := c.Context()
+
+	// 2. ユーザーネームの利用可能性チェック
+	available, err := h.userProfileUC.IsUsernameAvailable(ctx, req.Username)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "サーバーエラーが発生しました",
+		})
+	}
+
+	// 3. レスポンス返却
+	res := CheckUsernameAvailabilityResponse{
+		Available: available,
+	}
+	return c.Status(fiber.StatusOK).JSON(res)
+}

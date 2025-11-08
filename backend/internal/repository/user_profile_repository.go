@@ -12,6 +12,7 @@ import (
 type UserProfileRepository interface {
 	Create(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
 	ExistsByUserID(ctx context.Context, userID int64) (bool, error)
+	ExistsByUsername(ctx context.Context, username string) (bool, error)
 }
 
 type userProfileRepository struct {
@@ -46,6 +47,17 @@ func (r *userProfileRepository) ExistsByUserID(ctx context.Context, userID int64
 	exists, err := r.client.UserProfile.
 		Query().
 		Where(userprofile.HasUserWith(user.ID(userID))).
+		Exist(ctx)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
+}
+
+func (r *userProfileRepository) ExistsByUsername(ctx context.Context, username string) (bool, error) {
+	exists, err := r.client.UserProfile.
+		Query().
+		Where(userprofile.UsernameEQ(username)).
 		Exist(ctx)
 	if err != nil {
 		return false, err
