@@ -17,15 +17,17 @@ type TokenPair struct {
 type JWTClaims struct {
 	UserID int64  `json:"user_id"`
 	Email  string `json:"email"`
+	HasProfile bool   `json:"has_profile"`
 	jwt.RegisteredClaims
 }
 
 // GenerateAccessToken generates a JWT access token with 15 minutes expiration
-func GenerateAccessToken(userID int64, email string, secret string) (string, error) {
+func GenerateAccessToken(userID int64, email string, hasProfile bool, secret string) (string, error) {
 	expirationTime := time.Now().Add(15 * time.Minute)
 	claims := &JWTClaims{
 		UserID: userID,
 		Email:  email,
+		HasProfile: hasProfile,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

@@ -4,11 +4,14 @@ import (
 	"context"
 
 	"github.com/keu-5/muzee/backend/ent"
+	"github.com/keu-5/muzee/backend/ent/user"
+	"github.com/keu-5/muzee/backend/ent/userprofile"
 	"github.com/keu-5/muzee/backend/internal/domain"
 )
 
 type UserProfileRepository interface {
 	Create(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
+	ExistsByUserID(ctx context.Context, userID int64) (bool, error)
 }
 
 type userProfileRepository struct {
@@ -37,4 +40,15 @@ func (r *userProfileRepository) Create(ctx context.Context, userID int64, name s
 		CreatedAt: profile.CreatedAt,
 		UpdatedAt: profile.UpdatedAt,
 	}, nil
+}
+
+func (r *userProfileRepository) ExistsByUserID(ctx context.Context, userID int64) (bool, error) {
+	exists, err := r.client.UserProfile.
+		Query().
+		Where(userprofile.HasUserWith(user.ID(userID))).
+		Exist(ctx)
+	if err != nil {
+		return false, err
+	}
+	return exists, nil
 }
