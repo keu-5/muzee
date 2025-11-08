@@ -107,6 +107,17 @@ services:
     volumes:
       - minio_data:/data
 
+  minio-init:
+    build:
+      context: ..
+      dockerfile: deploy/docker/minio-init/Dockerfile
+    depends_on:
+      - minio
+    env_file:
+      - .env.dev
+    networks:
+      - app-network
+
 volumes:
   db_data:
     driver: local
