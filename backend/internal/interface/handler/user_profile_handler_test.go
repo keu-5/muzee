@@ -20,7 +20,8 @@ import (
 
 // Mock UserProfileUsecase
 type mockUserProfileUsecase struct {
-	createUserProfileFunc func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
+	createUserProfileFunc   func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
+	isUsernameAvailableFunc func(ctx context.Context, username string) (bool, error)
 }
 
 func (m *mockUserProfileUsecase) CreateUserProfile(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
@@ -38,9 +39,17 @@ func (m *mockUserProfileUsecase) CreateUserProfile(ctx context.Context, userID i
 	}, nil
 }
 
+func (m *mockUserProfileUsecase) IsUsernameAvailable(ctx context.Context, username string) (bool, error) {
+	if m.isUsernameAvailableFunc != nil {
+		return m.isUsernameAvailableFunc(ctx, username)
+	}
+	return true, nil
+}
+
 func setupTestUserProfileApp(handler *UserProfileHandler, jwtSecret string) *fiber.App {
 	app := fiber.New()
 	app.Post("/api/v1/users/me/profile", middleware.AuthMiddleware(jwtSecret), handler.CreateMyProfile)
+	app.Get("/api/v1/user-profiles/check-username", handler.CheckUsernameAvailability)
 	return app
 }
 
@@ -381,6 +390,162 @@ func TestCreateMyProfile_WithGETMethod(t *testing.T) {
 	// Try GET instead of POST
 	req := httptest.NewRequest("GET", "/api/v1/users/me/profile", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	// Should return 405 Method Not Allowed
+	assert.Equal(t, 405, resp.StatusCode)
+}
+
+func TestCheckUsernameAvailability_Success_Available(t *testing.T) {
+	jwtSecret := "test-secret-key"
+
+	mockUserProfile := &mockUserProfileUsecase{
+		isUsernameAvailableFunc: func(ctx context.Context, username string) (bool, error) {
+			return true, nil
+		},
+	}
+
+	handler := NewUserProfileHandler(mockUserProfile)
+	app := setupTestUserProfileApp(handler, jwtSecret)
+
+	// Create request
+	req := httptest.NewRequest("GET", "/api/v1/user-profiles/check-username?username=testuser", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform request
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 200, resp.StatusCode)
+
+	var response CheckUsernameAvailabilityResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	err = json.Unmarshal(bodyBytes, &response)
+	assert.NoError(t, err)
+	assert.True(t, response.Available)
+}
+
+func TestCheckUsernameAvailability_Success_NotAvailable(t *testing.T) {
+	jwtSecret := "test-secret-key"
+
+	mockUserProfile := &mockUserProfileUsecase{
+		isUsernameAvailableFunc: func(ctx context.Context, username string) (bool, error) {
+			if username == "existinguser" {
+				return false, nil
+			}
+			return true, nil
+		},
+	}
+
+	handler := NewUserProfileHandler(mockUserProfile)
+	app := setupTestUserProfileApp(handler, jwtSecret)
+
+	// Create request
+	req := httptest.NewRequest("GET", "/api/v1/user-profiles/check-username?username=existinguser", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform request
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 200, resp.StatusCode)
+
+	var response CheckUsernameAvailabilityResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	err = json.Unmarshal(bodyBytes, &response)
+	assert.NoError(t, err)
+	assert.False(t, response.Available)
+}
+
+func TestCheckUsernameAvailability_ValidationError_MissingUsername(t *testing.T) {
+	jwtSecret := "test-secret-key"
+
+	mockUserProfile := &mockUserProfileUsecase{}
+	handler := NewUserProfileHandler(mockUserProfile)
+	app := setupTestUserProfileApp(handler, jwtSecret)
+
+	// Request without username query parameter
+	req := httptest.NewRequest("GET", "/api/v1/user-profiles/check-username", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+}
+
+func TestCheckUsernameAvailability_ValidationError_EmptyUsername(t *testing.T) {
+	jwtSecret := "test-secret-key"
+
+	mockUserProfile := &mockUserProfileUsecase{}
+	handler := NewUserProfileHandler(mockUserProfile)
+	app := setupTestUserProfileApp(handler, jwtSecret)
+
+	// Request with empty username
+	req := httptest.NewRequest("GET", "/api/v1/user-profiles/check-username?username=", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 400, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "validation_error", errResp.Error)
+}
+
+func TestCheckUsernameAvailability_InternalServerError(t *testing.T) {
+	jwtSecret := "test-secret-key"
+
+	mockUserProfile := &mockUserProfileUsecase{
+		isUsernameAvailableFunc: func(ctx context.Context, username string) (bool, error) {
+			return false, errors.New("database error")
+		},
+	}
+
+	handler := NewUserProfileHandler(mockUserProfile)
+	app := setupTestUserProfileApp(handler, jwtSecret)
+
+	// Create request
+	req := httptest.NewRequest("GET", "/api/v1/user-profiles/check-username?username=testuser", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Perform request
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 500, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "internal_server_error", errResp.Error)
+}
+
+func TestCheckUsernameAvailability_WithPOSTMethod(t *testing.T) {
+	jwtSecret := "test-secret-key"
+
+	mockUserProfile := &mockUserProfileUsecase{}
+	handler := NewUserProfileHandler(mockUserProfile)
+	app := setupTestUserProfileApp(handler, jwtSecret)
+
+	// Try POST instead of GET
+	req := httptest.NewRequest("POST", "/api/v1/user-profiles/check-username?username=testuser", nil)
 
 	resp, err := app.Test(req, -1)
 	assert.NoError(t, err)

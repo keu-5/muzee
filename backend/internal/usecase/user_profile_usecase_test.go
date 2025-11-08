@@ -11,8 +11,9 @@ import (
 
 // Mock UserProfileRepository
 type mockUserProfileRepository struct {
-	createFunc         func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
-	existsByUserIDFunc func(ctx context.Context, userID int64) (bool, error)
+	createFunc             func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
+	existsByUserIDFunc     func(ctx context.Context, userID int64) (bool, error)
+	existsByUsernameFunc   func(ctx context.Context, username string) (bool, error)
 }
 
 func (m *mockUserProfileRepository) Create(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
@@ -33,6 +34,13 @@ func (m *mockUserProfileRepository) Create(ctx context.Context, userID int64, na
 func (m *mockUserProfileRepository) ExistsByUserID(ctx context.Context, userID int64) (bool, error) {
 	if m.existsByUserIDFunc != nil {
 		return m.existsByUserIDFunc(ctx, userID)
+	}
+	return false, nil
+}
+
+func (m *mockUserProfileRepository) ExistsByUsername(ctx context.Context, username string) (bool, error) {
+	if m.existsByUsernameFunc != nil {
+		return m.existsByUsernameFunc(ctx, username)
 	}
 	return false, nil
 }
@@ -169,6 +177,83 @@ func TestCreateUserProfile(t *testing.T) {
 				if tt.iconPath == nil && profile.IconPath != nil {
 					t.Errorf("CreateUserProfile() iconPath = %v, want nil", profile.IconPath)
 				}
+			}
+		})
+	}
+}
+
+func TestIsUsernameAvailable(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name               string
+		username           string
+		mockExistsByUsername func(ctx context.Context, username string) (bool, error)
+		wantAvailable      bool
+		wantErr            bool
+	}{
+		{
+			name:     "username is available",
+			username: "newuser",
+			mockExistsByUsername: func(ctx context.Context, username string) (bool, error) {
+				return false, nil
+			},
+			wantAvailable: true,
+			wantErr:       false,
+		},
+		{
+			name:     "username is not available",
+			username: "existinguser",
+			mockExistsByUsername: func(ctx context.Context, username string) (bool, error) {
+				return true, nil
+			},
+			wantAvailable: false,
+			wantErr:       false,
+		},
+		{
+			name:     "repository error",
+			username: "testuser",
+			mockExistsByUsername: func(ctx context.Context, username string) (bool, error) {
+				return false, errors.New("database error")
+			},
+			wantAvailable: false,
+			wantErr:       true,
+		},
+		{
+			name:     "empty username check",
+			username: "",
+			mockExistsByUsername: func(ctx context.Context, username string) (bool, error) {
+				return false, nil
+			},
+			wantAvailable: true,
+			wantErr:       false,
+		},
+		{
+			name:     "username with special characters",
+			username: "user_name123",
+			mockExistsByUsername: func(ctx context.Context, username string) (bool, error) {
+				return false, nil
+			},
+			wantAvailable: true,
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &mockUserProfileRepository{
+				existsByUsernameFunc: tt.mockExistsByUsername,
+			}
+			usecase := NewUserProfileUsecase(mockRepo)
+
+			available, err := usecase.IsUsernameAvailable(ctx, tt.username)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("IsUsernameAvailable() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if available != tt.wantAvailable {
+				t.Errorf("IsUsernameAvailable() available = %v, want %v", available, tt.wantAvailable)
 			}
 		})
 	}

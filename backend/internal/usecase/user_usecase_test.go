@@ -412,3 +412,81 @@ func TestGetUserByID(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckUserProfileExists(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name               string
+		userID             int64
+		mockExistsByUserID func(ctx context.Context, userID int64) (bool, error)
+		wantExists         bool
+		wantErr            bool
+	}{
+		{
+			name:   "profile exists",
+			userID: 123,
+			mockExistsByUserID: func(ctx context.Context, userID int64) (bool, error) {
+				return true, nil
+			},
+			wantExists: true,
+			wantErr:    false,
+		},
+		{
+			name:   "profile does not exist",
+			userID: 456,
+			mockExistsByUserID: func(ctx context.Context, userID int64) (bool, error) {
+				return false, nil
+			},
+			wantExists: false,
+			wantErr:    false,
+		},
+		{
+			name:   "repository error",
+			userID: 789,
+			mockExistsByUserID: func(ctx context.Context, userID int64) (bool, error) {
+				return false, errors.New("database error")
+			},
+			wantExists: false,
+			wantErr:    true,
+		},
+		{
+			name:   "user ID is 0",
+			userID: 0,
+			mockExistsByUserID: func(ctx context.Context, userID int64) (bool, error) {
+				return false, nil
+			},
+			wantExists: false,
+			wantErr:    false,
+		},
+		{
+			name:   "negative user ID",
+			userID: -1,
+			mockExistsByUserID: func(ctx context.Context, userID int64) (bool, error) {
+				return false, nil
+			},
+			wantExists: false,
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &mockUserRepository{}
+			mockProfileRepo := &mockUserProfileRepository{
+				existsByUserIDFunc: tt.mockExistsByUserID,
+			}
+			usecase := NewUserUsecase(mockRepo, mockProfileRepo)
+
+			exists, err := usecase.CheckUserProfileExists(ctx, tt.userID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CheckUserProfileExists() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if exists != tt.wantExists {
+				t.Errorf("CheckUserProfileExists() exists = %v, want %v", exists, tt.wantExists)
+			}
+		})
+	}
+}
