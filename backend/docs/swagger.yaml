@@ -12,6 +12,11 @@ definitions:
       message:
         type: string
     type: object
+  internal_interface_handler.CheckUsernameAvailabilityResponse:
+    properties:
+      available:
+        type: boolean
+    type: object
   internal_interface_handler.CreateMyProfileRequest:
     properties:
       icon_path:
@@ -499,6 +504,36 @@ paths:
       - BearerAuth: []
       - CookieAuth: []
       summary: Create user profile
+      tags:
+      - user-profiles
+  /v1/user-profiles/check-username:
+    get:
+      consumes:
+      - application/json
+      description: Checks whether the specified username is available for registration.
+        This endpoint does not require authentication.
+      parameters:
+      - description: Username to check (1–50 characters)
+        in: query
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.CheckUsernameAvailabilityResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      summary: Check username availability
       tags:
       - user-profiles
   /v1/users/me:

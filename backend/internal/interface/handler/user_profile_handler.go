@@ -122,9 +122,9 @@ type CheckUsernameAvailabilityResponse struct {
 //	@Accept			json
 //	@Produce		json
 //	@Param			username	query		string	true	"Username to check (1–50 characters)"
-//	@Success		200		{object}	CheckUsernameAvailabilityResponse
-//	@Failure		400		{object}	helper.ErrorResponse
-//	@Failure		500		{object}	helper.ErrorResponse
+//	@Success		200			{object}	CheckUsernameAvailabilityResponse
+//	@Failure		400			{object}	helper.ErrorResponse
+//	@Failure		500			{object}	helper.ErrorResponse
 //	@Router			/v1/user-profiles/check-username [get]
 func (h *UserProfileHandler) CheckUsernameAvailability(c *fiber.Ctx) error {
 	// 1. リクエストパース、バリデーション

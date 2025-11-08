@@ -7,8 +7,10 @@
  */
 
 export * from './getTests500';
+export * from './getV1UserProfilesCheckUsernameParams';
 export * from './githubComKeu5MuzeeBackendInternalHelperErrorResponse';
 export * from './githubComKeu5MuzeeBackendInternalHelperErrorResponseDetailsItem';
+export * from './internalInterfaceHandlerCheckUsernameAvailabilityResponse';
 export * from './internalInterfaceHandlerCreateMyProfileRequest';
 export * from './internalInterfaceHandlerCreateMyProfileResponse';
 export * from './internalInterfaceHandlerGetMeResponse';

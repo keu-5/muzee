@@ -331,6 +331,39 @@ paths:
       tags:
       - user-profiles
       x-codegen-request-body-name: request
+  /v1/user-profiles/check-username:
+    get:
+      description: Checks whether the specified username is available for registration.
+        This endpoint does not require authentication.
+      parameters:
+      - description: Username to check (1–50 characters)
+        in: query
+        name: username
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_interface_handler.CheckUsernameAvailabilityResponse"
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+          description: Bad Request
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+          description: Internal Server Error
+      summary: Check username availability
+      tags:
+      - user-profiles
   /v1/users/me:
     get:
       description: Returns the current authenticated user's information. Accepts authentication
@@ -379,6 +412,13 @@ components:
           type: string
         message:
           type: string
+      type: object
+    internal_interface_handler.CheckUsernameAvailabilityResponse:
+      example:
+        available: true
+      properties:
+        available:
+          type: boolean
       type: object
     internal_interface_handler.CreateMyProfileRequest:
       properties:

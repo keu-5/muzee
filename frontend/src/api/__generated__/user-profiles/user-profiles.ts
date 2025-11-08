@@ -6,16 +6,24 @@
  * OpenAPI spec version: 1.0
  */
 import {
-  useMutation
+  useMutation,
+  useQuery
 } from '@tanstack/react-query';
 import type {
   MutationFunction,
+  QueryClient,
+  QueryFunction,
+  QueryKey,
   UseMutationOptions,
-  UseMutationResult
+  UseMutationResult,
+  UseQueryOptions,
+  UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  GetV1UserProfilesCheckUsernameParams,
   GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
+  InternalInterfaceHandlerCheckUsernameAvailabilityResponse,
   InternalInterfaceHandlerCreateMyProfileRequest,
   InternalInterfaceHandlerCreateMyProfileResponse
 } from '.././schemas';
@@ -92,4 +100,82 @@ export const usePostV1MeProfile = <TError = GithubComKeu5MuzeeBackendInternalHel
 
       return useMutation(mutationOptions );
     }
+    /**
+ * Checks whether the specified username is available for registration. This endpoint does not require authentication.
+ * @summary Check username availability
+ */
+export const getV1UserProfilesCheckUsername = (
+    params: GetV1UserProfilesCheckUsernameParams,
+ options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxios<InternalInterfaceHandlerCheckUsernameAvailabilityResponse>(
+      {url: `/v1/user-profiles/check-username`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+  
+
+export const getGetV1UserProfilesCheckUsernameQueryKey = (params?: GetV1UserProfilesCheckUsernameParams,) => {
+    return [`/v1/user-profiles/check-username`, ...(params ? [params]: [])] as const;
+    }
+
     
+export const getGetV1UserProfilesCheckUsernameQueryOptions = <TData = Awaited<ReturnType<typeof getV1UserProfilesCheckUsername>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>(params: GetV1UserProfilesCheckUsernameParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getV1UserProfilesCheckUsername>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetV1UserProfilesCheckUsernameQueryKey(params);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getV1UserProfilesCheckUsername>>> = ({ signal }) => getV1UserProfilesCheckUsername(params, requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getV1UserProfilesCheckUsername>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetV1UserProfilesCheckUsernameQueryResult = NonNullable<Awaited<ReturnType<typeof getV1UserProfilesCheckUsername>>>
+export type GetV1UserProfilesCheckUsernameQueryError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
+
+
+/**
+ * @summary Check username availability
+ */
+
+export function useGetV1UserProfilesCheckUsername<TData = Awaited<ReturnType<typeof getV1UserProfilesCheckUsername>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>(
+ params: GetV1UserProfilesCheckUsernameParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getV1UserProfilesCheckUsername>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
+  
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetV1UserProfilesCheckUsernameQueryOptions(params,options)
+
+  const query = useQuery(queryOptions ) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+/**
+ * @summary Check username availability
+ */
+export const prefetchGetV1UserProfilesCheckUsernameQuery = async <TData = Awaited<ReturnType<typeof getV1UserProfilesCheckUsername>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>(
+ queryClient: QueryClient, params: GetV1UserProfilesCheckUsernameParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getV1UserProfilesCheckUsername>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getGetV1UserProfilesCheckUsernameQueryOptions(params,options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
+
+
