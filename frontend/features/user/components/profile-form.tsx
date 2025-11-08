@@ -15,7 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImageCropModal } from "@/features/user/components/image-crop-modal";
 import { LINK } from "@/lib/links";
-import { useGetV1UserProfilesCheckUsername } from "@/src/api/__generated__/user-profiles/user-profiles";
+import { base64ToFile } from "@/lib/utils";
+import { postV1AuthRefresh } from "@/src/api/__generated__/auth/auth";
+import {
+  useGetV1UserProfilesCheckUsername,
+  usePostV1MeProfile,
+} from "@/src/api/__generated__/user-profiles/user-profiles";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AtSign,
@@ -54,7 +59,9 @@ const _ProfileForm = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [tempImageSrc, setTempImageSrc] = useState<string>("");
   const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+
+  const { mutateAsync: createProfile, isPending: isLoading } =
+    usePostV1MeProfile();
 
   const {
     register,
@@ -144,26 +151,30 @@ const _ProfileForm = () => {
 
   const onSubmit = async (data: ProfileFormValues) => {
     setError("");
-    setIsLoading(true);
 
     try {
-      //TODO: モックAPIコール
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      let iconFile: File | undefined = undefined;
 
-      const profileData = {
-        icon_path: iconImage,
-        name: data.name,
-        username: data.username,
-        createdAt: new Date().toISOString(),
-      };
+      if (iconImage) {
+        iconFile = await base64ToFile(iconImage, "profile-icon.png");
+      }
 
-      localStorage.setItem("userProfile", JSON.stringify(profileData));
+      await createProfile({
+        data: {
+          name: data.name,
+          username: data.username,
+          icon: iconFile,
+        },
+      });
+
+      await postV1AuthRefresh({
+        refresh_token: undefined,
+        client_id: process.env.NEXT_PUBLIC_CLIENT_ID || "",
+      });
 
       router.push(LINK.home);
     } catch (err) {
       setError("プロフィール作成に失敗しました。");
-    } finally {
-      setIsLoading(false);
     }
   };
 
