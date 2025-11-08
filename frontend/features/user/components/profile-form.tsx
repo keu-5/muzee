@@ -1,5 +1,6 @@
 "use client";
 
+import { Providers } from "@/app/providers";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,11 +15,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImageCropModal } from "@/features/user/components/image-crop-modal";
 import { LINK } from "@/lib/links";
+import { useGetV1UserProfilesCheckUsername } from "@/src/api/__generated__/user-profiles/user-profiles";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AtSign, Cloud, Pencil, Trash2, User } from "lucide-react";
+import {
+  AtSign,
+  CheckCircle2,
+  Cloud,
+  Pencil,
+  Trash2,
+  User,
+  XCircle,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useDebounce } from "use-debounce";
 import { z } from "zod";
 
 const profileSchema = z.object({
@@ -31,7 +42,7 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-export function ProfileForm() {
+const _ProfileForm = () => {
   const router = useRouter();
   const [iconImage, setIconImage] = useState<string>("");
   const [originalImage, setOriginalImage] = useState<string>("");
@@ -48,11 +59,46 @@ export function ProfileForm() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
+    setError: setFormError,
+    clearErrors,
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
-    mode: "onBlur",
+    mode: "onChange",
   });
+
+  const username = watch("username");
+  const [debouncedUsername] = useDebounce(username, 500);
+
+  const { data: usernameCheckData, isFetching: isCheckingUsername } =
+    useGetV1UserProfilesCheckUsername(
+      { username: debouncedUsername || "" },
+      {
+        query: {
+          enabled:
+            !!debouncedUsername &&
+            debouncedUsername.length >= 3 &&
+            !errors.username,
+        },
+      },
+    );
+
+  useEffect(() => {
+    if (!debouncedUsername || debouncedUsername.length < 3) {
+      clearErrors("username");
+      return;
+    }
+
+    if (usernameCheckData && !usernameCheckData.available) {
+      setFormError("username", {
+        type: "manual",
+        message: "このユーザー名は既に使用されています",
+      });
+    } else if (usernameCheckData?.available) {
+      clearErrors("username");
+    }
+  }, [usernameCheckData, debouncedUsername, setFormError, clearErrors]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -243,14 +289,33 @@ export function ProfileForm() {
                   placeholder="yamada_taro"
                   disabled={isLoading}
                   {...register("username")}
-                  className="pl-10"
+                  className="pl-10 pr-10"
                 />
+                {username && username.length >= 3 && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    {isCheckingUsername ? (
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                    ) : usernameCheckData?.available ? (
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                    ) : (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    )}
+                  </div>
+                )}
               </div>
               {errors.username && (
                 <p className="text-sm text-red-500">
                   {errors.username.message}
                 </p>
               )}
+              {!errors.username &&
+                usernameCheckData?.available &&
+                username &&
+                username.length >= 3 && (
+                  <p className="text-sm text-green-600">
+                    このユーザー名は利用可能です
+                  </p>
+                )}
             </div>
           </CardContent>
 
@@ -271,4 +336,12 @@ export function ProfileForm() {
       />
     </>
   );
-}
+};
+
+export const ProfileForm = () => {
+  return (
+    <Providers>
+      <_ProfileForm />
+    </Providers>
+  );
+};
