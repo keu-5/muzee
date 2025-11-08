@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"mime/multipart"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/keu-5/muzee/backend/internal/helper"
@@ -9,12 +11,14 @@ import (
 
 type UserProfileHandler struct {
 	userProfileUC usecase.UserProfileUsecase
+	fileHelper    *helper.FileHelper
 	validate      *validator.Validate
 }
 
-func NewUserProfileHandler(userProfileUC usecase.UserProfileUsecase) *UserProfileHandler {
+func NewUserProfileHandler(userProfileUC usecase.UserProfileUsecase, fileHelper *helper.FileHelper) *UserProfileHandler {
 	return &UserProfileHandler{
 		userProfileUC: userProfileUC,
+		fileHelper:    fileHelper,
 		validate:      validator.New(),
 	}
 }
@@ -27,9 +31,8 @@ type UserProfileResponse struct {
 }
 
 type CreateMyProfileRequest struct {
-	Name     string `json:"name" validate:"required,min=1,max=100"`
-	Username string `json:"username" validate:"required,min=1,max=50"`
-	IconPath string `json:"icon_path" validate:"max=255"`
+	Name     string `form:"name" validate:"required,min=1,max=100"`
+	Username string `form:"username" validate:"required,min=1,max=50"`
 }
 
 type CreateMyProfileResponse struct {
@@ -40,34 +43,24 @@ type CreateMyProfileResponse struct {
 // CreateMyProfile creates a user profile for the authenticated user
 //
 //	@Summary		Create user profile
-//	@Description	Creates a user profile for the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).
+//	@Description	Creates a user profile for the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token). Accepts multipart form data with optional icon image file.
 //	@Tags			user-profiles
-//	@Accept			json
+//	@Accept			multipart/form-data
 //	@Produce		json
 //	@Security		BearerAuth
 //	@Security		CookieAuth
-//	@Param			request	body		CreateMyProfileRequest	true	"User profile information"
-//	@Success		201		{object}	CreateMyProfileResponse
-//	@Failure		400		{object}	helper.ErrorResponse
-//	@Failure		401		{object}	helper.ErrorResponse
-//	@Failure		500		{object}	helper.ErrorResponse
+//	@Param			name		formData	string	true	"User name (1-100 characters)"
+//	@Param			username	formData	string	true	"Username (1-50 characters)"
+//	@Param			icon		formData	file	false	"Profile icon image (max 5MB, JPEG/PNG/GIF/WebP)"
+//	@Success		201			{object}	CreateMyProfileResponse
+//	@Failure		400			{object}	helper.ErrorResponse
+//	@Failure		401			{object}	helper.ErrorResponse
+//	@Failure		500			{object}	helper.ErrorResponse
 //	@Router			/v1/me/profile [post]
 func (h *UserProfileHandler) CreateMyProfile(c *fiber.Ctx) error {
-	// 1. リクエストパース、バリデーション
-	var req CreateMyProfileRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":   "bad_request",
-			"message": "無効なリクエストボディです",
-		})
-	}
-	if err := h.validate.Struct(req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
-	}
-
 	ctx := c.Context()
 
-	// 2. ミドルウェアでlocalsに設定されたuser_idを取得
+	// 1. ミドルウェアでlocalsに設定されたuser_idを取得
 	userID, ok := c.Locals("user_id").(int64)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(helper.ErrorResponse{
@@ -76,12 +69,36 @@ func (h *UserProfileHandler) CreateMyProfile(c *fiber.Ctx) error {
 		})
 	}
 
-	// 3. ユーザープロフィール作成
-	var iconPath *string
-	if req.IconPath != "" {
-		iconPath = &req.IconPath
+	// 2. フォームデータをパース
+	var req CreateMyProfileRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+			Error:   "bad_request",
+			Message: "無効なリクエストボディです",
+		})
 	}
-	profile, err := h.userProfileUC.CreateUserProfile(ctx, userID, req.Name, req.Username, iconPath)
+
+	// 3. バリデーション
+	if err := h.validate.Struct(req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(helper.BuildValidationErrorResponse(err))
+	}
+
+	// 4. 画像ファイルの処理（オプショナル）
+	var iconFile *multipart.FileHeader
+	var err error
+	iconFile, err = c.FormFile("icon")
+	if err == nil {
+		// ファイルが提供されている場合、バリデーション
+		if err := h.fileHelper.ValidateImageFile(iconFile); err != nil {
+			return c.Status(fiber.StatusBadRequest).JSON(helper.ErrorResponse{
+				Error:   "invalid_file",
+				Message: err.Error(),
+			})
+		}
+	}
+
+	// 5. ユーザープロフィール作成（画像ファイルを渡す）
+	profile, err := h.userProfileUC.CreateUserProfile(ctx, userID, req.Name, req.Username, iconFile)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
@@ -89,7 +106,7 @@ func (h *UserProfileHandler) CreateMyProfile(c *fiber.Ctx) error {
 		})
 	}
 
-	// 4. レスポンス返却
+	// 6. レスポンス返却
 	iconPathStr := ""
 	if profile.IconPath != nil {
 		iconPathStr = *profile.IconPath

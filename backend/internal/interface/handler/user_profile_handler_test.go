@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"mime/multipart"
 	"net/http/httptest"
 	"testing"
 	"time"
@@ -20,13 +21,18 @@ import (
 
 // Mock UserProfileUsecase
 type mockUserProfileUsecase struct {
-	createUserProfileFunc   func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
+	createUserProfileFunc   func(ctx context.Context, userID int64, name string, username string, iconFile *multipart.FileHeader) (*domain.UserProfile, error)
 	isUsernameAvailableFunc func(ctx context.Context, username string) (bool, error)
 }
 
-func (m *mockUserProfileUsecase) CreateUserProfile(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
+func (m *mockUserProfileUsecase) CreateUserProfile(ctx context.Context, userID int64, name string, username string, iconFile *multipart.FileHeader) (*domain.UserProfile, error) {
 	if m.createUserProfileFunc != nil {
-		return m.createUserProfileFunc(ctx, userID, name, username, iconPath)
+		return m.createUserProfileFunc(ctx, userID, name, username, iconFile)
+	}
+	var iconPath *string
+	if iconFile != nil {
+		path := "profiles/" + iconFile.Filename
+		iconPath = &path
 	}
 	return &domain.UserProfile{
 		ID:        1,
@@ -55,10 +61,12 @@ func setupTestUserProfileApp(handler *UserProfileHandler, jwtSecret string) *fib
 
 func TestNewUserProfileHandler(t *testing.T) {
 	mockUserProfile := &mockUserProfileUsecase{}
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 
 	assert.NotNil(t, handler)
 	assert.NotNil(t, handler.userProfileUC)
+	assert.NotNil(t, handler.fileHelper)
 }
 
 func TestCreateMyProfile_Success(t *testing.T) {
@@ -67,36 +75,33 @@ func TestCreateMyProfile_Success(t *testing.T) {
 	email := "test@example.com"
 
 	mockUserProfile := &mockUserProfileUsecase{
-		createUserProfileFunc: func(ctx context.Context, uid int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
+		createUserProfileFunc: func(ctx context.Context, uid int64, name string, username string, iconFile *multipart.FileHeader) (*domain.UserProfile, error) {
 			return &domain.UserProfile{
 				ID:        1,
 				UserID:    uid,
 				Name:      name,
 				Username:  username,
-				IconPath:  iconPath,
+				IconPath:  nil,
 				CreatedAt: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
 				UpdatedAt: time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC),
 			}, nil
 		},
 	}
 
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
 	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
 	assert.NoError(t, err)
 
-	// Create request
-	reqBody := CreateMyProfileRequest{
-		Name:     "Test User",
-		Username: "testuser",
-		IconPath: "https://example.com/icon.png",
-	}
-	body, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", bytes.NewReader(body))
+	// Create request with form data
+	body := new(bytes.Buffer)
+	body.WriteString("name=Test+User&username=testuser")
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// Perform request
 	resp, err := app.Test(req, -1)
@@ -113,7 +118,6 @@ func TestCreateMyProfile_Success(t *testing.T) {
 	assert.Equal(t, int64(1), response.UserProfile.ID)
 	assert.Equal(t, "Test User", response.UserProfile.Name)
 	assert.Equal(t, "testuser", response.UserProfile.Username)
-	assert.Equal(t, "https://example.com/icon.png", response.UserProfile.IconPath)
 }
 
 func TestCreateMyProfile_Success_WithoutIconPath(t *testing.T) {
@@ -122,36 +126,33 @@ func TestCreateMyProfile_Success_WithoutIconPath(t *testing.T) {
 	email := "test@example.com"
 
 	mockUserProfile := &mockUserProfileUsecase{
-		createUserProfileFunc: func(ctx context.Context, uid int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
+		createUserProfileFunc: func(ctx context.Context, uid int64, name string, username string, iconFile *multipart.FileHeader) (*domain.UserProfile, error) {
 			return &domain.UserProfile{
 				ID:        1,
 				UserID:    uid,
 				Name:      name,
 				Username:  username,
-				IconPath:  iconPath,
+				IconPath:  nil,
 				CreatedAt: time.Now(),
 				UpdatedAt: time.Now(),
 			}, nil
 		},
 	}
 
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
 	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
 	assert.NoError(t, err)
 
-	// Create request without icon_path
-	reqBody := CreateMyProfileRequest{
-		Name:     "Test User",
-		Username: "testuser",
-		IconPath: "",
-	}
-	body, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", bytes.NewReader(body))
+	// Create request without icon
+	body := new(bytes.Buffer)
+	body.WriteString("name=Test+User&username=testuser")
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// Perform request
 	resp, err := app.Test(req, -1)
@@ -175,7 +176,8 @@ func TestCreateMyProfile_InvalidJSON(t *testing.T) {
 	email := "test@example.com"
 
 	mockUserProfile := &mockUserProfileUsecase{}
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
@@ -205,7 +207,8 @@ func TestCreateMyProfile_ValidationError_MissingName(t *testing.T) {
 	email := "test@example.com"
 
 	mockUserProfile := &mockUserProfileUsecase{}
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
@@ -213,15 +216,11 @@ func TestCreateMyProfile_ValidationError_MissingName(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Missing name
-	reqBody := CreateMyProfileRequest{
-		Name:     "",
-		Username: "testuser",
-		IconPath: "",
-	}
-	body, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", bytes.NewReader(body))
+	body := new(bytes.Buffer)
+	body.WriteString("name=&username=testuser")
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := app.Test(req, -1)
 	assert.NoError(t, err)
@@ -242,7 +241,8 @@ func TestCreateMyProfile_ValidationError_MissingUsername(t *testing.T) {
 	email := "test@example.com"
 
 	mockUserProfile := &mockUserProfileUsecase{}
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
@@ -250,15 +250,11 @@ func TestCreateMyProfile_ValidationError_MissingUsername(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Missing username
-	reqBody := CreateMyProfileRequest{
-		Name:     "Test User",
-		Username: "",
-		IconPath: "",
-	}
-	body, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", bytes.NewReader(body))
+	body := new(bytes.Buffer)
+	body.WriteString("name=Test+User&username=")
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := app.Test(req, -1)
 	assert.NoError(t, err)
@@ -277,18 +273,15 @@ func TestCreateMyProfile_Unauthorized_MissingToken(t *testing.T) {
 	jwtSecret := "test-secret-key"
 
 	mockUserProfile := &mockUserProfileUsecase{}
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Request without Authorization header
-	reqBody := CreateMyProfileRequest{
-		Name:     "Test User",
-		Username: "testuser",
-		IconPath: "",
-	}
-	body, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
+	body := new(bytes.Buffer)
+	body.WriteString("name=Test+User&username=testuser")
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := app.Test(req, -1)
 	assert.NoError(t, err)
@@ -306,19 +299,16 @@ func TestCreateMyProfile_Unauthorized_InvalidToken(t *testing.T) {
 	jwtSecret := "test-secret-key"
 
 	mockUserProfile := &mockUserProfileUsecase{}
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Request with invalid token
-	reqBody := CreateMyProfileRequest{
-		Name:     "Test User",
-		Username: "testuser",
-		IconPath: "",
-	}
-	body, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", bytes.NewReader(body))
+	body := new(bytes.Buffer)
+	body.WriteString("name=Test+User&username=testuser")
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
 	req.Header.Set("Authorization", "Bearer invalid.token.here")
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := app.Test(req, -1)
 	assert.NoError(t, err)
@@ -338,12 +328,13 @@ func TestCreateMyProfile_InternalServerError(t *testing.T) {
 	email := "test@example.com"
 
 	mockUserProfile := &mockUserProfileUsecase{
-		createUserProfileFunc: func(ctx context.Context, uid int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
+		createUserProfileFunc: func(ctx context.Context, uid int64, name string, username string, iconFile *multipart.FileHeader) (*domain.UserProfile, error) {
 			return nil, errors.New("database error")
 		},
 	}
 
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
@@ -351,15 +342,11 @@ func TestCreateMyProfile_InternalServerError(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Create request
-	reqBody := CreateMyProfileRequest{
-		Name:     "Test User",
-		Username: "testuser",
-		IconPath: "",
-	}
-	body, _ := json.Marshal(reqBody)
-	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", bytes.NewReader(body))
+	body := new(bytes.Buffer)
+	body.WriteString("name=Test+User&username=testuser")
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
 	req.Header.Set("Authorization", "Bearer "+token)
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	// Perform request
 	resp, err := app.Test(req, -1)
@@ -380,7 +367,8 @@ func TestCreateMyProfile_WithGETMethod(t *testing.T) {
 	email := "test@example.com"
 
 	mockUserProfile := &mockUserProfileUsecase{}
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
@@ -408,7 +396,8 @@ func TestCheckUsernameAvailability_Success_Available(t *testing.T) {
 		},
 	}
 
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create request
@@ -441,7 +430,8 @@ func TestCheckUsernameAvailability_Success_NotAvailable(t *testing.T) {
 		},
 	}
 
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create request
@@ -466,7 +456,8 @@ func TestCheckUsernameAvailability_ValidationError_MissingUsername(t *testing.T)
 	jwtSecret := "test-secret-key"
 
 	mockUserProfile := &mockUserProfileUsecase{}
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Request without username query parameter
@@ -489,7 +480,8 @@ func TestCheckUsernameAvailability_ValidationError_EmptyUsername(t *testing.T) {
 	jwtSecret := "test-secret-key"
 
 	mockUserProfile := &mockUserProfileUsecase{}
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Request with empty username
@@ -517,7 +509,8 @@ func TestCheckUsernameAvailability_InternalServerError(t *testing.T) {
 		},
 	}
 
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create request
@@ -541,7 +534,8 @@ func TestCheckUsernameAvailability_WithPOSTMethod(t *testing.T) {
 	jwtSecret := "test-secret-key"
 
 	mockUserProfile := &mockUserProfileUsecase{}
-	handler := NewUserProfileHandler(mockUserProfile)
+	mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+	handler := NewUserProfileHandler(mockUserProfile, mockFileHelper)
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Try POST instead of GET

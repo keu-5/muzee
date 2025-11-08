@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/keu-5/muzee/backend/internal/domain"
+	"github.com/keu-5/muzee/backend/internal/helper"
 )
 
 // Mock UserProfileRepository
@@ -47,7 +48,8 @@ func (m *mockUserProfileRepository) ExistsByUsername(ctx context.Context, userna
 
 func TestNewUserProfileUsecase(t *testing.T) {
 	mockRepo := &mockUserProfileRepository{}
-	usecase := NewUserProfileUsecase(mockRepo)
+	mockFileHelper := &helper.FileHelper{}
+	usecase := NewUserProfileUsecase(mockRepo, mockFileHelper)
 
 	if usecase == nil {
 		t.Fatal("Expected usecase to be non-nil")
@@ -144,9 +146,11 @@ func TestCreateUserProfile(t *testing.T) {
 			mockRepo := &mockUserProfileRepository{
 				createFunc: tt.mockCreate,
 			}
-			usecase := NewUserProfileUsecase(mockRepo)
+			mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+			usecase := NewUserProfileUsecase(mockRepo, mockFileHelper)
 
-			profile, err := usecase.CreateUserProfile(ctx, tt.userID, tt.profileName, tt.username, tt.iconPath)
+			// iconFileはnilとして渡す（ファイルアップロードテストは別途実施）
+			profile, err := usecase.CreateUserProfile(ctx, tt.userID, tt.profileName, tt.username, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("CreateUserProfile() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -170,12 +174,9 @@ func TestCreateUserProfile(t *testing.T) {
 					t.Errorf("CreateUserProfile() userID = %v, want %v", profile.UserID, tt.userID)
 				}
 
-				if tt.iconPath != nil && (profile.IconPath == nil || *profile.IconPath != *tt.iconPath) {
-					t.Errorf("CreateUserProfile() iconPath = %v, want %v", profile.IconPath, tt.iconPath)
-				}
-
-				if tt.iconPath == nil && profile.IconPath != nil {
-					t.Errorf("CreateUserProfile() iconPath = %v, want nil", profile.IconPath)
+				// iconFileはnilで渡しているため、iconPathは常にnilになる
+				if profile.IconPath != nil {
+					t.Errorf("CreateUserProfile() iconPath = %v, want nil (iconFile was nil)", profile.IconPath)
 				}
 			}
 		})
@@ -244,7 +245,8 @@ func TestIsUsernameAvailable(t *testing.T) {
 			mockRepo := &mockUserProfileRepository{
 				existsByUsernameFunc: tt.mockExistsByUsername,
 			}
-			usecase := NewUserProfileUsecase(mockRepo)
+			mockFileHelper := helper.NewFileHelper("/tmp/test-uploads")
+			usecase := NewUserProfileUsecase(mockRepo, mockFileHelper)
 
 			available, err := usecase.IsUsernameAvailable(ctx, tt.username)
 			if (err != nil) != tt.wantErr {
