@@ -18,6 +18,11 @@ type Config struct {
 	RedisPassword string
 	RedisDB       int
 
+	S3Endpoint  string
+	S3AccessKey string
+	S3SecretKey string
+	S3UseSSL    bool
+
 	ResendEmailDomain string
 	ResendAPIKey      string
 

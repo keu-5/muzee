@@ -87,6 +87,7 @@ func main() {
 			infrastructure.NewClient,
 			infrastructure.NewRedisClient,
 			infrastructure.NewEmailClient,
+			infrastructure.NewMinioClient,
 			NewEmailSender, // EmailClient -> EmailSender interface adapter
 			NewFiberApp,
 
