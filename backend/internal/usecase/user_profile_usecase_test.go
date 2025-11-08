@@ -11,7 +11,8 @@ import (
 
 // Mock UserProfileRepository
 type mockUserProfileRepository struct {
-	createFunc func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
+	createFunc         func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
+	existsByUserIDFunc func(ctx context.Context, userID int64) (bool, error)
 }
 
 func (m *mockUserProfileRepository) Create(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
@@ -27,6 +28,13 @@ func (m *mockUserProfileRepository) Create(ctx context.Context, userID int64, na
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}, nil
+}
+
+func (m *mockUserProfileRepository) ExistsByUserID(ctx context.Context, userID int64) (bool, error) {
+	if m.existsByUserIDFunc != nil {
+		return m.existsByUserIDFunc(ctx, userID)
+	}
+	return false, nil
 }
 
 func TestNewUserProfileUsecase(t *testing.T) {

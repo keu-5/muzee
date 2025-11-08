@@ -75,7 +75,7 @@ func TestCreateMyProfile_Success(t *testing.T) {
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
-	token, err := util.GenerateAccessToken(userID, email, jwtSecret)
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
 	assert.NoError(t, err)
 
 	// Create request
@@ -130,7 +130,7 @@ func TestCreateMyProfile_Success_WithoutIconPath(t *testing.T) {
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
-	token, err := util.GenerateAccessToken(userID, email, jwtSecret)
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
 	assert.NoError(t, err)
 
 	// Create request without icon_path
@@ -170,7 +170,7 @@ func TestCreateMyProfile_InvalidJSON(t *testing.T) {
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
-	token, err := util.GenerateAccessToken(userID, email, jwtSecret)
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
 	assert.NoError(t, err)
 
 	// Invalid JSON
@@ -200,7 +200,7 @@ func TestCreateMyProfile_ValidationError_MissingName(t *testing.T) {
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
-	token, err := util.GenerateAccessToken(userID, email, jwtSecret)
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
 	assert.NoError(t, err)
 
 	// Missing name
@@ -237,7 +237,7 @@ func TestCreateMyProfile_ValidationError_MissingUsername(t *testing.T) {
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
-	token, err := util.GenerateAccessToken(userID, email, jwtSecret)
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
 	assert.NoError(t, err)
 
 	// Missing username
@@ -338,7 +338,7 @@ func TestCreateMyProfile_InternalServerError(t *testing.T) {
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
-	token, err := util.GenerateAccessToken(userID, email, jwtSecret)
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
 	assert.NoError(t, err)
 
 	// Create request
@@ -375,7 +375,7 @@ func TestCreateMyProfile_WithGETMethod(t *testing.T) {
 	app := setupTestUserProfileApp(handler, jwtSecret)
 
 	// Create valid JWT token
-	token, err := util.GenerateAccessToken(userID, email, jwtSecret)
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
 	assert.NoError(t, err)
 
 	// Try GET instead of POST

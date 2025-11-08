@@ -51,7 +51,8 @@ func (m *mockUserRepository) GetByID(ctx context.Context, id int64) (*domain.Use
 
 func TestNewUserUsecase(t *testing.T) {
 	mockRepo := &mockUserRepository{}
-	usecase := NewUserUsecase(mockRepo)
+	mockProfileRepo := &mockUserProfileRepository{}
+	usecase := NewUserUsecase(mockRepo, mockProfileRepo)
 
 	if usecase == nil {
 		t.Fatal("Expected usecase to be non-nil")
@@ -161,7 +162,8 @@ func TestCreateUser(t *testing.T) {
 			mockRepo := &mockUserRepository{
 				createFunc: tt.mockCreate,
 			}
-			usecase := NewUserUsecase(mockRepo)
+			mockProfileRepo := &mockUserProfileRepository{}
+			usecase := NewUserUsecase(mockRepo, mockProfileRepo)
 
 			user, err := usecase.CreateUser(ctx, tt.email, tt.passwordHash)
 			if (err != nil) != tt.wantErr {
@@ -290,7 +292,8 @@ func TestGetUserByEmail(t *testing.T) {
 			mockRepo := &mockUserRepository{
 				getByEmailFunc: tt.mockGetByEmail,
 			}
-			usecase := NewUserUsecase(mockRepo)
+			mockProfileRepo := &mockUserProfileRepository{}
+			usecase := NewUserUsecase(mockRepo, mockProfileRepo)
 
 			user, err := usecase.GetUserByEmail(ctx, tt.email)
 			if (err != nil) != tt.wantErr {
@@ -385,7 +388,8 @@ func TestGetUserByID(t *testing.T) {
 			mockRepo := &mockUserRepository{
 				getByIDFunc: tt.mockGetByID,
 			}
-			usecase := NewUserUsecase(mockRepo)
+			mockProfileRepo := &mockUserProfileRepository{}
+			usecase := NewUserUsecase(mockRepo, mockProfileRepo)
 
 			user, err := usecase.GetUserByID(ctx, tt.id)
 			if (err != nil) != tt.wantErr {
