@@ -92,6 +92,20 @@ services:
     depends_on:
       - frontend
       - backend
+      - minio
+
+  minio:
+    <<: *common
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9000:9000" # S3互換API
+      - "9001:9001" # Web管理UI
+    env_file:
+      - .env.dev
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
 
 volumes:
   db_data:
@@ -101,6 +115,8 @@ volumes:
   go_mod_cache:
     driver: local
   pnpm_cache:
+    driver: local
+  minio_data:
     driver: local
 
 networks:
