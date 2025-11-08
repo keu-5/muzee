@@ -7,3 +7,5 @@ export const LINK = {
     verify: "/signup/verify",
   },
 };
+
+export const PUBLIC_LINKS = [LINK.login, LINK.signup.base, LINK.signup.verify];
