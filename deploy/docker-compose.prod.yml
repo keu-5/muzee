@@ -9,6 +9,8 @@ services:
     build:
       context: ..
       dockerfile: deploy/docker/backend/Dockerfile.prod
+    volumes:
+      - uploads_data:/app/deploy/uploads
     ports:
       - "8080:8080"
     env_file:
@@ -105,6 +107,8 @@ volumes:
   db_data:
     driver: local
   redis_data:
+    driver: local
+  uploads_data:
     driver: local
 
 networks:

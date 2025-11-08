@@ -22,6 +22,8 @@ type Config struct {
 	ResendAPIKey      string
 
 	JWTSecret string
+
+	UploadDir string
 }
 
 func Load() *Config {
@@ -40,6 +42,8 @@ func Load() *Config {
 	viper.SetDefault("RESEND_API_KEY", "")
 
 	viper.SetDefault("JWT_SECRET", "")
+
+	viper.SetDefault("UPLOAD_DIR", "./deploy/uploads")
 
 	viper.AutomaticEnv()
 
@@ -68,6 +72,8 @@ func Load() *Config {
 		ResendAPIKey:      viper.GetString("RESEND_API_KEY"),
 
 		JWTSecret: viper.GetString("JWT_SECRET"),
+
+		UploadDir: viper.GetString("UPLOAD_DIR"),
 	}
 }
 

@@ -57,6 +57,11 @@ func NewEmailSender(emailClient *infrastructure.EmailClient) usecase.EmailSender
 	return emailClient
 }
 
+// NewFileHelper provides FileHelper for fx
+func NewFileHelper(cfg *config.Config) *helper.FileHelper {
+	return helper.NewFileHelper(cfg.UploadDir)
+}
+
 // NewAuthHandlerWithConfig provides AuthHandler with config for fx
 func NewAuthHandlerWithConfig(
 	authUC usecase.AuthUsecase,
@@ -88,6 +93,7 @@ func main() {
 			infrastructure.NewRedisClient,
 			infrastructure.NewEmailClient,
 			NewEmailSender, // EmailClient -> EmailSender interface adapter
+			NewFileHelper,  // FileHelper provider
 			NewFiberApp,
 
 			// Repository

@@ -12,6 +12,7 @@ services:
     volumes:
       - ../backend:/app
       - go_mod_cache:/go/pkg/mod
+      - uploads_data:/app/deploy/uploads
     ports:
       - "8080:8080"
     env_file:
@@ -101,6 +102,8 @@ volumes:
   go_mod_cache:
     driver: local
   pnpm_cache:
+    driver: local
+  uploads_data:
     driver: local
 
 networks:
