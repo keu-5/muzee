@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -301,7 +300,7 @@ func (h *AuthHandler) VerifyCode(c *fiber.Ctx) error {
 	}
 
 	// 6. JWT生成
-	accessToken, err := util.GenerateAccessToken(user.ID, user.Email, h.jwtSecret)
+	accessToken, err := util.GenerateAccessToken(user.ID, user.Email, false, h.jwtSecret)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
@@ -331,32 +330,28 @@ func (h *AuthHandler) VerifyCode(c *fiber.Ctx) error {
 		fmt.Printf("サインアップセッション削除エラー: %v\n", err)
 	}
 
-	// 10. webの場合cookieに設定
-	userAgent := c.Get("User-Agent")
-	isWebBrowser := strings.Contains(userAgent, "Mozilla") && !strings.Contains(userAgent, "Mobile")
+	// 10. cookieに設定（モバイルアプリはレスポンスボディのトークンを使用）
 	isProduction := h.goEnv == "production"
 
-	if isWebBrowser {
-		c.Cookie(&fiber.Cookie{
-			Name:     "access_token",
-			Value:    accessToken,
-			HTTPOnly: true,
-			Secure:   isProduction,
-			SameSite: "Lax",
-			MaxAge:   15 * 60,
-			Path:     "/",
-		})
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		HTTPOnly: true,
+		Secure:   isProduction,
+		SameSite: "Lax",
+		MaxAge:   15 * 60,
+		Path:     "/",
+	})
 
-		c.Cookie(&fiber.Cookie{
-			Name:     "refresh_token",
-			Value:    refreshToken,
-			HTTPOnly: true,
-			Secure:   isProduction,
-			SameSite: "Lax",
-			MaxAge:   7 * 24 * 60 * 60,
-			Path:     "/",
-		})
-	}
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HTTPOnly: true,
+		Secure:   isProduction,
+		SameSite: "Lax",
+		MaxAge:   7 * 24 * 60 * 60,
+		Path:     "/",
+	})
 
 	// 11. レスポンス返却
 	return c.Status(fiber.StatusCreated).JSON(VerifyCodeResponse{
@@ -450,8 +445,17 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// 6. JWT生成
-	accessToken, err := util.GenerateAccessToken(user.ID, user.Email, h.jwtSecret)
+	// 6. ユーザープロフィールの有無を確認
+	hasProfile, err := h.userUC.CheckUserProfileExists(ctx, user.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "サーバーエラーが発生しました。しばらく待ってから再度お試しください",
+		})
+	}
+
+	// 7. JWT生成
+	accessToken, err := util.GenerateAccessToken(user.ID, user.Email, hasProfile, h.jwtSecret)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
@@ -459,7 +463,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// 7. リフレッシュトークン生成
+	// 8. リフレッシュトークン生成
 	refreshToken, err := util.GenerateRefreshToken()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
@@ -468,7 +472,7 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// 8. Redisにリフレッシュトークンを保存（30日間）
+	// 9. Redisにリフレッシュトークンを保存（30日間）
 	if err := h.sessionHelper.SaveRefreshToken(ctx, refreshToken, user.ID, req.ClientID); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
@@ -476,34 +480,30 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// 9. webの場合cookieに設定
-	userAgent := c.Get("User-Agent")
-	isWebBrowser := strings.Contains(userAgent, "Mozilla") && !strings.Contains(userAgent, "Mobile")
+	// 10. cookieに設定（モバイルアプリはレスポンスボディのトークンを使用）
 	isProduction := h.goEnv == "production"
 
-	if isWebBrowser {
-		c.Cookie(&fiber.Cookie{
-			Name:     "access_token",
-			Value:    accessToken,
-			HTTPOnly: true,
-			Secure:   isProduction,
-			SameSite: "Lax",
-			MaxAge:   15 * 60,
-			Path:     "/",
-		})
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    accessToken,
+		HTTPOnly: true,
+		Secure:   isProduction,
+		SameSite: "Lax",
+		MaxAge:   15 * 60,
+		Path:     "/",
+	})
 
-		c.Cookie(&fiber.Cookie{
-			Name:     "refresh_token",
-			Value:    refreshToken,
-			HTTPOnly: true,
-			Secure:   isProduction,
-			SameSite: "Lax",
-			MaxAge:   7 * 24 * 60 * 60,
-			Path:     "/",
-		})
-	}
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    refreshToken,
+		HTTPOnly: true,
+		Secure:   isProduction,
+		SameSite: "Lax",
+		MaxAge:   7 * 24 * 60 * 60,
+		Path:     "/",
+	})
 
-	// 10. レスポンス返却
+	// 11. レスポンス返却
 	return c.JSON(LoginResponse{
 		Message:      "ログインに成功しました",
 		AccessToken:  accessToken,
@@ -608,8 +608,17 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		fmt.Printf("リフレッシュトークン削除エラー: %v\n", err)
 	}
 
-	// 8. 新しいアクセストークンを生成
-	newAccessToken, err := util.GenerateAccessToken(user.ID, user.Email, h.jwtSecret)
+	// 8. ユーザープロフィールの有無を確認
+	hasProfile, err := h.userUC.CheckUserProfileExists(ctx, user.ID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
+			Error:   "internal_server_error",
+			Message: "サーバーエラーが発生しました。しばらく待ってから再度お試しください",
+		})
+	}
+
+	// 9. 新しいアクセストークンを生成
+	newAccessToken, err := util.GenerateAccessToken(user.ID, user.Email, hasProfile, h.jwtSecret)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
@@ -617,7 +626,7 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 9. 新しいリフレッシュトークンを生成
+	// 10. 新しいリフレッシュトークンを生成
 	newRefreshToken, err := util.GenerateRefreshToken()
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
@@ -626,7 +635,7 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 10. Redisに新しいリフレッシュトークンを保存（30日間）
+	// 11. Redisに新しいリフレッシュトークンを保存（30日間）
 	if err := h.sessionHelper.SaveRefreshToken(ctx, newRefreshToken, user.ID, req.ClientID); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(helper.ErrorResponse{
 			Error:   "internal_server_error",
@@ -634,34 +643,30 @@ func (h *AuthHandler) RefreshToken(c *fiber.Ctx) error {
 		})
 	}
 
-	// 11. webの場合cookieに設定
-	userAgent := c.Get("User-Agent")
-	isWebBrowser := strings.Contains(userAgent, "Mozilla") && !strings.Contains(userAgent, "Mobile")
+	// 12. cookieに設定（モバイルアプリはレスポンスボディのトークンを使用）
 	isProduction := h.goEnv == "production"
 
-	if isWebBrowser {
-		c.Cookie(&fiber.Cookie{
-			Name:     "access_token",
-			Value:    newAccessToken,
-			HTTPOnly: true,
-			Secure:   isProduction,
-			SameSite: "Lax",
-			MaxAge:   15 * 60,
-			Path:     "/",
-		})
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    newAccessToken,
+		HTTPOnly: true,
+		Secure:   isProduction,
+		SameSite: "Lax",
+		MaxAge:   15 * 60,
+		Path:     "/",
+	})
 
-		c.Cookie(&fiber.Cookie{
-			Name:     "refresh_token",
-			Value:    newRefreshToken,
-			HTTPOnly: true,
-			Secure:   isProduction,
-			SameSite: "Lax",
-			MaxAge:   7 * 24 * 60 * 60,
-			Path:     "/",
-		})
-	}
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    newRefreshToken,
+		HTTPOnly: true,
+		Secure:   isProduction,
+		SameSite: "Lax",
+		MaxAge:   7 * 24 * 60 * 60,
+		Path:     "/",
+	})
 
-	// 12. レスポンス返却
+	// 13. レスポンス返却
 	return c.JSON(RefreshTokenResponse{
 		AccessToken:  newAccessToken,
 		RefreshToken: newRefreshToken,
@@ -735,30 +740,26 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 	}
 
 	// 5. クッキー削除処理
-	userAgent := c.Get("User-Agent")
-	isWebBrowser := strings.Contains(userAgent, "Mozilla") && !strings.Contains(userAgent, "Mobile")
 	isProduction := h.goEnv == "production"
 
-	if isWebBrowser {
-		c.Cookie(&fiber.Cookie{
-			Name:     "access_token",
-			Value:    "",
-			Path:     "/",
-			MaxAge:   -1,
-			HTTPOnly: true,
-			Secure:   isProduction,
-			SameSite: "Lax",
-		})
-		c.Cookie(&fiber.Cookie{
-			Name:     "refresh_token",
-			Value:    "",
-			Path:     "/",
-			MaxAge:   -1,
-			HTTPOnly: true,
-			Secure:   isProduction,
-			SameSite: "Lax",
-		})
-	}
+	c.Cookie(&fiber.Cookie{
+		Name:     "access_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HTTPOnly: true,
+		Secure:   isProduction,
+		SameSite: "Lax",
+	})
+	c.Cookie(&fiber.Cookie{
+		Name:     "refresh_token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
+		HTTPOnly: true,
+		Secure:   isProduction,
+		SameSite: "Lax",
+	})
 
 	// 6. レスポンス返却
 	return c.JSON(LogoutResponse{

@@ -14,6 +14,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"github.com/keu-5/muzee/backend/ent/test"
 	"github.com/keu-5/muzee/backend/ent/user"
+	"github.com/keu-5/muzee/backend/ent/userprofile"
 )
 
 // ent aliases to avoid import conflicts in user's code.
@@ -74,8 +75,9 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
-			test.Table: test.ValidColumn,
-			user.Table: user.ValidColumn,
+			test.Table:        test.ValidColumn,
+			user.Table:        user.ValidColumn,
+			userprofile.Table: userprofile.ValidColumn,
 		})
 	})
 	return columnCheck(t, c)

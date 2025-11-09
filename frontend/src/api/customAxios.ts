@@ -58,13 +58,14 @@ const customAxios = async <T = unknown>(
         isRefreshing = true;
 
         try {
-          // 動的インポートで循環依存を回避
-          const { postV1AuthRefresh } = await import(
-            "./__generated__/auth/auth"
-          );
+          // インターセプターを持たない専用のインスタンスでリフレッシュ
+          const refreshInstance = axios.create({
+            baseURL: isServer ? "http://backend:8080" : "/api",
+            withCredentials: true,
+          });
 
           // リフレッシュAPIを呼び出し
-          await postV1AuthRefresh({
+          await refreshInstance.post("/v1/auth/refresh", {
             refresh_token: undefined,
             client_id: process.env.NEXT_PUBLIC_CLIENT_ID || "",
           });

@@ -11,6 +11,7 @@ import (
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
 	"github.com/keu-5/muzee/backend/ent/user"
+	"github.com/keu-5/muzee/backend/ent/userprofile"
 )
 
 // UserCreate is the builder for creating a User entity.
@@ -64,6 +65,25 @@ func (_c *UserCreate) SetNillableUpdatedAt(v *time.Time) *UserCreate {
 func (_c *UserCreate) SetID(v int64) *UserCreate {
 	_c.mutation.SetID(v)
 	return _c
+}
+
+// SetProfileID sets the "profile" edge to the UserProfile entity by ID.
+func (_c *UserCreate) SetProfileID(id int64) *UserCreate {
+	_c.mutation.SetProfileID(id)
+	return _c
+}
+
+// SetNillableProfileID sets the "profile" edge to the UserProfile entity by ID if the given value is not nil.
+func (_c *UserCreate) SetNillableProfileID(id *int64) *UserCreate {
+	if id != nil {
+		_c = _c.SetProfileID(*id)
+	}
+	return _c
+}
+
+// SetProfile sets the "profile" edge to the UserProfile entity.
+func (_c *UserCreate) SetProfile(v *UserProfile) *UserCreate {
+	return _c.SetProfileID(v.ID)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -182,6 +202,22 @@ func (_c *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	if value, ok := _c.mutation.UpdatedAt(); ok {
 		_spec.SetField(user.FieldUpdatedAt, field.TypeTime, value)
 		_node.UpdatedAt = value
+	}
+	if nodes := _c.mutation.ProfileIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   user.ProfileTable,
+			Columns: []string{user.ProfileColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

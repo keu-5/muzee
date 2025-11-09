@@ -44,12 +44,50 @@ var (
 			},
 		},
 	}
+	// UserProfilesColumns holds the columns for the "user_profiles" table.
+	UserProfilesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "name", Type: field.TypeString, Size: 100},
+		{Name: "username", Type: field.TypeString, Unique: true, Size: 50},
+		{Name: "icon_path", Type: field.TypeString, Nullable: true, Size: 255},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "user_profile", Type: field.TypeInt64, Unique: true},
+	}
+	// UserProfilesTable holds the schema information for the "user_profiles" table.
+	UserProfilesTable = &schema.Table{
+		Name:       "user_profiles",
+		Columns:    UserProfilesColumns,
+		PrimaryKey: []*schema.Column{UserProfilesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "user_profiles_users_profile",
+				Columns:    []*schema.Column{UserProfilesColumns[6]},
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "userprofile_username",
+				Unique:  true,
+				Columns: []*schema.Column{UserProfilesColumns[2]},
+			},
+			{
+				Name:    "userprofile_created_at",
+				Unique:  false,
+				Columns: []*schema.Column{UserProfilesColumns[4]},
+			},
+		},
+	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		TestsTable,
 		UsersTable,
+		UserProfilesTable,
 	}
 )
 
 func init() {
+	UserProfilesTable.ForeignKeys[0].RefTable = UsersTable
 }

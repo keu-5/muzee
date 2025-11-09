@@ -46,9 +46,10 @@ func RegisterRoutes(
 	testHandler *handler.TestHandler,
 	authHandler *handler.AuthHandler,
 	userHandler *handler.UserHandler,
+	userProfileHandler *handler.UserProfileHandler,
 	cfg *config.Config,
 ) {
-	interfacepkg.RegisterRoutes(app, testHandler, authHandler, userHandler, cfg)
+	interfacepkg.RegisterRoutes(app, testHandler, authHandler, userHandler, userProfileHandler, cfg)
 }
 
 // NewEmailSender provides EmailClient as EmailSender interface for fx
@@ -60,6 +61,7 @@ func NewEmailSender(emailClient *infrastructure.EmailClient) usecase.EmailSender
 func NewAuthHandlerWithConfig(
 	authUC usecase.AuthUsecase,
 	userUC usecase.UserUsecase,
+	userProfileUC usecase.UserProfileUsecase,
 	emailUC usecase.EmailUsecase,
 	redisClient *redis.Client,
 	cfg *config.Config,
@@ -85,23 +87,31 @@ func main() {
 			infrastructure.NewClient,
 			infrastructure.NewRedisClient,
 			infrastructure.NewEmailClient,
+			infrastructure.NewMinioClient,
+			infrastructure.NewStorageService,
 			NewEmailSender, // EmailClient -> EmailSender interface adapter
 			NewFiberApp,
+
+			// Helper
+			helper.NewFileHelper,
 
 			// Repository
 			repository.NewTestRepository,
 			repository.NewUserRepository,
+			repository.NewUserProfileRepository,
 
 			// Usecase
 			usecase.NewTestUsecase,
 			usecase.NewUserUsecase,
 			usecase.NewAuthUsecase,
+			usecase.NewUserProfileUsecase,
 			usecase.NewEmailUsecase,
 
 			// Handler
 			handler.NewTestHandler,
 			NewAuthHandlerWithConfig,
 			handler.NewUserHandler,
+			handler.NewUserProfileHandler,
 		),
 		fx.Invoke(
 			LogConfigLoaded,
