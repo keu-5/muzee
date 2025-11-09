@@ -145,6 +145,95 @@ func TestCreateUserProfile(t *testing.T) {
 			wantUsername: "",
 			wantErr:      true,
 		},
+		{
+			name:        "invalid username with special characters",
+			userID:      1001,
+			profileName: "Test User",
+			username:    "test@user",
+			iconFile:    nil,
+			mockCreate: func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
+				return nil, errors.New("validation error")
+			},
+			wantName:     "",
+			wantUsername: "",
+			wantErr:      true,
+		},
+		{
+			name:        "invalid username with spaces",
+			userID:      1002,
+			profileName: "Test User",
+			username:    "test user",
+			iconFile:    nil,
+			mockCreate: func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
+				return nil, errors.New("validation error")
+			},
+			wantName:     "",
+			wantUsername: "",
+			wantErr:      true,
+		},
+		{
+			name:        "valid username with underscore",
+			userID:      1003,
+			profileName: "Test User",
+			username:    "test_user",
+			iconFile:    nil,
+			mockCreate: func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
+				return &domain.UserProfile{
+					ID:        1,
+					UserID:    userID,
+					Name:      name,
+					Username:  username,
+					IconPath:  iconPath,
+					CreatedAt: now,
+					UpdatedAt: now,
+				}, nil
+			},
+			wantName:     "Test User",
+			wantUsername: "test_user",
+			wantErr:      false,
+		},
+		{
+			name:        "valid username with hyphen",
+			userID:      1004,
+			profileName: "Test User",
+			username:    "test-user",
+			iconFile:    nil,
+			mockCreate: func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
+				return &domain.UserProfile{
+					ID:        1,
+					UserID:    userID,
+					Name:      name,
+					Username:  username,
+					IconPath:  iconPath,
+					CreatedAt: now,
+					UpdatedAt: now,
+				}, nil
+			},
+			wantName:     "Test User",
+			wantUsername: "test-user",
+			wantErr:      false,
+		},
+		{
+			name:        "valid username with numbers",
+			userID:      1005,
+			profileName: "Test User",
+			username:    "test123",
+			iconFile:    nil,
+			mockCreate: func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error) {
+				return &domain.UserProfile{
+					ID:        1,
+					UserID:    userID,
+					Name:      name,
+					Username:  username,
+					IconPath:  iconPath,
+					CreatedAt: now,
+					UpdatedAt: now,
+				}, nil
+			},
+			wantName:     "Test User",
+			wantUsername: "test123",
+			wantErr:      false,
+		},
 	}
 
 	for _, tt := range tests {
