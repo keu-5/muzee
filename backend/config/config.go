@@ -47,7 +47,7 @@ func Load() *Config {
 	viper.SetDefault("S3_ACCESS_KEY", "minioadmin")
 	viper.SetDefault("S3_SECRET_KEY", "minioadmin")
 	viper.SetDefault("S3_USE_SSL", false)
-	viper.SetDefault("S3_PUBLIC_BUCKET", "public-uploads")
+	viper.SetDefault("NEXT_PUBLIC_S3_PUBLIC_BUCKET", "public-uploads")
 	viper.SetDefault("S3_PRIVATE_BUCKET", "private-uploads")
 
 	viper.SetDefault("RESEND_EMAIL_DOMAIN", "")
@@ -82,7 +82,7 @@ func Load() *Config {
 		S3AccessKey:     viper.GetString("S3_ACCESS_KEY"),
 		S3SecretKey:     viper.GetString("S3_SECRET_KEY"),
 		S3UseSSL:        viper.GetBool("S3_USE_SSL"),
-		S3PublicBucket:  viper.GetString("S3_PUBLIC_BUCKET"),
+		S3PublicBucket:  viper.GetString("NEXT_PUBLIC_S3_PUBLIC_BUCKET"),
 		S3PrivateBucket: viper.GetString("S3_PRIVATE_BUCKET"),
 
 		ResendEmailDomain: viper.GetString("RESEND_EMAIL_DOMAIN"),

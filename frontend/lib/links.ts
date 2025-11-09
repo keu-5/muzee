@@ -11,11 +11,16 @@ export const LINK = {
 
 export const PUBLIC_LINK = [LINK.login, LINK.signup.base, LINK.signup.verify];
 
-//TODO: 本番環境対応
 export const generateStaticLink = (path: string | undefined): string | null => {
   if (!path) {
     return null;
   }
 
-  return "http://localhost/storage" + "/" + "public-uploads" + "/" + path;
+  return (
+    process.env.NEXT_PUBLIC_S3_PUBLIC_URL +
+    "/" +
+    process.env.NEXT_PUBLIC_S3_PUBLIC_BUCKET +
+    "/" +
+    path
+  );
 };
