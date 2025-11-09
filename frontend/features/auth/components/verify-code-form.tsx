@@ -55,8 +55,13 @@ const _VerifyCodeForm = () => {
   const code = form.watch("code");
 
   useEffect(() => {
-    const storedEmail = sessionStorage.getItem("signupEmail") || "";
-    setEmail(storedEmail);
+    const storedEmail = sessionStorage.getItem("signupEmail");
+
+    if (!storedEmail) {
+      router.push(LINK.signup.base);
+    } else {
+      setEmail(storedEmail);
+    }
   }, []);
 
   const handleVerifyCode = async (data: VerifyFormValues) => {
@@ -152,7 +157,7 @@ const _VerifyCodeForm = () => {
             )}
 
             <p className="text-xs text-muted-foreground text-center">
-              {email ? `${email} に送信されました` : "メールアドレス未設定"}
+              {`${email} に送信されました`}
             </p>
           </div>
         </CardContent>
