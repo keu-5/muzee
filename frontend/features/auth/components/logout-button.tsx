@@ -40,6 +40,7 @@ const _LogoutButton = () => {
         {logoutMutation.isPending ? "ログアウト中..." : "ログアウト"}
       </Button>
       <Button
+        onClick={router.back}
         variant="outline"
         className="w-full rounded-full py-6 text-base font-medium"
       >
