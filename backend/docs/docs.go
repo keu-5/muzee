@@ -381,6 +381,50 @@ const docTemplate = `{
             }
         },
         "/v1/me/profile": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    },
+                    {
+                        "CookieAuth": []
+                    }
+                ],
+                "description": "Retrieves the user profile of the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "user-profiles"
+                ],
+                "summary": "Get my user profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_interface_handler.GetMyProfileResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -594,6 +638,17 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_interface_handler.GetMyProfileResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "user_profile": {
+                    "$ref": "#/definitions/internal_interface_handler.UserProfileResponse"
+                }
+            }
+        },
         "internal_interface_handler.LoginRequest": {
             "type": "object",
             "required": [
@@ -759,6 +814,9 @@ const docTemplate = `{
         "internal_interface_handler.UserProfileResponse": {
             "type": "object",
             "properties": {
+                "created_at": {
+                    "type": "string"
+                },
                 "icon_path": {
                     "type": "string"
                 },
@@ -766,6 +824,9 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "name": {
+                    "type": "string"
+                },
+                "updated_at": {
                     "type": "string"
                 },
                 "username": {

@@ -14,6 +14,7 @@ export * from './githubComKeu5MuzeeBackendInternalHelperErrorResponseDetailsItem
 export * from './internalInterfaceHandlerCheckUsernameAvailabilityResponse';
 export * from './internalInterfaceHandlerCreateMyProfileResponse';
 export * from './internalInterfaceHandlerGetMeResponse';
+export * from './internalInterfaceHandlerGetMyProfileResponse';
 export * from './internalInterfaceHandlerLoginRequest';
 export * from './internalInterfaceHandlerLoginResponse';
 export * from './internalInterfaceHandlerLogoutRequest';

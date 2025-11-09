@@ -35,6 +35,13 @@ definitions:
       updated_at:
         type: string
     type: object
+  internal_interface_handler.GetMyProfileResponse:
+    properties:
+      message:
+        type: string
+      user_profile:
+        $ref: '#/definitions/internal_interface_handler.UserProfileResponse'
+    type: object
   internal_interface_handler.LoginRequest:
     properties:
       client_id:
@@ -146,11 +153,15 @@ definitions:
     type: object
   internal_interface_handler.UserProfileResponse:
     properties:
+      created_at:
+        type: string
       icon_path:
         type: string
       id:
         type: integer
       name:
+        type: string
+      updated_at:
         type: string
       username:
         type: string
@@ -451,6 +462,35 @@ paths:
       tags:
       - auth
   /v1/me/profile:
+    get:
+      description: Retrieves the user profile of the currently authenticated user.
+        Requires authentication via Bearer token (Authorization header) or HttpOnly
+        cookie (access_token).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.GetMyProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - CookieAuth: []
+      summary: Get my user profile
+      tags:
+      - user-profiles
     post:
       consumes:
       - multipart/form-data

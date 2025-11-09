@@ -7,8 +7,10 @@
  */
 
 export interface InternalInterfaceHandlerUserProfileResponse {
+  created_at?: string;
   icon_path?: string;
   id?: number;
   name?: string;
+  updated_at?: string;
   username?: string;
 }

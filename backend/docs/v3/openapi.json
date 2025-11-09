@@ -432,6 +432,58 @@
       }
     },
     "/v1/me/profile" : {
+      "get" : {
+        "description" : "Retrieves the user profile of the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.GetMyProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "security" : [ {
+          "BearerAuth" : [ ]
+        }, {
+          "CookieAuth" : [ ]
+        } ],
+        "summary" : "Get my user profile",
+        "tags" : [ "user-profiles" ]
+      },
       "post" : {
         "description" : "Creates a user profile for the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token). Accepts multipart form data with optional icon image file.",
         "requestBody" : {
@@ -644,6 +696,17 @@
         },
         "type" : "object"
       },
+      "internal_interface_handler.GetMyProfileResponse" : {
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "user_profile" : {
+            "$ref" : "#/components/schemas/internal_interface_handler.UserProfileResponse"
+          }
+        },
+        "type" : "object"
+      },
       "internal_interface_handler.LoginRequest" : {
         "properties" : {
           "client_id" : {
@@ -797,6 +860,9 @@
       },
       "internal_interface_handler.UserProfileResponse" : {
         "properties" : {
+          "created_at" : {
+            "type" : "string"
+          },
           "icon_path" : {
             "type" : "string"
           },
@@ -804,6 +870,9 @@
             "type" : "integer"
           },
           "name" : {
+            "type" : "string"
+          },
+          "updated_at" : {
             "type" : "string"
           },
           "username" : {

@@ -25,6 +25,7 @@ import type {
   GithubComKeu5MuzeeBackendInternalHelperErrorResponse,
   InternalInterfaceHandlerCheckUsernameAvailabilityResponse,
   InternalInterfaceHandlerCreateMyProfileResponse,
+  InternalInterfaceHandlerGetMyProfileResponse,
   _V1MeProfilePostRequest
 } from '.././schemas';
 
@@ -33,6 +34,84 @@ import customAxios from '../../customAxios';
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
+
+
+/**
+ * Retrieves the user profile of the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).
+ * @summary Get my user profile
+ */
+export const getV1MeProfile = (
+    
+ options?: SecondParameter<typeof customAxios>,signal?: AbortSignal
+) => {
+      
+      
+      return customAxios<InternalInterfaceHandlerGetMyProfileResponse>(
+      {url: `/v1/me/profile`, method: 'GET', signal
+    },
+      options);
+    }
+  
+
+export const getGetV1MeProfileQueryKey = () => {
+    return [`/v1/me/profile`] as const;
+    }
+
+    
+export const getGetV1MeProfileQueryOptions = <TData = Awaited<ReturnType<typeof getV1MeProfile>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getV1MeProfile>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetV1MeProfileQueryKey();
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getV1MeProfile>>> = ({ signal }) => getV1MeProfile(requestOptions, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getV1MeProfile>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetV1MeProfileQueryResult = NonNullable<Awaited<ReturnType<typeof getV1MeProfile>>>
+export type GetV1MeProfileQueryError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse
+
+
+/**
+ * @summary Get my user profile
+ */
+
+export function useGetV1MeProfile<TData = Awaited<ReturnType<typeof getV1MeProfile>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getV1MeProfile>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
+  
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetV1MeProfileQueryOptions(options)
+
+  const query = useQuery(queryOptions ) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+/**
+ * @summary Get my user profile
+ */
+export const prefetchGetV1MeProfileQuery = async <TData = Awaited<ReturnType<typeof getV1MeProfile>>, TError = GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse | GithubComKeu5MuzeeBackendInternalHelperErrorResponse>(
+ queryClient: QueryClient,  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getV1MeProfile>>, TError, TData>, request?: SecondParameter<typeof customAxios>}
+
+  ): Promise<QueryClient> => {
+
+  const queryOptions = getGetV1MeProfileQueryOptions(options)
+
+  await queryClient.prefetchQuery(queryOptions);
+
+  return queryClient;
+}
 
 
 /**

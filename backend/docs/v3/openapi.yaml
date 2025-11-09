@@ -288,6 +288,41 @@ paths:
       - auth
       x-codegen-request-body-name: request
   /v1/me/profile:
+    get:
+      description: Retrieves the user profile of the currently authenticated user.
+        Requires authentication via Bearer token (Authorization header) or HttpOnly
+        cookie (access_token).
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_interface_handler.GetMyProfileResponse"
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+          description: Unauthorized
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+          description: Internal Server Error
+      security:
+      - BearerAuth: []
+      - CookieAuth: []
+      summary: Get my user profile
+      tags:
+      - user-profiles
     post:
       description: Creates a user profile for the currently authenticated user. Requires
         authentication via Bearer token (Authorization header) or HttpOnly cookie
@@ -421,8 +456,10 @@ components:
     internal_interface_handler.CreateMyProfileResponse:
       example:
         user_profile:
+          updated_at: updated_at
           icon_path: icon_path
           name: name
+          created_at: created_at
           id: 0
           username: username
         message: message
@@ -447,6 +484,22 @@ components:
           type: integer
         updated_at:
           type: string
+      type: object
+    internal_interface_handler.GetMyProfileResponse:
+      example:
+        user_profile:
+          updated_at: updated_at
+          icon_path: icon_path
+          name: name
+          created_at: created_at
+          id: 0
+          username: username
+        message: message
+      properties:
+        message:
+          type: string
+        user_profile:
+          $ref: "#/components/schemas/internal_interface_handler.UserProfileResponse"
       type: object
     internal_interface_handler.LoginRequest:
       properties:
@@ -586,16 +639,22 @@ components:
       type: object
     internal_interface_handler.UserProfileResponse:
       example:
+        updated_at: updated_at
         icon_path: icon_path
         name: name
+        created_at: created_at
         id: 0
         username: username
       properties:
+        created_at:
+          type: string
         icon_path:
           type: string
         id:
           type: integer
         name:
+          type: string
+        updated_at:
           type: string
         username:
           type: string
