@@ -223,18 +223,21 @@ const _ProfileForm = () => {
                 </span>
               </Label>
               {iconImage ? (
-                <div className="relative group mx-auto w-32 h-32 rounded-full overflow-hidden border-2 border-[#BDB76B] shadow-sm transition-all duration-200 hover:shadow-md">
-                  <img
-                    src={iconImage}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity">
+                <div className="relative mx-auto w-32 h-32 rounded-full overflow-visible">
+                  <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-[#BDB76B] shadow-sm">
+                    <img
+                      src={iconImage}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2">
                     {/* 編集ボタン */}
                     <Button
                       size="icon"
                       variant="secondary"
-                      className="bg-white/80 hover:bg-white text-black rounded-full"
+                      className="h-8 w-8 bg-white hover:bg-gray-100 text-black rounded-full shadow-md border border-gray-200"
                       onClick={() => {
                         setTempImageSrc(originalImage);
                         setIsModalOpen(true);
@@ -248,7 +251,7 @@ const _ProfileForm = () => {
                     <Button
                       size="icon"
                       variant="secondary"
-                      className="bg-white/80 hover:bg-red-100 text-red-600 rounded-full"
+                      className="h-8 w-8 bg-white hover:bg-red-50 text-red-600 rounded-full shadow-md border border-gray-200"
                       onClick={() => {
                         setIconImage("");
                         setOriginalImage("");
