@@ -1,6 +1,7 @@
 "use client";
 
 import { ProfileMinibar } from "@/features/sidebar/components/profile-minibar";
+import { LINK } from "@/lib/links";
 import { navItems } from "@/lib/nav-items";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -14,7 +15,7 @@ export const SidebarLeft = () => {
     <aside className="hidden w-80 border-r border-border bg-background h-screen sticky top-0 sm:block">
       <div className="h-full flex flex-col p-6">
         <div className="flex-1 overflow-y-auto">
-          <Link href="/" className="flex items-center gap-2 mb-8">
+          <Link href={LINK.home} className="flex items-center gap-2 mb-8">
             <Image
               src="/muzee-logo.png"
               alt="Logo"
