@@ -50,4 +50,5 @@ func RegisterRoutes(
 
 	me := v1.Group("/me", middleware.AuthMiddleware(cfg.JWTSecret))
 	me.Post("/profile", userProfileHandler.CreateMyProfile)
+	me.Get("/profile", userProfileHandler.GetMyProfile)
 }

@@ -15,6 +15,7 @@ const userIconsFolder = "user-icons"
 
 type UserProfileUsecase interface {
 	CreateUserProfile(ctx context.Context, userID int64, name string, username string, iconFile *multipart.FileHeader) (*domain.UserProfile, error)
+	GetUserProfileByUserID(ctx context.Context, userID int64) (*domain.UserProfile, error)
 	IsUsernameAvailable(ctx context.Context, username string) (bool, error)
 }
 
@@ -49,6 +50,14 @@ func (u *userProfileUsecase) CreateUserProfile(ctx context.Context, userID int64
 	}
 
 	userProfile, err := u.userProfileRepo.Create(ctx, userID, name, username, iconPath)
+	if err != nil {
+		return nil, err
+	}
+	return userProfile, nil
+}
+
+func (u *userProfileUsecase) GetUserProfileByUserID(ctx context.Context, userID int64) (*domain.UserProfile, error) {
+	userProfile, err := u.userProfileRepo.GetByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
