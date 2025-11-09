@@ -46,7 +46,9 @@ const profileSchema = z.object({
   username: z
     .string()
     .trim()
-    .min(3, "ユーザー名は3文字以上である必要があります"),
+    .min(3, "ユーザー名は3文字以上である必要があります")
+    .max(50, "ユーザ名は50文字以下である必要があります")
+    .regex(/^[a-zA-Z0-9_-]+$/, "使用できるのは英数字・_・- のみです"),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
