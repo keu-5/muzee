@@ -14,8 +14,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImageCropModal } from "@/features/user/components/image-crop-modal";
+import {
+  base64ToFile,
+  MAX_IMAGE_SIZE,
+  validateImageFile,
+} from "@/lib/file-validation";
 import { LINK } from "@/lib/links";
-import { base64ToFile } from "@/lib/utils";
 import { postV1AuthRefresh } from "@/src/api/__generated__/auth/auth";
 import {
   useGetV1UserProfilesCheckUsername,
@@ -42,7 +46,9 @@ const profileSchema = z.object({
   username: z
     .string()
     .trim()
-    .min(3, "ユーザー名は3文字以上である必要があります"),
+    .min(3, "ユーザー名は3文字以上である必要があります")
+    .max(50, "ユーザ名は50文字以下である必要があります")
+    .regex(/^[a-zA-Z0-9_-]+$/, "使用できるのは英数字・_・- のみです"),
 });
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
@@ -130,15 +136,25 @@ const _ProfileForm = () => {
   };
 
   const processImageFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const src = event.target?.result as string;
-      setOriginalImage(src);
-      setTempImageSrc(src);
-      setCropParams(null);
-      setIsModalOpen(true);
-    };
-    reader.readAsDataURL(file);
+    try {
+      validateImageFile(file);
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const src = event.target?.result as string;
+        setOriginalImage(src);
+        setTempImageSrc(src);
+        setCropParams(null);
+        setIsModalOpen(true);
+        setError("");
+      };
+      reader.onerror = () => {
+        setError("ファイルの読み込みに失敗しました");
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "無効なファイルです");
+    }
   };
 
   const handleImageSave = (
@@ -200,20 +216,28 @@ const _ProfileForm = () => {
 
             {/* 画像アップロード */}
             <div className="space-y-2">
-              <Label htmlFor="icon">プロフィール画像</Label>
+              <Label htmlFor="icon">
+                プロフィール画像
+                <span className="text-xs text-muted-foreground ml-2">
+                  (最大{MAX_IMAGE_SIZE / 1024 / 1024}MB、JPEG/PNG/GIF/WebP)
+                </span>
+              </Label>
               {iconImage ? (
-                <div className="relative group mx-auto w-32 h-32 rounded-full overflow-hidden border-2 border-[#BDB76B] shadow-sm transition-all duration-200 hover:shadow-md">
-                  <img
-                    src={iconImage}
-                    alt="Profile"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity">
+                <div className="relative mx-auto w-32 h-32 rounded-full overflow-visible">
+                  <div className="relative w-full h-full rounded-full overflow-hidden border-2 border-[#BDB76B] shadow-sm">
+                    <img
+                      src={iconImage}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-2">
                     {/* 編集ボタン */}
                     <Button
                       size="icon"
                       variant="secondary"
-                      className="bg-white/80 hover:bg-white text-black rounded-full"
+                      className="h-8 w-8 bg-white hover:bg-gray-100 text-black rounded-full shadow-md border border-gray-200"
                       onClick={() => {
                         setTempImageSrc(originalImage);
                         setIsModalOpen(true);
@@ -227,7 +251,7 @@ const _ProfileForm = () => {
                     <Button
                       size="icon"
                       variant="secondary"
-                      className="bg-white/80 hover:bg-red-100 text-red-600 rounded-full"
+                      className="h-8 w-8 bg-white hover:bg-red-50 text-red-600 rounded-full shadow-md border border-gray-200"
                       onClick={() => {
                         setIconImage("");
                         setOriginalImage("");
@@ -249,7 +273,7 @@ const _ProfileForm = () => {
                   <input
                     id="icon-input"
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
                     onChange={handleFileChange}
                     disabled={isLoading}
                     className="hidden"

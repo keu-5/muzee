@@ -606,6 +606,192 @@ func TestCheckUsernameAvailability_WithPOSTMethod(t *testing.T) {
 	assert.Equal(t, 405, resp.StatusCode)
 }
 
+func TestCreateMyProfile_InvalidUsernameWithSpecialCharacters(t *testing.T) {
+	jwtSecret := "test-secret-key"
+	userID := int64(123)
+	email := "test@example.com"
+
+	mockUserProfile := &mockUserProfileUsecase{
+		createUserProfileFunc: func(ctx context.Context, uid int64, name string, username string, iconFile *multipart.FileHeader) (*domain.UserProfile, error) {
+			return nil, errors.New("validation error")
+		},
+	}
+
+	fileHelper := helper.NewFileHelper()
+	handler := NewUserProfileHandler(mockUserProfile, fileHelper)
+	app := setupTestUserProfileApp(handler, jwtSecret)
+
+	// Create valid JWT token
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
+	assert.NoError(t, err)
+
+	// Create multipart form request with invalid username
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("name", "Test User")
+	writer.WriteField("username", "test@user!")
+	writer.Close()
+
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 500, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "internal_server_error", errResp.Error)
+}
+
+func TestCreateMyProfile_InvalidUsernameWithSpaces(t *testing.T) {
+	jwtSecret := "test-secret-key"
+	userID := int64(123)
+	email := "test@example.com"
+
+	mockUserProfile := &mockUserProfileUsecase{
+		createUserProfileFunc: func(ctx context.Context, uid int64, name string, username string, iconFile *multipart.FileHeader) (*domain.UserProfile, error) {
+			return nil, errors.New("validation error")
+		},
+	}
+
+	fileHelper := helper.NewFileHelper()
+	handler := NewUserProfileHandler(mockUserProfile, fileHelper)
+	app := setupTestUserProfileApp(handler, jwtSecret)
+
+	// Create valid JWT token
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
+	assert.NoError(t, err)
+
+	// Create multipart form request with username containing spaces
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("name", "Test User")
+	writer.WriteField("username", "test user")
+	writer.Close()
+
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 500, resp.StatusCode)
+
+	var errResp helper.ErrorResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	json.Unmarshal(bodyBytes, &errResp)
+	assert.Equal(t, "internal_server_error", errResp.Error)
+}
+
+func TestCreateMyProfile_ValidUsernameWithUnderscore(t *testing.T) {
+	jwtSecret := "test-secret-key"
+	userID := int64(123)
+	email := "test@example.com"
+
+	mockUserProfile := &mockUserProfileUsecase{
+		createUserProfileFunc: func(ctx context.Context, uid int64, name string, username string, iconFile *multipart.FileHeader) (*domain.UserProfile, error) {
+			return &domain.UserProfile{
+				ID:        1,
+				UserID:    uid,
+				Name:      name,
+				Username:  username,
+				IconPath:  nil,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}, nil
+		},
+	}
+
+	fileHelper := helper.NewFileHelper()
+	handler := NewUserProfileHandler(mockUserProfile, fileHelper)
+	app := setupTestUserProfileApp(handler, jwtSecret)
+
+	// Create valid JWT token
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
+	assert.NoError(t, err)
+
+	// Create multipart form request with valid username
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("name", "Test User")
+	writer.WriteField("username", "test_user")
+	writer.Close()
+
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 201, resp.StatusCode)
+
+	var response CreateMyProfileResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	err = json.Unmarshal(bodyBytes, &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "test_user", response.UserProfile.Username)
+}
+
+func TestCreateMyProfile_ValidUsernameWithHyphen(t *testing.T) {
+	jwtSecret := "test-secret-key"
+	userID := int64(123)
+	email := "test@example.com"
+
+	mockUserProfile := &mockUserProfileUsecase{
+		createUserProfileFunc: func(ctx context.Context, uid int64, name string, username string, iconFile *multipart.FileHeader) (*domain.UserProfile, error) {
+			return &domain.UserProfile{
+				ID:        1,
+				UserID:    uid,
+				Name:      name,
+				Username:  username,
+				IconPath:  nil,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}, nil
+		},
+	}
+
+	fileHelper := helper.NewFileHelper()
+	handler := NewUserProfileHandler(mockUserProfile, fileHelper)
+	app := setupTestUserProfileApp(handler, jwtSecret)
+
+	// Create valid JWT token
+	token, err := util.GenerateAccessToken(userID, email, false, jwtSecret)
+	assert.NoError(t, err)
+
+	// Create multipart form request with valid username
+	body := new(bytes.Buffer)
+	writer := multipart.NewWriter(body)
+	writer.WriteField("name", "Test User")
+	writer.WriteField("username", "test-user-123")
+	writer.Close()
+
+	req := httptest.NewRequest("POST", "/api/v1/users/me/profile", body)
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	resp, err := app.Test(req, -1)
+	assert.NoError(t, err)
+	defer resp.Body.Close()
+
+	assert.Equal(t, 201, resp.StatusCode)
+
+	var response CreateMyProfileResponse
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	err = json.Unmarshal(bodyBytes, &response)
+	assert.NoError(t, err)
+	assert.Equal(t, "test-user-123", response.UserProfile.Username)
+}
+
 func TestCreateMyProfile_Success_WithIconFile(t *testing.T) {
 	jwtSecret := "test-secret-key"
 	userID := int64(123)

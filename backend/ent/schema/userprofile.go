@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"regexp"
 	"time"
 
 	"entgo.io/ent"
@@ -25,6 +26,7 @@ func (UserProfile) Fields() []ent.Field {
 
 		field.String("username").
 			MaxLen(50).
+			Match(regexp.MustCompile(`^[a-zA-Z0-9_-]+$`)).
 			NotEmpty().
 			Unique(),
 
