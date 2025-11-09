@@ -14,8 +14,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ImageCropModal } from "@/features/user/components/image-crop-modal";
+import {
+  base64ToFile,
+  MAX_IMAGE_SIZE,
+  validateImageFile,
+} from "@/lib/file-validation";
 import { LINK } from "@/lib/links";
-import { base64ToFile } from "@/lib/utils";
 import { postV1AuthRefresh } from "@/src/api/__generated__/auth/auth";
 import {
   useGetV1UserProfilesCheckUsername,
@@ -130,15 +134,25 @@ const _ProfileForm = () => {
   };
 
   const processImageFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const src = event.target?.result as string;
-      setOriginalImage(src);
-      setTempImageSrc(src);
-      setCropParams(null);
-      setIsModalOpen(true);
-    };
-    reader.readAsDataURL(file);
+    try {
+      validateImageFile(file);
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const src = event.target?.result as string;
+        setOriginalImage(src);
+        setTempImageSrc(src);
+        setCropParams(null);
+        setIsModalOpen(true);
+        setError("");
+      };
+      reader.onerror = () => {
+        setError("ファイルの読み込みに失敗しました");
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "無効なファイルです");
+    }
   };
 
   const handleImageSave = (
@@ -200,7 +214,12 @@ const _ProfileForm = () => {
 
             {/* 画像アップロード */}
             <div className="space-y-2">
-              <Label htmlFor="icon">プロフィール画像</Label>
+              <Label htmlFor="icon">
+                プロフィール画像
+                <span className="text-xs text-muted-foreground ml-2">
+                  (最大{MAX_IMAGE_SIZE / 1024 / 1024}MB、JPEG/PNG/GIF/WebP)
+                </span>
+              </Label>
               {iconImage ? (
                 <div className="relative group mx-auto w-32 h-32 rounded-full overflow-hidden border-2 border-[#BDB76B] shadow-sm transition-all duration-200 hover:shadow-md">
                   <img
@@ -249,7 +268,7 @@ const _ProfileForm = () => {
                   <input
                     id="icon-input"
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/gif,image/webp"
                     onChange={handleFileChange}
                     disabled={isLoading}
                     className="hidden"
