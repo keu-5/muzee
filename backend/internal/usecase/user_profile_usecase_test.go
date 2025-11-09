@@ -15,6 +15,7 @@ import (
 // Mock UserProfileRepository
 type mockUserProfileRepository struct {
 	createFunc           func(ctx context.Context, userID int64, name string, username string, iconPath *string) (*domain.UserProfile, error)
+	getByUserIDFunc      func(ctx context.Context, userID int64) (*domain.UserProfile, error)
 	existsByUserIDFunc   func(ctx context.Context, userID int64) (bool, error)
 	existsByUsernameFunc func(ctx context.Context, username string) (bool, error)
 }
@@ -34,6 +35,21 @@ func (m *mockUserProfileRepository) Create(ctx context.Context, userID int64, na
 		Name:      name,
 		Username:  username,
 		IconPath:  iconPath,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}, nil
+}
+
+func (m *mockUserProfileRepository) GetByUserID(ctx context.Context, userID int64) (*domain.UserProfile, error) {
+	if m.getByUserIDFunc != nil {
+		return m.getByUserIDFunc(ctx, userID)
+	}
+	return &domain.UserProfile{
+		ID:        1,
+		UserID:    userID,
+		Name:      "Test User",
+		Username:  "testuser",
+		IconPath:  nil,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}, nil
@@ -248,6 +264,128 @@ func TestIsUsernameAvailable(t *testing.T) {
 
 			if available != tt.wantAvailable {
 				t.Errorf("IsUsernameAvailable() available = %v, want %v", available, tt.wantAvailable)
+			}
+		})
+	}
+}
+
+func TestGetUserProfileByUserID(t *testing.T) {
+	ctx := context.Background()
+	now := time.Now()
+
+	tests := []struct {
+		name             string
+		userID           int64
+		mockGetByUserID  func(ctx context.Context, userID int64) (*domain.UserProfile, error)
+		wantProfile      *domain.UserProfile
+		wantErr          bool
+	}{
+		{
+			name:   "profile found",
+			userID: 123,
+			mockGetByUserID: func(ctx context.Context, userID int64) (*domain.UserProfile, error) {
+				return &domain.UserProfile{
+					ID:        1,
+					UserID:    userID,
+					Name:      "Test User",
+					Username:  "testuser",
+					IconPath:  nil,
+					CreatedAt: now,
+					UpdatedAt: now,
+				}, nil
+			},
+			wantProfile: &domain.UserProfile{
+				ID:        1,
+				UserID:    123,
+				Name:      "Test User",
+				Username:  "testuser",
+				IconPath:  nil,
+				CreatedAt: now,
+				UpdatedAt: now,
+			},
+			wantErr: false,
+		},
+		{
+			name:   "profile not found",
+			userID: 456,
+			mockGetByUserID: func(ctx context.Context, userID int64) (*domain.UserProfile, error) {
+				return nil, nil
+			},
+			wantProfile: nil,
+			wantErr:     false,
+		},
+		{
+			name:   "repository error",
+			userID: 789,
+			mockGetByUserID: func(ctx context.Context, userID int64) (*domain.UserProfile, error) {
+				return nil, errors.New("database error")
+			},
+			wantProfile: nil,
+			wantErr:     true,
+		},
+		{
+			name:   "profile with icon path",
+			userID: 999,
+			mockGetByUserID: func(ctx context.Context, userID int64) (*domain.UserProfile, error) {
+				iconPath := "user-icons/user_999/icon.jpg"
+				return &domain.UserProfile{
+					ID:        2,
+					UserID:    userID,
+					Name:      "User With Icon",
+					Username:  "iconuser",
+					IconPath:  &iconPath,
+					CreatedAt: now,
+					UpdatedAt: now,
+				}, nil
+			},
+			wantProfile: &domain.UserProfile{
+				ID:        2,
+				UserID:    999,
+				Name:      "User With Icon",
+				Username:  "iconuser",
+				CreatedAt: now,
+				UpdatedAt: now,
+			},
+			wantErr: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &mockUserProfileRepository{
+				getByUserIDFunc: tt.mockGetByUserID,
+			}
+			mockStorage := newMockStorageService()
+			cfg := &config.Config{
+				S3PublicBucket:  "public-uploads",
+				S3PrivateBucket: "private-uploads",
+			}
+			usecase := NewUserProfileUsecase(mockRepo, mockStorage, cfg)
+
+			profile, err := usecase.GetUserProfileByUserID(ctx, tt.userID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetUserProfileByUserID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantProfile == nil {
+				if profile != nil {
+					t.Errorf("GetUserProfileByUserID() expected nil profile, got %+v", profile)
+				}
+			} else {
+				if profile == nil {
+					t.Error("GetUserProfileByUserID() returned nil profile")
+					return
+				}
+				if profile.UserID != tt.wantProfile.UserID {
+					t.Errorf("GetUserProfileByUserID() userID = %v, want %v", profile.UserID, tt.wantProfile.UserID)
+				}
+				if profile.Name != tt.wantProfile.Name {
+					t.Errorf("GetUserProfileByUserID() name = %v, want %v", profile.Name, tt.wantProfile.Name)
+				}
+				if profile.Username != tt.wantProfile.Username {
+					t.Errorf("GetUserProfileByUserID() username = %v, want %v", profile.Username, tt.wantProfile.Username)
+				}
 			}
 		})
 	}
