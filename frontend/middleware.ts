@@ -13,7 +13,7 @@ export function middleware(request: NextRequest) {
   }
 
   // ログイン済み → トップへ
-  if (token && pathname.startsWith(LINK.login)) {
+  if (token && PUBLIC_LINK.includes(pathname)) {
     return NextResponse.redirect(new URL(LINK.home, request.url));
   }
 
