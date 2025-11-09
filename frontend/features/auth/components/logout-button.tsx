@@ -3,7 +3,6 @@
 import { Providers } from "@/app/providers";
 import { Button } from "@/components/ui/button";
 import { usePostV1AuthLogout } from "@/src/api/__generated__/auth/auth";
-import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -32,16 +31,21 @@ const _LogoutButton = () => {
   };
 
   return (
-    <Button
-      onClick={handleLogout}
-      disabled={logoutMutation.isPending}
-      variant="ghost"
-      size="sm"
-      className="gap-2"
-    >
-      <LogOut className="h-4 w-4" />
-      {logoutMutation.isPending ? "ログアウト中..." : "ログアウト"}
-    </Button>
+    <div className="space-y-3">
+      <Button
+        onClick={handleLogout}
+        disabled={logoutMutation.isPending}
+        className="w-full bg-foreground text-background hover:bg-foreground/90 rounded-full py-6 text-base font-medium"
+      >
+        {logoutMutation.isPending ? "ログアウト中..." : "ログアウト"}
+      </Button>
+      <Button
+        variant="outline"
+        className="w-full rounded-full py-6 text-base font-medium"
+      >
+        キャンセル
+      </Button>
+    </div>
   );
 };
 

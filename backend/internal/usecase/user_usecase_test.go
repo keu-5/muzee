@@ -51,7 +51,8 @@ func (m *mockUserRepository) GetByID(ctx context.Context, id int64) (*domain.Use
 
 func TestNewUserUsecase(t *testing.T) {
 	mockRepo := &mockUserRepository{}
-	usecase := NewUserUsecase(mockRepo)
+	mockProfileRepo := &mockUserProfileRepository{}
+	usecase := NewUserUsecase(mockRepo, mockProfileRepo)
 
 	if usecase == nil {
 		t.Fatal("Expected usecase to be non-nil")
@@ -161,7 +162,8 @@ func TestCreateUser(t *testing.T) {
 			mockRepo := &mockUserRepository{
 				createFunc: tt.mockCreate,
 			}
-			usecase := NewUserUsecase(mockRepo)
+			mockProfileRepo := &mockUserProfileRepository{}
+			usecase := NewUserUsecase(mockRepo, mockProfileRepo)
 
 			user, err := usecase.CreateUser(ctx, tt.email, tt.passwordHash)
 			if (err != nil) != tt.wantErr {
@@ -290,7 +292,8 @@ func TestGetUserByEmail(t *testing.T) {
 			mockRepo := &mockUserRepository{
 				getByEmailFunc: tt.mockGetByEmail,
 			}
-			usecase := NewUserUsecase(mockRepo)
+			mockProfileRepo := &mockUserProfileRepository{}
+			usecase := NewUserUsecase(mockRepo, mockProfileRepo)
 
 			user, err := usecase.GetUserByEmail(ctx, tt.email)
 			if (err != nil) != tt.wantErr {
@@ -385,7 +388,8 @@ func TestGetUserByID(t *testing.T) {
 			mockRepo := &mockUserRepository{
 				getByIDFunc: tt.mockGetByID,
 			}
-			usecase := NewUserUsecase(mockRepo)
+			mockProfileRepo := &mockUserProfileRepository{}
+			usecase := NewUserUsecase(mockRepo, mockProfileRepo)
 
 			user, err := usecase.GetUserByID(ctx, tt.id)
 			if (err != nil) != tt.wantErr {
@@ -404,6 +408,84 @@ func TestGetUserByID(t *testing.T) {
 				}
 			} else if !tt.wantErr && user != nil {
 				t.Error("GetUserByID() expected nil user")
+			}
+		})
+	}
+}
+
+func TestCheckUserProfileExists(t *testing.T) {
+	ctx := context.Background()
+
+	tests := []struct {
+		name               string
+		userID             int64
+		mockExistsByUserID func(ctx context.Context, userID int64) (bool, error)
+		wantExists         bool
+		wantErr            bool
+	}{
+		{
+			name:   "profile exists",
+			userID: 123,
+			mockExistsByUserID: func(ctx context.Context, userID int64) (bool, error) {
+				return true, nil
+			},
+			wantExists: true,
+			wantErr:    false,
+		},
+		{
+			name:   "profile does not exist",
+			userID: 456,
+			mockExistsByUserID: func(ctx context.Context, userID int64) (bool, error) {
+				return false, nil
+			},
+			wantExists: false,
+			wantErr:    false,
+		},
+		{
+			name:   "repository error",
+			userID: 789,
+			mockExistsByUserID: func(ctx context.Context, userID int64) (bool, error) {
+				return false, errors.New("database error")
+			},
+			wantExists: false,
+			wantErr:    true,
+		},
+		{
+			name:   "user ID is 0",
+			userID: 0,
+			mockExistsByUserID: func(ctx context.Context, userID int64) (bool, error) {
+				return false, nil
+			},
+			wantExists: false,
+			wantErr:    false,
+		},
+		{
+			name:   "negative user ID",
+			userID: -1,
+			mockExistsByUserID: func(ctx context.Context, userID int64) (bool, error) {
+				return false, nil
+			},
+			wantExists: false,
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &mockUserRepository{}
+			mockProfileRepo := &mockUserProfileRepository{
+				existsByUserIDFunc: tt.mockExistsByUserID,
+			}
+			usecase := NewUserUsecase(mockRepo, mockProfileRepo)
+
+			exists, err := usecase.CheckUserProfileExists(ctx, tt.userID)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("CheckUserProfileExists() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if exists != tt.wantExists {
+				t.Errorf("CheckUserProfileExists() exists = %v, want %v", exists, tt.wantExists)
 			}
 		})
 	}

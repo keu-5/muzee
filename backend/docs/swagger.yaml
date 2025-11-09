@@ -12,6 +12,18 @@ definitions:
       message:
         type: string
     type: object
+  internal_interface_handler.CheckUsernameAvailabilityResponse:
+    properties:
+      available:
+        type: boolean
+    type: object
+  internal_interface_handler.CreateMyProfileResponse:
+    properties:
+      message:
+        type: string
+      user_profile:
+        $ref: '#/definitions/internal_interface_handler.UserProfileResponse'
+    type: object
   internal_interface_handler.GetMeResponse:
     properties:
       created_at:
@@ -22,6 +34,13 @@ definitions:
         type: integer
       updated_at:
         type: string
+    type: object
+  internal_interface_handler.GetMyProfileResponse:
+    properties:
+      message:
+        type: string
+      user_profile:
+        $ref: '#/definitions/internal_interface_handler.UserProfileResponse'
     type: object
   internal_interface_handler.LoginRequest:
     properties:
@@ -131,6 +150,21 @@ definitions:
     properties:
       id:
         type: integer
+    type: object
+  internal_interface_handler.UserProfileResponse:
+    properties:
+      created_at:
+        type: string
+      icon_path:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
     type: object
   internal_interface_handler.UserResponse:
     properties:
@@ -427,6 +461,112 @@ paths:
       summary: Verify code and create account
       tags:
       - auth
+  /v1/me/profile:
+    get:
+      description: Retrieves the user profile of the currently authenticated user.
+        Requires authentication via Bearer token (Authorization header) or HttpOnly
+        cookie (access_token).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.GetMyProfileResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - CookieAuth: []
+      summary: Get my user profile
+      tags:
+      - user-profiles
+    post:
+      consumes:
+      - multipart/form-data
+      description: Creates a user profile for the currently authenticated user. Requires
+        authentication via Bearer token (Authorization header) or HttpOnly cookie
+        (access_token). Accepts multipart form data with optional icon image file.
+      parameters:
+      - description: User name (1-100 characters)
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Username (1-50 characters)
+        in: formData
+        name: username
+        required: true
+        type: string
+      - description: Profile icon image (max 5MB, JPEG/PNG/GIF/WebP)
+        in: formData
+        name: icon
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_interface_handler.CreateMyProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      security:
+      - BearerAuth: []
+      - CookieAuth: []
+      summary: Create user profile
+      tags:
+      - user-profiles
+  /v1/user-profiles/check-username:
+    get:
+      consumes:
+      - application/json
+      description: Checks whether the specified username is available for registration.
+        This endpoint does not require authentication.
+      parameters:
+      - description: Username to check (1–50 characters)
+        in: query
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_interface_handler.CheckUsernameAvailabilityResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse'
+      summary: Check username availability
+      tags:
+      - user-profiles
   /v1/users/me:
     get:
       consumes:

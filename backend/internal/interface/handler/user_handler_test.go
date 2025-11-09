@@ -515,7 +515,7 @@ func createToken(userID int64, email string, secret string, expiresIn time.Durat
 func generateSimpleToken(userID int64, email string, secret string) (string, error) {
 	// This will use util.GenerateAccessToken
 	// Import: "github.com/keu-5/muzee/backend/internal/util"
-	return util.GenerateAccessToken(userID, email, secret)
+	return util.GenerateAccessToken(userID, email, false, secret)
 }
 
 func generateExpiredToken(userID int64, email string, secret string, expiresIn time.Duration) (string, error) {

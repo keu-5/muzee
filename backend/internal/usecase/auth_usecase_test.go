@@ -12,9 +12,10 @@ import (
 
 // Mock UserUsecase
 type mockUserUsecase struct {
-	getUserByEmailFunc func(ctx context.Context, email string) (*domain.User, error)
-	getUserByIDFunc    func(ctx context.Context, id int64) (*domain.User, error)
-	createUserFunc     func(ctx context.Context, email, passwordHash string) (*domain.User, error)
+	getUserByEmailFunc         func(ctx context.Context, email string) (*domain.User, error)
+	getUserByIDFunc            func(ctx context.Context, id int64) (*domain.User, error)
+	createUserFunc             func(ctx context.Context, email, passwordHash string) (*domain.User, error)
+	checkUserProfileExistsFunc func(ctx context.Context, userID int64) (bool, error)
 }
 
 func (m *mockUserUsecase) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
@@ -42,6 +43,13 @@ func (m *mockUserUsecase) CreateUser(ctx context.Context, email, passwordHash st
 		return m.createUserFunc(ctx, email, passwordHash)
 	}
 	return nil, nil
+}
+
+func (m *mockUserUsecase) CheckUserProfileExists(ctx context.Context, userID int64) (bool, error) {
+	if m.checkUserProfileExistsFunc != nil {
+		return m.checkUserProfileExistsFunc(ctx, userID)
+	}
+	return false, nil
 }
 
 func TestNewAuthUsecase(t *testing.T) {

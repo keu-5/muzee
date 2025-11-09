@@ -431,6 +431,170 @@
         "x-codegen-request-body-name" : "request"
       }
     },
+    "/v1/me/profile" : {
+      "get" : {
+        "description" : "Retrieves the user profile of the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).",
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.GetMyProfileResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          },
+          "404" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Not Found"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "security" : [ {
+          "BearerAuth" : [ ]
+        }, {
+          "CookieAuth" : [ ]
+        } ],
+        "summary" : "Get my user profile",
+        "tags" : [ "user-profiles" ]
+      },
+      "post" : {
+        "description" : "Creates a user profile for the currently authenticated user. Requires authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token). Accepts multipart form data with optional icon image file.",
+        "requestBody" : {
+          "content" : {
+            "multipart/form-data" : {
+              "schema" : {
+                "$ref" : "#/components/schemas/_v1_me_profile_post_request"
+              }
+            }
+          },
+          "required" : true
+        },
+        "responses" : {
+          "201" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.CreateMyProfileResponse"
+                }
+              }
+            },
+            "description" : "Created"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "401" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Unauthorized"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "security" : [ {
+          "BearerAuth" : [ ]
+        }, {
+          "CookieAuth" : [ ]
+        } ],
+        "summary" : "Create user profile",
+        "tags" : [ "user-profiles" ]
+      }
+    },
+    "/v1/user-profiles/check-username" : {
+      "get" : {
+        "description" : "Checks whether the specified username is available for registration. This endpoint does not require authentication.",
+        "parameters" : [ {
+          "description" : "Username to check (1–50 characters)",
+          "in" : "query",
+          "name" : "username",
+          "required" : true,
+          "schema" : {
+            "type" : "string"
+          }
+        } ],
+        "responses" : {
+          "200" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/internal_interface_handler.CheckUsernameAvailabilityResponse"
+                }
+              }
+            },
+            "description" : "OK"
+          },
+          "400" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Bad Request"
+          },
+          "500" : {
+            "content" : {
+              "application/json" : {
+                "schema" : {
+                  "$ref" : "#/components/schemas/github_com_keu-5_muzee_backend_internal_helper.ErrorResponse"
+                }
+              }
+            },
+            "description" : "Internal Server Error"
+          }
+        },
+        "summary" : "Check username availability",
+        "tags" : [ "user-profiles" ]
+      }
+    },
     "/v1/users/me" : {
       "get" : {
         "description" : "Returns the current authenticated user's information. Accepts authentication via Bearer token (Authorization header) or HttpOnly cookie (access_token).",
@@ -496,6 +660,25 @@
         },
         "type" : "object"
       },
+      "internal_interface_handler.CheckUsernameAvailabilityResponse" : {
+        "properties" : {
+          "available" : {
+            "type" : "boolean"
+          }
+        },
+        "type" : "object"
+      },
+      "internal_interface_handler.CreateMyProfileResponse" : {
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "user_profile" : {
+            "$ref" : "#/components/schemas/internal_interface_handler.UserProfileResponse"
+          }
+        },
+        "type" : "object"
+      },
       "internal_interface_handler.GetMeResponse" : {
         "properties" : {
           "created_at" : {
@@ -509,6 +692,17 @@
           },
           "updated_at" : {
             "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
+      "internal_interface_handler.GetMyProfileResponse" : {
+        "properties" : {
+          "message" : {
+            "type" : "string"
+          },
+          "user_profile" : {
+            "$ref" : "#/components/schemas/internal_interface_handler.UserProfileResponse"
           }
         },
         "type" : "object"
@@ -664,6 +858,29 @@
         },
         "type" : "object"
       },
+      "internal_interface_handler.UserProfileResponse" : {
+        "properties" : {
+          "created_at" : {
+            "type" : "string"
+          },
+          "icon_path" : {
+            "type" : "string"
+          },
+          "id" : {
+            "type" : "integer"
+          },
+          "name" : {
+            "type" : "string"
+          },
+          "updated_at" : {
+            "type" : "string"
+          },
+          "username" : {
+            "type" : "string"
+          }
+        },
+        "type" : "object"
+      },
       "internal_interface_handler.UserResponse" : {
         "properties" : {
           "created_at" : {
@@ -717,6 +934,25 @@
             "$ref" : "#/components/schemas/internal_interface_handler.UserResponse"
           }
         },
+        "type" : "object"
+      },
+      "_v1_me_profile_post_request" : {
+        "properties" : {
+          "name" : {
+            "description" : "User name (1-100 characters)",
+            "type" : "string"
+          },
+          "username" : {
+            "description" : "Username (1-50 characters)",
+            "type" : "string"
+          },
+          "icon" : {
+            "description" : "Profile icon image (max 5MB, JPEG/PNG/GIF/WebP)",
+            "format" : "binary",
+            "type" : "string"
+          }
+        },
+        "required" : [ "name", "username" ],
         "type" : "object"
       }
     },
