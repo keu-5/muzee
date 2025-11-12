@@ -74,6 +74,9 @@ func (Post) Edges() []ent.Edge {
 
 		edge.To("likes", Like.Type).
 			StructTag(`json:"likes,omitempty"`),
+
+		edge.To("images", Image.Type).
+			StructTag(`json:"images,omitempty"`),
 	}
 }
 
