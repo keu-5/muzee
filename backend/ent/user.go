@@ -36,9 +36,13 @@ type User struct {
 type UserEdges struct {
 	// Profile holds the value of the profile edge.
 	Profile *UserProfile `json:"profile,omitempty"`
+	// Posts holds the value of the posts edge.
+	Posts []*Post `json:"posts,omitempty"`
+	// Likes holds the value of the likes edge.
+	Likes []*Like `json:"likes,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
+	loadedTypes [3]bool
 }
 
 // ProfileOrErr returns the Profile value or an error if the edge
@@ -50,6 +54,24 @@ func (e UserEdges) ProfileOrErr() (*UserProfile, error) {
 		return nil, &NotFoundError{label: userprofile.Label}
 	}
 	return nil, &NotLoadedError{edge: "profile"}
+}
+
+// PostsOrErr returns the Posts value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) PostsOrErr() ([]*Post, error) {
+	if e.loadedTypes[1] {
+		return e.Posts, nil
+	}
+	return nil, &NotLoadedError{edge: "posts"}
+}
+
+// LikesOrErr returns the Likes value or an error if the edge
+// was not loaded in eager-loading.
+func (e UserEdges) LikesOrErr() ([]*Like, error) {
+	if e.loadedTypes[2] {
+		return e.Likes, nil
+	}
+	return nil, &NotLoadedError{edge: "likes"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -124,6 +146,16 @@ func (_m *User) Value(name string) (ent.Value, error) {
 // QueryProfile queries the "profile" edge of the User entity.
 func (_m *User) QueryProfile() *UserProfileQuery {
 	return NewUserClient(_m.config).QueryProfile(_m)
+}
+
+// QueryPosts queries the "posts" edge of the User entity.
+func (_m *User) QueryPosts() *PostQuery {
+	return NewUserClient(_m.config).QueryPosts(_m)
+}
+
+// QueryLikes queries the "likes" edge of the User entity.
+func (_m *User) QueryLikes() *LikeQuery {
+	return NewUserClient(_m.config).QueryLikes(_m)
 }
 
 // Update returns a builder for updating this User.

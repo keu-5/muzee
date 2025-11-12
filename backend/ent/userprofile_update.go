@@ -29,6 +29,20 @@ func (_u *UserProfileUpdate) Where(ps ...predicate.UserProfile) *UserProfileUpda
 	return _u
 }
 
+// SetUserID sets the "user_id" field.
+func (_u *UserProfileUpdate) SetUserID(v int64) *UserProfileUpdate {
+	_u.mutation.SetUserID(v)
+	return _u
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_u *UserProfileUpdate) SetNillableUserID(v *int64) *UserProfileUpdate {
+	if v != nil {
+		_u.SetUserID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *UserProfileUpdate) SetName(v string) *UserProfileUpdate {
 	_u.mutation.SetName(v)
@@ -80,12 +94,6 @@ func (_u *UserProfileUpdate) ClearIconPath() *UserProfileUpdate {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *UserProfileUpdate) SetUpdatedAt(v time.Time) *UserProfileUpdate {
 	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
-// SetUserID sets the "user" edge to the User entity by ID.
-func (_u *UserProfileUpdate) SetUserID(id int64) *UserProfileUpdate {
-	_u.mutation.SetUserID(id)
 	return _u
 }
 
@@ -240,6 +248,20 @@ type UserProfileUpdateOne struct {
 	mutation *UserProfileMutation
 }
 
+// SetUserID sets the "user_id" field.
+func (_u *UserProfileUpdateOne) SetUserID(v int64) *UserProfileUpdateOne {
+	_u.mutation.SetUserID(v)
+	return _u
+}
+
+// SetNillableUserID sets the "user_id" field if the given value is not nil.
+func (_u *UserProfileUpdateOne) SetNillableUserID(v *int64) *UserProfileUpdateOne {
+	if v != nil {
+		_u.SetUserID(*v)
+	}
+	return _u
+}
+
 // SetName sets the "name" field.
 func (_u *UserProfileUpdateOne) SetName(v string) *UserProfileUpdateOne {
 	_u.mutation.SetName(v)
@@ -291,12 +313,6 @@ func (_u *UserProfileUpdateOne) ClearIconPath() *UserProfileUpdateOne {
 // SetUpdatedAt sets the "updated_at" field.
 func (_u *UserProfileUpdateOne) SetUpdatedAt(v time.Time) *UserProfileUpdateOne {
 	_u.mutation.SetUpdatedAt(v)
-	return _u
-}
-
-// SetUserID sets the "user" edge to the User entity by ID.
-func (_u *UserProfileUpdateOne) SetUserID(id int64) *UserProfileUpdateOne {
-	_u.mutation.SetUserID(id)
 	return _u
 }
 

@@ -11,57 +11,59 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/keu-5/muzee/backend/ent/like"
+	"github.com/keu-5/muzee/backend/ent/post"
 	"github.com/keu-5/muzee/backend/ent/predicate"
 	"github.com/keu-5/muzee/backend/ent/user"
-	"github.com/keu-5/muzee/backend/ent/userprofile"
 )
 
-// UserProfileQuery is the builder for querying UserProfile entities.
-type UserProfileQuery struct {
+// LikeQuery is the builder for querying Like entities.
+type LikeQuery struct {
 	config
 	ctx        *QueryContext
-	order      []userprofile.OrderOption
+	order      []like.OrderOption
 	inters     []Interceptor
-	predicates []predicate.UserProfile
+	predicates []predicate.Like
 	withUser   *UserQuery
+	withPost   *PostQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the UserProfileQuery builder.
-func (_q *UserProfileQuery) Where(ps ...predicate.UserProfile) *UserProfileQuery {
+// Where adds a new predicate for the LikeQuery builder.
+func (_q *LikeQuery) Where(ps ...predicate.Like) *LikeQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *UserProfileQuery) Limit(limit int) *UserProfileQuery {
+func (_q *LikeQuery) Limit(limit int) *LikeQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *UserProfileQuery) Offset(offset int) *UserProfileQuery {
+func (_q *LikeQuery) Offset(offset int) *LikeQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *UserProfileQuery) Unique(unique bool) *UserProfileQuery {
+func (_q *LikeQuery) Unique(unique bool) *LikeQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *UserProfileQuery) Order(o ...userprofile.OrderOption) *UserProfileQuery {
+func (_q *LikeQuery) Order(o ...like.OrderOption) *LikeQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
 // QueryUser chains the current query on the "user" edge.
-func (_q *UserProfileQuery) QueryUser() *UserQuery {
+func (_q *LikeQuery) QueryUser() *UserQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -72,9 +74,9 @@ func (_q *UserProfileQuery) QueryUser() *UserQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(userprofile.Table, userprofile.FieldID, selector),
+			sqlgraph.From(like.Table, like.FieldID, selector),
 			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, userprofile.UserTable, userprofile.UserColumn),
+			sqlgraph.Edge(sqlgraph.M2O, true, like.UserTable, like.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -82,21 +84,43 @@ func (_q *UserProfileQuery) QueryUser() *UserQuery {
 	return query
 }
 
-// First returns the first UserProfile entity from the query.
-// Returns a *NotFoundError when no UserProfile was found.
-func (_q *UserProfileQuery) First(ctx context.Context) (*UserProfile, error) {
+// QueryPost chains the current query on the "post" edge.
+func (_q *LikeQuery) QueryPost() *PostQuery {
+	query := (&PostClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(like.Table, like.FieldID, selector),
+			sqlgraph.To(post.Table, post.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, like.PostTable, like.PostColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// First returns the first Like entity from the query.
+// Returns a *NotFoundError when no Like was found.
+func (_q *LikeQuery) First(ctx context.Context) (*Like, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{userprofile.Label}
+		return nil, &NotFoundError{like.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *UserProfileQuery) FirstX(ctx context.Context) *UserProfile {
+func (_q *LikeQuery) FirstX(ctx context.Context) *Like {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -104,22 +128,22 @@ func (_q *UserProfileQuery) FirstX(ctx context.Context) *UserProfile {
 	return node
 }
 
-// FirstID returns the first UserProfile ID from the query.
-// Returns a *NotFoundError when no UserProfile ID was found.
-func (_q *UserProfileQuery) FirstID(ctx context.Context) (id int64, err error) {
+// FirstID returns the first Like ID from the query.
+// Returns a *NotFoundError when no Like ID was found.
+func (_q *LikeQuery) FirstID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{userprofile.Label}
+		err = &NotFoundError{like.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *UserProfileQuery) FirstIDX(ctx context.Context) int64 {
+func (_q *LikeQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -127,10 +151,10 @@ func (_q *UserProfileQuery) FirstIDX(ctx context.Context) int64 {
 	return id
 }
 
-// Only returns a single UserProfile entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one UserProfile entity is found.
-// Returns a *NotFoundError when no UserProfile entities are found.
-func (_q *UserProfileQuery) Only(ctx context.Context) (*UserProfile, error) {
+// Only returns a single Like entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Like entity is found.
+// Returns a *NotFoundError when no Like entities are found.
+func (_q *LikeQuery) Only(ctx context.Context) (*Like, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -139,14 +163,14 @@ func (_q *UserProfileQuery) Only(ctx context.Context) (*UserProfile, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{userprofile.Label}
+		return nil, &NotFoundError{like.Label}
 	default:
-		return nil, &NotSingularError{userprofile.Label}
+		return nil, &NotSingularError{like.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *UserProfileQuery) OnlyX(ctx context.Context) *UserProfile {
+func (_q *LikeQuery) OnlyX(ctx context.Context) *Like {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -154,10 +178,10 @@ func (_q *UserProfileQuery) OnlyX(ctx context.Context) *UserProfile {
 	return node
 }
 
-// OnlyID is like Only, but returns the only UserProfile ID in the query.
-// Returns a *NotSingularError when more than one UserProfile ID is found.
+// OnlyID is like Only, but returns the only Like ID in the query.
+// Returns a *NotSingularError when more than one Like ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *UserProfileQuery) OnlyID(ctx context.Context) (id int64, err error) {
+func (_q *LikeQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -166,15 +190,15 @@ func (_q *UserProfileQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{userprofile.Label}
+		err = &NotFoundError{like.Label}
 	default:
-		err = &NotSingularError{userprofile.Label}
+		err = &NotSingularError{like.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *UserProfileQuery) OnlyIDX(ctx context.Context) int64 {
+func (_q *LikeQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -182,18 +206,18 @@ func (_q *UserProfileQuery) OnlyIDX(ctx context.Context) int64 {
 	return id
 }
 
-// All executes the query and returns a list of UserProfiles.
-func (_q *UserProfileQuery) All(ctx context.Context) ([]*UserProfile, error) {
+// All executes the query and returns a list of Likes.
+func (_q *LikeQuery) All(ctx context.Context) ([]*Like, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*UserProfile, *UserProfileQuery]()
-	return withInterceptors[[]*UserProfile](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Like, *LikeQuery]()
+	return withInterceptors[[]*Like](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *UserProfileQuery) AllX(ctx context.Context) []*UserProfile {
+func (_q *LikeQuery) AllX(ctx context.Context) []*Like {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -201,20 +225,20 @@ func (_q *UserProfileQuery) AllX(ctx context.Context) []*UserProfile {
 	return nodes
 }
 
-// IDs executes the query and returns a list of UserProfile IDs.
-func (_q *UserProfileQuery) IDs(ctx context.Context) (ids []int64, err error) {
+// IDs executes the query and returns a list of Like IDs.
+func (_q *LikeQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(userprofile.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(like.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *UserProfileQuery) IDsX(ctx context.Context) []int64 {
+func (_q *LikeQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -223,16 +247,16 @@ func (_q *UserProfileQuery) IDsX(ctx context.Context) []int64 {
 }
 
 // Count returns the count of the given query.
-func (_q *UserProfileQuery) Count(ctx context.Context) (int, error) {
+func (_q *LikeQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*UserProfileQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*LikeQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *UserProfileQuery) CountX(ctx context.Context) int {
+func (_q *LikeQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -241,7 +265,7 @@ func (_q *UserProfileQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *UserProfileQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *LikeQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -254,7 +278,7 @@ func (_q *UserProfileQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *UserProfileQuery) ExistX(ctx context.Context) bool {
+func (_q *LikeQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -262,19 +286,20 @@ func (_q *UserProfileQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the UserProfileQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the LikeQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *UserProfileQuery) Clone() *UserProfileQuery {
+func (_q *LikeQuery) Clone() *LikeQuery {
 	if _q == nil {
 		return nil
 	}
-	return &UserProfileQuery{
+	return &LikeQuery{
 		config:     _q.config,
 		ctx:        _q.ctx.Clone(),
-		order:      append([]userprofile.OrderOption{}, _q.order...),
+		order:      append([]like.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.UserProfile{}, _q.predicates...),
+		predicates: append([]predicate.Like{}, _q.predicates...),
 		withUser:   _q.withUser.Clone(),
+		withPost:   _q.withPost.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -283,12 +308,23 @@ func (_q *UserProfileQuery) Clone() *UserProfileQuery {
 
 // WithUser tells the query-builder to eager-load the nodes that are connected to
 // the "user" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserProfileQuery) WithUser(opts ...func(*UserQuery)) *UserProfileQuery {
+func (_q *LikeQuery) WithUser(opts ...func(*UserQuery)) *LikeQuery {
 	query := (&UserClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
 	_q.withUser = query
+	return _q
+}
+
+// WithPost tells the query-builder to eager-load the nodes that are connected to
+// the "post" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *LikeQuery) WithPost(opts ...func(*PostQuery)) *LikeQuery {
+	query := (&PostClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withPost = query
 	return _q
 }
 
@@ -302,15 +338,15 @@ func (_q *UserProfileQuery) WithUser(opts ...func(*UserQuery)) *UserProfileQuery
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.UserProfile.Query().
-//		GroupBy(userprofile.FieldUserID).
+//	client.Like.Query().
+//		GroupBy(like.FieldUserID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *UserProfileQuery) GroupBy(field string, fields ...string) *UserProfileGroupBy {
+func (_q *LikeQuery) GroupBy(field string, fields ...string) *LikeGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &UserProfileGroupBy{build: _q}
+	grbuild := &LikeGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = userprofile.Label
+	grbuild.label = like.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -324,23 +360,23 @@ func (_q *UserProfileQuery) GroupBy(field string, fields ...string) *UserProfile
 //		UserID int64 `json:"user_id,omitempty"`
 //	}
 //
-//	client.UserProfile.Query().
-//		Select(userprofile.FieldUserID).
+//	client.Like.Query().
+//		Select(like.FieldUserID).
 //		Scan(ctx, &v)
-func (_q *UserProfileQuery) Select(fields ...string) *UserProfileSelect {
+func (_q *LikeQuery) Select(fields ...string) *LikeSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &UserProfileSelect{UserProfileQuery: _q}
-	sbuild.label = userprofile.Label
+	sbuild := &LikeSelect{LikeQuery: _q}
+	sbuild.label = like.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a UserProfileSelect configured with the given aggregations.
-func (_q *UserProfileQuery) Aggregate(fns ...AggregateFunc) *UserProfileSelect {
+// Aggregate returns a LikeSelect configured with the given aggregations.
+func (_q *LikeQuery) Aggregate(fns ...AggregateFunc) *LikeSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *UserProfileQuery) prepareQuery(ctx context.Context) error {
+func (_q *LikeQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -352,7 +388,7 @@ func (_q *UserProfileQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !userprofile.ValidColumn(f) {
+		if !like.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -366,19 +402,20 @@ func (_q *UserProfileQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *UserProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*UserProfile, error) {
+func (_q *LikeQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Like, error) {
 	var (
-		nodes       = []*UserProfile{}
+		nodes       = []*Like{}
 		_spec       = _q.querySpec()
-		loadedTypes = [1]bool{
+		loadedTypes = [2]bool{
 			_q.withUser != nil,
+			_q.withPost != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*UserProfile).scanValues(nil, columns)
+		return (*Like).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &UserProfile{config: _q.config}
+		node := &Like{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -394,16 +431,22 @@ func (_q *UserProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	}
 	if query := _q.withUser; query != nil {
 		if err := _q.loadUser(ctx, query, nodes, nil,
-			func(n *UserProfile, e *User) { n.Edges.User = e }); err != nil {
+			func(n *Like, e *User) { n.Edges.User = e }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withPost; query != nil {
+		if err := _q.loadPost(ctx, query, nodes, nil,
+			func(n *Like, e *Post) { n.Edges.Post = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *UserProfileQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*UserProfile, init func(*UserProfile), assign func(*UserProfile, *User)) error {
+func (_q *LikeQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Like, init func(*Like), assign func(*Like, *User)) error {
 	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*UserProfile)
+	nodeids := make(map[int64][]*Like)
 	for i := range nodes {
 		fk := nodes[i].UserID
 		if _, ok := nodeids[fk]; !ok {
@@ -430,8 +473,37 @@ func (_q *UserProfileQuery) loadUser(ctx context.Context, query *UserQuery, node
 	}
 	return nil
 }
+func (_q *LikeQuery) loadPost(ctx context.Context, query *PostQuery, nodes []*Like, init func(*Like), assign func(*Like, *Post)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Like)
+	for i := range nodes {
+		fk := nodes[i].PostID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(post.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "post_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
 
-func (_q *UserProfileQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *LikeQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -440,8 +512,8 @@ func (_q *UserProfileQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *UserProfileQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(userprofile.Table, userprofile.Columns, sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt64))
+func (_q *LikeQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(like.Table, like.Columns, sqlgraph.NewFieldSpec(like.FieldID, field.TypeInt64))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -450,14 +522,17 @@ func (_q *UserProfileQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, userprofile.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, like.FieldID)
 		for i := range fields {
-			if fields[i] != userprofile.FieldID {
+			if fields[i] != like.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
 		if _q.withUser != nil {
-			_spec.Node.AddColumnOnce(userprofile.FieldUserID)
+			_spec.Node.AddColumnOnce(like.FieldUserID)
+		}
+		if _q.withPost != nil {
+			_spec.Node.AddColumnOnce(like.FieldPostID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -483,12 +558,12 @@ func (_q *UserProfileQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *UserProfileQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *LikeQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(userprofile.Table)
+	t1 := builder.Table(like.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = userprofile.Columns
+		columns = like.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -515,28 +590,28 @@ func (_q *UserProfileQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// UserProfileGroupBy is the group-by builder for UserProfile entities.
-type UserProfileGroupBy struct {
+// LikeGroupBy is the group-by builder for Like entities.
+type LikeGroupBy struct {
 	selector
-	build *UserProfileQuery
+	build *LikeQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *UserProfileGroupBy) Aggregate(fns ...AggregateFunc) *UserProfileGroupBy {
+func (_g *LikeGroupBy) Aggregate(fns ...AggregateFunc) *LikeGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *UserProfileGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *LikeGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*UserProfileQuery, *UserProfileGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*LikeQuery, *LikeGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *UserProfileGroupBy) sqlScan(ctx context.Context, root *UserProfileQuery, v any) error {
+func (_g *LikeGroupBy) sqlScan(ctx context.Context, root *LikeQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -563,28 +638,28 @@ func (_g *UserProfileGroupBy) sqlScan(ctx context.Context, root *UserProfileQuer
 	return sql.ScanSlice(rows, v)
 }
 
-// UserProfileSelect is the builder for selecting fields of UserProfile entities.
-type UserProfileSelect struct {
-	*UserProfileQuery
+// LikeSelect is the builder for selecting fields of Like entities.
+type LikeSelect struct {
+	*LikeQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *UserProfileSelect) Aggregate(fns ...AggregateFunc) *UserProfileSelect {
+func (_s *LikeSelect) Aggregate(fns ...AggregateFunc) *LikeSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *UserProfileSelect) Scan(ctx context.Context, v any) error {
+func (_s *LikeSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*UserProfileQuery, *UserProfileSelect](ctx, _s.UserProfileQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*LikeQuery, *LikeSelect](ctx, _s.LikeQuery, _s, _s.inters, v)
 }
 
-func (_s *UserProfileSelect) sqlScan(ctx context.Context, root *UserProfileQuery, v any) error {
+func (_s *LikeSelect) sqlScan(ctx context.Context, root *LikeQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

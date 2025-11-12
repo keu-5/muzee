@@ -16,58 +16,58 @@ import (
 	"github.com/keu-5/muzee/backend/ent/post"
 	"github.com/keu-5/muzee/backend/ent/predicate"
 	"github.com/keu-5/muzee/backend/ent/user"
-	"github.com/keu-5/muzee/backend/ent/userprofile"
 )
 
-// UserQuery is the builder for querying User entities.
-type UserQuery struct {
+// PostQuery is the builder for querying Post entities.
+type PostQuery struct {
 	config
-	ctx         *QueryContext
-	order       []user.OrderOption
-	inters      []Interceptor
-	predicates  []predicate.User
-	withProfile *UserProfileQuery
-	withPosts   *PostQuery
-	withLikes   *LikeQuery
+	ctx                   *QueryContext
+	order                 []post.OrderOption
+	inters                []Interceptor
+	predicates            []predicate.Post
+	withUser              *UserQuery
+	withRecommendingPosts *PostQuery
+	withRecommendedPost   *PostQuery
+	withLikes             *LikeQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the UserQuery builder.
-func (_q *UserQuery) Where(ps ...predicate.User) *UserQuery {
+// Where adds a new predicate for the PostQuery builder.
+func (_q *PostQuery) Where(ps ...predicate.Post) *PostQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *UserQuery) Limit(limit int) *UserQuery {
+func (_q *PostQuery) Limit(limit int) *PostQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *UserQuery) Offset(offset int) *UserQuery {
+func (_q *PostQuery) Offset(offset int) *PostQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *UserQuery) Unique(unique bool) *UserQuery {
+func (_q *PostQuery) Unique(unique bool) *PostQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *UserQuery) Order(o ...user.OrderOption) *UserQuery {
+func (_q *PostQuery) Order(o ...post.OrderOption) *PostQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryProfile chains the current query on the "profile" edge.
-func (_q *UserQuery) QueryProfile() *UserProfileQuery {
-	query := (&UserProfileClient{config: _q.config}).Query()
+// QueryUser chains the current query on the "user" edge.
+func (_q *PostQuery) QueryUser() *UserQuery {
+	query := (&UserClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -77,9 +77,9 @@ func (_q *UserQuery) QueryProfile() *UserProfileQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, selector),
-			sqlgraph.To(userprofile.Table, userprofile.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, false, user.ProfileTable, user.ProfileColumn),
+			sqlgraph.From(post.Table, post.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, post.UserTable, post.UserColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -87,8 +87,8 @@ func (_q *UserQuery) QueryProfile() *UserProfileQuery {
 	return query
 }
 
-// QueryPosts chains the current query on the "posts" edge.
-func (_q *UserQuery) QueryPosts() *PostQuery {
+// QueryRecommendingPosts chains the current query on the "recommending_posts" edge.
+func (_q *PostQuery) QueryRecommendingPosts() *PostQuery {
 	query := (&PostClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -99,9 +99,31 @@ func (_q *UserQuery) QueryPosts() *PostQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.From(post.Table, post.FieldID, selector),
 			sqlgraph.To(post.Table, post.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.PostsTable, user.PostsColumn),
+			sqlgraph.Edge(sqlgraph.O2M, true, post.RecommendingPostsTable, post.RecommendingPostsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryRecommendedPost chains the current query on the "recommended_post" edge.
+func (_q *PostQuery) QueryRecommendedPost() *PostQuery {
+	query := (&PostClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(post.Table, post.FieldID, selector),
+			sqlgraph.To(post.Table, post.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, post.RecommendedPostTable, post.RecommendedPostColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -110,7 +132,7 @@ func (_q *UserQuery) QueryPosts() *PostQuery {
 }
 
 // QueryLikes chains the current query on the "likes" edge.
-func (_q *UserQuery) QueryLikes() *LikeQuery {
+func (_q *PostQuery) QueryLikes() *LikeQuery {
 	query := (&LikeClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
@@ -121,9 +143,9 @@ func (_q *UserQuery) QueryLikes() *LikeQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(user.Table, user.FieldID, selector),
+			sqlgraph.From(post.Table, post.FieldID, selector),
 			sqlgraph.To(like.Table, like.FieldID),
-			sqlgraph.Edge(sqlgraph.O2M, false, user.LikesTable, user.LikesColumn),
+			sqlgraph.Edge(sqlgraph.O2M, false, post.LikesTable, post.LikesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -131,21 +153,21 @@ func (_q *UserQuery) QueryLikes() *LikeQuery {
 	return query
 }
 
-// First returns the first User entity from the query.
-// Returns a *NotFoundError when no User was found.
-func (_q *UserQuery) First(ctx context.Context) (*User, error) {
+// First returns the first Post entity from the query.
+// Returns a *NotFoundError when no Post was found.
+func (_q *PostQuery) First(ctx context.Context) (*Post, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{user.Label}
+		return nil, &NotFoundError{post.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *UserQuery) FirstX(ctx context.Context) *User {
+func (_q *PostQuery) FirstX(ctx context.Context) *Post {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -153,22 +175,22 @@ func (_q *UserQuery) FirstX(ctx context.Context) *User {
 	return node
 }
 
-// FirstID returns the first User ID from the query.
-// Returns a *NotFoundError when no User ID was found.
-func (_q *UserQuery) FirstID(ctx context.Context) (id int64, err error) {
+// FirstID returns the first Post ID from the query.
+// Returns a *NotFoundError when no Post ID was found.
+func (_q *PostQuery) FirstID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{user.Label}
+		err = &NotFoundError{post.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *UserQuery) FirstIDX(ctx context.Context) int64 {
+func (_q *PostQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -176,10 +198,10 @@ func (_q *UserQuery) FirstIDX(ctx context.Context) int64 {
 	return id
 }
 
-// Only returns a single User entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one User entity is found.
-// Returns a *NotFoundError when no User entities are found.
-func (_q *UserQuery) Only(ctx context.Context) (*User, error) {
+// Only returns a single Post entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Post entity is found.
+// Returns a *NotFoundError when no Post entities are found.
+func (_q *PostQuery) Only(ctx context.Context) (*Post, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -188,14 +210,14 @@ func (_q *UserQuery) Only(ctx context.Context) (*User, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{user.Label}
+		return nil, &NotFoundError{post.Label}
 	default:
-		return nil, &NotSingularError{user.Label}
+		return nil, &NotSingularError{post.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *UserQuery) OnlyX(ctx context.Context) *User {
+func (_q *PostQuery) OnlyX(ctx context.Context) *Post {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -203,10 +225,10 @@ func (_q *UserQuery) OnlyX(ctx context.Context) *User {
 	return node
 }
 
-// OnlyID is like Only, but returns the only User ID in the query.
-// Returns a *NotSingularError when more than one User ID is found.
+// OnlyID is like Only, but returns the only Post ID in the query.
+// Returns a *NotSingularError when more than one Post ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *UserQuery) OnlyID(ctx context.Context) (id int64, err error) {
+func (_q *PostQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -215,15 +237,15 @@ func (_q *UserQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{user.Label}
+		err = &NotFoundError{post.Label}
 	default:
-		err = &NotSingularError{user.Label}
+		err = &NotSingularError{post.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *UserQuery) OnlyIDX(ctx context.Context) int64 {
+func (_q *PostQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -231,18 +253,18 @@ func (_q *UserQuery) OnlyIDX(ctx context.Context) int64 {
 	return id
 }
 
-// All executes the query and returns a list of Users.
-func (_q *UserQuery) All(ctx context.Context) ([]*User, error) {
+// All executes the query and returns a list of Posts.
+func (_q *PostQuery) All(ctx context.Context) ([]*Post, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*User, *UserQuery]()
-	return withInterceptors[[]*User](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Post, *PostQuery]()
+	return withInterceptors[[]*Post](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *UserQuery) AllX(ctx context.Context) []*User {
+func (_q *PostQuery) AllX(ctx context.Context) []*Post {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -250,20 +272,20 @@ func (_q *UserQuery) AllX(ctx context.Context) []*User {
 	return nodes
 }
 
-// IDs executes the query and returns a list of User IDs.
-func (_q *UserQuery) IDs(ctx context.Context) (ids []int64, err error) {
+// IDs executes the query and returns a list of Post IDs.
+func (_q *PostQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(user.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(post.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *UserQuery) IDsX(ctx context.Context) []int64 {
+func (_q *PostQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -272,16 +294,16 @@ func (_q *UserQuery) IDsX(ctx context.Context) []int64 {
 }
 
 // Count returns the count of the given query.
-func (_q *UserQuery) Count(ctx context.Context) (int, error) {
+func (_q *PostQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*UserQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*PostQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *UserQuery) CountX(ctx context.Context) int {
+func (_q *PostQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -290,7 +312,7 @@ func (_q *UserQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *UserQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *PostQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -303,7 +325,7 @@ func (_q *UserQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *UserQuery) ExistX(ctx context.Context) bool {
+func (_q *PostQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -311,52 +333,64 @@ func (_q *UserQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the UserQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the PostQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *UserQuery) Clone() *UserQuery {
+func (_q *PostQuery) Clone() *PostQuery {
 	if _q == nil {
 		return nil
 	}
-	return &UserQuery{
-		config:      _q.config,
-		ctx:         _q.ctx.Clone(),
-		order:       append([]user.OrderOption{}, _q.order...),
-		inters:      append([]Interceptor{}, _q.inters...),
-		predicates:  append([]predicate.User{}, _q.predicates...),
-		withProfile: _q.withProfile.Clone(),
-		withPosts:   _q.withPosts.Clone(),
-		withLikes:   _q.withLikes.Clone(),
+	return &PostQuery{
+		config:                _q.config,
+		ctx:                   _q.ctx.Clone(),
+		order:                 append([]post.OrderOption{}, _q.order...),
+		inters:                append([]Interceptor{}, _q.inters...),
+		predicates:            append([]predicate.Post{}, _q.predicates...),
+		withUser:              _q.withUser.Clone(),
+		withRecommendingPosts: _q.withRecommendingPosts.Clone(),
+		withRecommendedPost:   _q.withRecommendedPost.Clone(),
+		withLikes:             _q.withLikes.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithProfile tells the query-builder to eager-load the nodes that are connected to
-// the "profile" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserQuery) WithProfile(opts ...func(*UserProfileQuery)) *UserQuery {
-	query := (&UserProfileClient{config: _q.config}).Query()
+// WithUser tells the query-builder to eager-load the nodes that are connected to
+// the "user" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PostQuery) WithUser(opts ...func(*UserQuery)) *PostQuery {
+	query := (&UserClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withProfile = query
+	_q.withUser = query
 	return _q
 }
 
-// WithPosts tells the query-builder to eager-load the nodes that are connected to
-// the "posts" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserQuery) WithPosts(opts ...func(*PostQuery)) *UserQuery {
+// WithRecommendingPosts tells the query-builder to eager-load the nodes that are connected to
+// the "recommending_posts" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PostQuery) WithRecommendingPosts(opts ...func(*PostQuery)) *PostQuery {
 	query := (&PostClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withPosts = query
+	_q.withRecommendingPosts = query
+	return _q
+}
+
+// WithRecommendedPost tells the query-builder to eager-load the nodes that are connected to
+// the "recommended_post" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PostQuery) WithRecommendedPost(opts ...func(*PostQuery)) *PostQuery {
+	query := (&PostClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withRecommendedPost = query
 	return _q
 }
 
 // WithLikes tells the query-builder to eager-load the nodes that are connected to
 // the "likes" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserQuery) WithLikes(opts ...func(*LikeQuery)) *UserQuery {
+func (_q *PostQuery) WithLikes(opts ...func(*LikeQuery)) *PostQuery {
 	query := (&LikeClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
@@ -371,19 +405,19 @@ func (_q *UserQuery) WithLikes(opts ...func(*LikeQuery)) *UserQuery {
 // Example:
 //
 //	var v []struct {
-//		Email string `json:"email,omitempty"`
+//		UserID int64 `json:"user_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.User.Query().
-//		GroupBy(user.FieldEmail).
+//	client.Post.Query().
+//		GroupBy(post.FieldUserID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
+func (_q *PostQuery) GroupBy(field string, fields ...string) *PostGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &UserGroupBy{build: _q}
+	grbuild := &PostGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = user.Label
+	grbuild.label = post.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -394,26 +428,26 @@ func (_q *UserQuery) GroupBy(field string, fields ...string) *UserGroupBy {
 // Example:
 //
 //	var v []struct {
-//		Email string `json:"email,omitempty"`
+//		UserID int64 `json:"user_id,omitempty"`
 //	}
 //
-//	client.User.Query().
-//		Select(user.FieldEmail).
+//	client.Post.Query().
+//		Select(post.FieldUserID).
 //		Scan(ctx, &v)
-func (_q *UserQuery) Select(fields ...string) *UserSelect {
+func (_q *PostQuery) Select(fields ...string) *PostSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &UserSelect{UserQuery: _q}
-	sbuild.label = user.Label
+	sbuild := &PostSelect{PostQuery: _q}
+	sbuild.label = post.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a UserSelect configured with the given aggregations.
-func (_q *UserQuery) Aggregate(fns ...AggregateFunc) *UserSelect {
+// Aggregate returns a PostSelect configured with the given aggregations.
+func (_q *PostQuery) Aggregate(fns ...AggregateFunc) *PostSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *UserQuery) prepareQuery(ctx context.Context) error {
+func (_q *PostQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -425,7 +459,7 @@ func (_q *UserQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !user.ValidColumn(f) {
+		if !post.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -439,21 +473,22 @@ func (_q *UserQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, error) {
+func (_q *PostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Post, error) {
 	var (
-		nodes       = []*User{}
+		nodes       = []*Post{}
 		_spec       = _q.querySpec()
-		loadedTypes = [3]bool{
-			_q.withProfile != nil,
-			_q.withPosts != nil,
+		loadedTypes = [4]bool{
+			_q.withUser != nil,
+			_q.withRecommendingPosts != nil,
+			_q.withRecommendedPost != nil,
 			_q.withLikes != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*User).scanValues(nil, columns)
+		return (*Post).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &User{config: _q.config}
+		node := &Post{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -467,59 +502,67 @@ func (_q *UserQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*User, e
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withProfile; query != nil {
-		if err := _q.loadProfile(ctx, query, nodes, nil,
-			func(n *User, e *UserProfile) { n.Edges.Profile = e }); err != nil {
+	if query := _q.withUser; query != nil {
+		if err := _q.loadUser(ctx, query, nodes, nil,
+			func(n *Post, e *User) { n.Edges.User = e }); err != nil {
 			return nil, err
 		}
 	}
-	if query := _q.withPosts; query != nil {
-		if err := _q.loadPosts(ctx, query, nodes,
-			func(n *User) { n.Edges.Posts = []*Post{} },
-			func(n *User, e *Post) { n.Edges.Posts = append(n.Edges.Posts, e) }); err != nil {
+	if query := _q.withRecommendingPosts; query != nil {
+		if err := _q.loadRecommendingPosts(ctx, query, nodes,
+			func(n *Post) { n.Edges.RecommendingPosts = []*Post{} },
+			func(n *Post, e *Post) { n.Edges.RecommendingPosts = append(n.Edges.RecommendingPosts, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withRecommendedPost; query != nil {
+		if err := _q.loadRecommendedPost(ctx, query, nodes, nil,
+			func(n *Post, e *Post) { n.Edges.RecommendedPost = e }); err != nil {
 			return nil, err
 		}
 	}
 	if query := _q.withLikes; query != nil {
 		if err := _q.loadLikes(ctx, query, nodes,
-			func(n *User) { n.Edges.Likes = []*Like{} },
-			func(n *User, e *Like) { n.Edges.Likes = append(n.Edges.Likes, e) }); err != nil {
+			func(n *Post) { n.Edges.Likes = []*Like{} },
+			func(n *Post, e *Like) { n.Edges.Likes = append(n.Edges.Likes, e) }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *UserQuery) loadProfile(ctx context.Context, query *UserProfileQuery, nodes []*User, init func(*User), assign func(*User, *UserProfile)) error {
-	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int64]*User)
+func (_q *PostQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*Post, init func(*Post), assign func(*Post, *User)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Post)
 	for i := range nodes {
-		fks = append(fks, nodes[i].ID)
-		nodeids[nodes[i].ID] = nodes[i]
+		fk := nodes[i].UserID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
 	}
-	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(userprofile.FieldUserID)
+	if len(ids) == 0 {
+		return nil
 	}
-	query.Where(predicate.UserProfile(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.ProfileColumn), fks...))
-	}))
+	query.Where(user.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.UserID
-		node, ok := nodeids[fk]
+		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
 		}
-		assign(node, n)
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
 	}
 	return nil
 }
-func (_q *UserQuery) loadPosts(ctx context.Context, query *PostQuery, nodes []*User, init func(*User), assign func(*User, *Post)) error {
+func (_q *PostQuery) loadRecommendingPosts(ctx context.Context, query *PostQuery, nodes []*Post, init func(*Post), assign func(*Post, *Post)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int64]*User)
+	nodeids := make(map[int64]*Post)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -528,28 +571,57 @@ func (_q *UserQuery) loadPosts(ctx context.Context, query *PostQuery, nodes []*U
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(post.FieldUserID)
+		query.ctx.AppendFieldOnce(post.FieldRecommendedPostID)
 	}
 	query.Where(predicate.Post(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.PostsColumn), fks...))
+		s.Where(sql.InValues(s.C(post.RecommendingPostsColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.UserID
+		fk := n.RecommendedPostID
 		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "recommended_post_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
 	return nil
 }
-func (_q *UserQuery) loadLikes(ctx context.Context, query *LikeQuery, nodes []*User, init func(*User), assign func(*User, *Like)) error {
+func (_q *PostQuery) loadRecommendedPost(ctx context.Context, query *PostQuery, nodes []*Post, init func(*Post), assign func(*Post, *Post)) error {
+	ids := make([]int64, 0, len(nodes))
+	nodeids := make(map[int64][]*Post)
+	for i := range nodes {
+		fk := nodes[i].RecommendedPostID
+		if _, ok := nodeids[fk]; !ok {
+			ids = append(ids, fk)
+		}
+		nodeids[fk] = append(nodeids[fk], nodes[i])
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	query.Where(post.IDIn(ids...))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		nodes, ok := nodeids[n.ID]
+		if !ok {
+			return fmt.Errorf(`unexpected foreign-key "recommended_post_id" returned %v`, n.ID)
+		}
+		for i := range nodes {
+			assign(nodes[i], n)
+		}
+	}
+	return nil
+}
+func (_q *PostQuery) loadLikes(ctx context.Context, query *LikeQuery, nodes []*Post, init func(*Post), assign func(*Post, *Like)) error {
 	fks := make([]driver.Value, 0, len(nodes))
-	nodeids := make(map[int64]*User)
+	nodeids := make(map[int64]*Post)
 	for i := range nodes {
 		fks = append(fks, nodes[i].ID)
 		nodeids[nodes[i].ID] = nodes[i]
@@ -558,27 +630,27 @@ func (_q *UserQuery) loadLikes(ctx context.Context, query *LikeQuery, nodes []*U
 		}
 	}
 	if len(query.ctx.Fields) > 0 {
-		query.ctx.AppendFieldOnce(like.FieldUserID)
+		query.ctx.AppendFieldOnce(like.FieldPostID)
 	}
 	query.Where(predicate.Like(func(s *sql.Selector) {
-		s.Where(sql.InValues(s.C(user.LikesColumn), fks...))
+		s.Where(sql.InValues(s.C(post.LikesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
 	}
 	for _, n := range neighbors {
-		fk := n.UserID
+		fk := n.PostID
 		node, ok := nodeids[fk]
 		if !ok {
-			return fmt.Errorf(`unexpected referenced foreign-key "user_id" returned %v for node %v`, fk, n.ID)
+			return fmt.Errorf(`unexpected referenced foreign-key "post_id" returned %v for node %v`, fk, n.ID)
 		}
 		assign(node, n)
 	}
 	return nil
 }
 
-func (_q *UserQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *PostQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -587,8 +659,8 @@ func (_q *UserQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *UserQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(user.Table, user.Columns, sqlgraph.NewFieldSpec(user.FieldID, field.TypeInt64))
+func (_q *PostQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(post.Table, post.Columns, sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt64))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -597,11 +669,17 @@ func (_q *UserQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, user.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, post.FieldID)
 		for i := range fields {
-			if fields[i] != user.FieldID {
+			if fields[i] != post.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
+		}
+		if _q.withUser != nil {
+			_spec.Node.AddColumnOnce(post.FieldUserID)
+		}
+		if _q.withRecommendedPost != nil {
+			_spec.Node.AddColumnOnce(post.FieldRecommendedPostID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -627,12 +705,12 @@ func (_q *UserQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *UserQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *PostQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(user.Table)
+	t1 := builder.Table(post.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = user.Columns
+		columns = post.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -659,28 +737,28 @@ func (_q *UserQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// UserGroupBy is the group-by builder for User entities.
-type UserGroupBy struct {
+// PostGroupBy is the group-by builder for Post entities.
+type PostGroupBy struct {
 	selector
-	build *UserQuery
+	build *PostQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *UserGroupBy) Aggregate(fns ...AggregateFunc) *UserGroupBy {
+func (_g *PostGroupBy) Aggregate(fns ...AggregateFunc) *PostGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *UserGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *PostGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*UserQuery, *UserGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*PostQuery, *PostGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *UserGroupBy) sqlScan(ctx context.Context, root *UserQuery, v any) error {
+func (_g *PostGroupBy) sqlScan(ctx context.Context, root *PostQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -707,28 +785,28 @@ func (_g *UserGroupBy) sqlScan(ctx context.Context, root *UserQuery, v any) erro
 	return sql.ScanSlice(rows, v)
 }
 
-// UserSelect is the builder for selecting fields of User entities.
-type UserSelect struct {
-	*UserQuery
+// PostSelect is the builder for selecting fields of Post entities.
+type PostSelect struct {
+	*PostQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *UserSelect) Aggregate(fns ...AggregateFunc) *UserSelect {
+func (_s *PostSelect) Aggregate(fns ...AggregateFunc) *PostSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *UserSelect) Scan(ctx context.Context, v any) error {
+func (_s *PostSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*UserQuery, *UserSelect](ctx, _s.UserQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*PostQuery, *PostSelect](ctx, _s.PostQuery, _s, _s.inters, v)
 }
 
-func (_s *UserSelect) sqlScan(ctx context.Context, root *UserQuery, v any) error {
+func (_s *PostSelect) sqlScan(ctx context.Context, root *PostQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

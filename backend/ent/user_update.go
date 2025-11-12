@@ -11,6 +11,8 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/keu-5/muzee/backend/ent/like"
+	"github.com/keu-5/muzee/backend/ent/post"
 	"github.com/keu-5/muzee/backend/ent/predicate"
 	"github.com/keu-5/muzee/backend/ent/user"
 	"github.com/keu-5/muzee/backend/ent/userprofile"
@@ -82,6 +84,36 @@ func (_u *UserUpdate) SetProfile(v *UserProfile) *UserUpdate {
 	return _u.SetProfileID(v.ID)
 }
 
+// AddPostIDs adds the "posts" edge to the Post entity by IDs.
+func (_u *UserUpdate) AddPostIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddPostIDs(ids...)
+	return _u
+}
+
+// AddPosts adds the "posts" edges to the Post entity.
+func (_u *UserUpdate) AddPosts(v ...*Post) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPostIDs(ids...)
+}
+
+// AddLikeIDs adds the "likes" edge to the Like entity by IDs.
+func (_u *UserUpdate) AddLikeIDs(ids ...int64) *UserUpdate {
+	_u.mutation.AddLikeIDs(ids...)
+	return _u
+}
+
+// AddLikes adds the "likes" edges to the Like entity.
+func (_u *UserUpdate) AddLikes(v ...*Like) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLikeIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdate) Mutation() *UserMutation {
 	return _u.mutation
@@ -91,6 +123,48 @@ func (_u *UserUpdate) Mutation() *UserMutation {
 func (_u *UserUpdate) ClearProfile() *UserUpdate {
 	_u.mutation.ClearProfile()
 	return _u
+}
+
+// ClearPosts clears all "posts" edges to the Post entity.
+func (_u *UserUpdate) ClearPosts() *UserUpdate {
+	_u.mutation.ClearPosts()
+	return _u
+}
+
+// RemovePostIDs removes the "posts" edge to Post entities by IDs.
+func (_u *UserUpdate) RemovePostIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemovePostIDs(ids...)
+	return _u
+}
+
+// RemovePosts removes "posts" edges to Post entities.
+func (_u *UserUpdate) RemovePosts(v ...*Post) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePostIDs(ids...)
+}
+
+// ClearLikes clears all "likes" edges to the Like entity.
+func (_u *UserUpdate) ClearLikes() *UserUpdate {
+	_u.mutation.ClearLikes()
+	return _u
+}
+
+// RemoveLikeIDs removes the "likes" edge to Like entities by IDs.
+func (_u *UserUpdate) RemoveLikeIDs(ids ...int64) *UserUpdate {
+	_u.mutation.RemoveLikeIDs(ids...)
+	return _u
+}
+
+// RemoveLikes removes "likes" edges to Like entities.
+func (_u *UserUpdate) RemoveLikes(v ...*Like) *UserUpdate {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLikeIDs(ids...)
 }
 
 // Save executes the query and returns the number of nodes affected by the update operation.
@@ -194,6 +268,96 @@ func (_u *UserUpdate) sqlSave(ctx context.Context) (_node int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if _u.mutation.PostsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PostsTable,
+			Columns: []string{user.PostsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPostsIDs(); len(nodes) > 0 && !_u.mutation.PostsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PostsTable,
+			Columns: []string{user.PostsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PostsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PostsTable,
+			Columns: []string{user.PostsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LikesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LikesTable,
+			Columns: []string{user.LikesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLikesIDs(); len(nodes) > 0 && !_u.mutation.LikesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LikesTable,
+			Columns: []string{user.LikesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LikesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LikesTable,
+			Columns: []string{user.LikesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if _node, err = sqlgraph.UpdateNodes(ctx, _u.driver, _spec); err != nil {
 		if _, ok := err.(*sqlgraph.NotFoundError); ok {
 			err = &NotFoundError{user.Label}
@@ -267,6 +431,36 @@ func (_u *UserUpdateOne) SetProfile(v *UserProfile) *UserUpdateOne {
 	return _u.SetProfileID(v.ID)
 }
 
+// AddPostIDs adds the "posts" edge to the Post entity by IDs.
+func (_u *UserUpdateOne) AddPostIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddPostIDs(ids...)
+	return _u
+}
+
+// AddPosts adds the "posts" edges to the Post entity.
+func (_u *UserUpdateOne) AddPosts(v ...*Post) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddPostIDs(ids...)
+}
+
+// AddLikeIDs adds the "likes" edge to the Like entity by IDs.
+func (_u *UserUpdateOne) AddLikeIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.AddLikeIDs(ids...)
+	return _u
+}
+
+// AddLikes adds the "likes" edges to the Like entity.
+func (_u *UserUpdateOne) AddLikes(v ...*Like) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.AddLikeIDs(ids...)
+}
+
 // Mutation returns the UserMutation object of the builder.
 func (_u *UserUpdateOne) Mutation() *UserMutation {
 	return _u.mutation
@@ -276,6 +470,48 @@ func (_u *UserUpdateOne) Mutation() *UserMutation {
 func (_u *UserUpdateOne) ClearProfile() *UserUpdateOne {
 	_u.mutation.ClearProfile()
 	return _u
+}
+
+// ClearPosts clears all "posts" edges to the Post entity.
+func (_u *UserUpdateOne) ClearPosts() *UserUpdateOne {
+	_u.mutation.ClearPosts()
+	return _u
+}
+
+// RemovePostIDs removes the "posts" edge to Post entities by IDs.
+func (_u *UserUpdateOne) RemovePostIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemovePostIDs(ids...)
+	return _u
+}
+
+// RemovePosts removes "posts" edges to Post entities.
+func (_u *UserUpdateOne) RemovePosts(v ...*Post) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemovePostIDs(ids...)
+}
+
+// ClearLikes clears all "likes" edges to the Like entity.
+func (_u *UserUpdateOne) ClearLikes() *UserUpdateOne {
+	_u.mutation.ClearLikes()
+	return _u
+}
+
+// RemoveLikeIDs removes the "likes" edge to Like entities by IDs.
+func (_u *UserUpdateOne) RemoveLikeIDs(ids ...int64) *UserUpdateOne {
+	_u.mutation.RemoveLikeIDs(ids...)
+	return _u
+}
+
+// RemoveLikes removes "likes" edges to Like entities.
+func (_u *UserUpdateOne) RemoveLikes(v ...*Like) *UserUpdateOne {
+	ids := make([]int64, len(v))
+	for i := range v {
+		ids[i] = v[i].ID
+	}
+	return _u.RemoveLikeIDs(ids...)
 }
 
 // Where appends a list predicates to the UserUpdate builder.
@@ -402,6 +638,96 @@ func (_u *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 			Bidi:    false,
 			Target: &sqlgraph.EdgeTarget{
 				IDSpec: sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.PostsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PostsTable,
+			Columns: []string{user.PostsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedPostsIDs(); len(nodes) > 0 && !_u.mutation.PostsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PostsTable,
+			Columns: []string{user.PostsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.PostsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.PostsTable,
+			Columns: []string{user.PostsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(post.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if _u.mutation.LikesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LikesTable,
+			Columns: []string{user.LikesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeInt64),
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.RemovedLikesIDs(); len(nodes) > 0 && !_u.mutation.LikesCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LikesTable,
+			Columns: []string{user.LikesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeInt64),
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := _u.mutation.LikesIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.LikesTable,
+			Columns: []string{user.LikesColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: sqlgraph.NewFieldSpec(like.FieldID, field.TypeInt64),
 			},
 		}
 		for _, k := range nodes {

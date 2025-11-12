@@ -12,6 +12,10 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Like is the client for interacting with the Like builders.
+	Like *LikeClient
+	// Post is the client for interacting with the Post builders.
+	Post *PostClient
 	// Test is the client for interacting with the Test builders.
 	Test *TestClient
 	// User is the client for interacting with the User builders.
@@ -149,6 +153,8 @@ func (tx *Tx) Client() *Client {
 }
 
 func (tx *Tx) init() {
+	tx.Like = NewLikeClient(tx.config)
+	tx.Post = NewPostClient(tx.config)
 	tx.Test = NewTestClient(tx.config)
 	tx.User = NewUserClient(tx.config)
 	tx.UserProfile = NewUserProfileClient(tx.config)
@@ -161,7 +167,7 @@ func (tx *Tx) init() {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Test.QueryXXX(), the query will be executed
+// applies a query, for example: Like.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

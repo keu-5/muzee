@@ -9,6 +9,30 @@ import (
 	"github.com/keu-5/muzee/backend/ent"
 )
 
+// The LikeFunc type is an adapter to allow the use of ordinary
+// function as Like mutator.
+type LikeFunc func(context.Context, *ent.LikeMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f LikeFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.LikeMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.LikeMutation", m)
+}
+
+// The PostFunc type is an adapter to allow the use of ordinary
+// function as Post mutator.
+type PostFunc func(context.Context, *ent.PostMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f PostFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.PostMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.PostMutation", m)
+}
+
 // The TestFunc type is an adapter to allow the use of ordinary
 // function as Test mutator.
 type TestFunc func(context.Context, *ent.TestMutation) (ent.Value, error)

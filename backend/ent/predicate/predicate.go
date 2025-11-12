@@ -6,6 +6,12 @@ import (
 	"entgo.io/ent/dialect/sql"
 )
 
+// Like is the predicate function for like builders.
+type Like func(*sql.Selector)
+
+// Post is the predicate function for post builders.
+type Post func(*sql.Selector)
+
 // Test is the predicate function for test builders.
 type Test func(*sql.Selector)
 
