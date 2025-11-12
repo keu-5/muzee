@@ -17,7 +17,9 @@ type User struct {
 // Fields of the User.
 func (User) Fields() []ent.Field {
 	return []ent.Field{
-		field.Int64("id"),
+		field.Int64("id").
+			Unique().
+			Immutable(),
 
 		field.String("email").
 			MaxLen(255).
@@ -45,6 +47,12 @@ func (User) Edges() []ent.Edge {
 		edge.To("profile", UserProfile.Type).
 			Unique().
 			StructTag(`json:"profile,omitempty"`),
+
+		edge.To("posts", Post.Type).
+			StructTag(`json:"posts,omitempty"`),
+
+		edge.To("likes", Like.Type).
+			StructTag(`json:"likes,omitempty"`),
 	}
 }
 
