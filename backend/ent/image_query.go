@@ -11,58 +11,58 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/keu-5/muzee/backend/ent/image"
+	"github.com/keu-5/muzee/backend/ent/post"
 	"github.com/keu-5/muzee/backend/ent/predicate"
-	"github.com/keu-5/muzee/backend/ent/user"
-	"github.com/keu-5/muzee/backend/ent/userprofile"
 )
 
-// UserProfileQuery is the builder for querying UserProfile entities.
-type UserProfileQuery struct {
+// ImageQuery is the builder for querying Image entities.
+type ImageQuery struct {
 	config
 	ctx        *QueryContext
-	order      []userprofile.OrderOption
+	order      []image.OrderOption
 	inters     []Interceptor
-	predicates []predicate.UserProfile
-	withUser   *UserQuery
+	predicates []predicate.Image
+	withPost   *PostQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the UserProfileQuery builder.
-func (_q *UserProfileQuery) Where(ps ...predicate.UserProfile) *UserProfileQuery {
+// Where adds a new predicate for the ImageQuery builder.
+func (_q *ImageQuery) Where(ps ...predicate.Image) *ImageQuery {
 	_q.predicates = append(_q.predicates, ps...)
 	return _q
 }
 
 // Limit the number of records to be returned by this query.
-func (_q *UserProfileQuery) Limit(limit int) *UserProfileQuery {
+func (_q *ImageQuery) Limit(limit int) *ImageQuery {
 	_q.ctx.Limit = &limit
 	return _q
 }
 
 // Offset to start from.
-func (_q *UserProfileQuery) Offset(offset int) *UserProfileQuery {
+func (_q *ImageQuery) Offset(offset int) *ImageQuery {
 	_q.ctx.Offset = &offset
 	return _q
 }
 
 // Unique configures the query builder to filter duplicate records on query.
 // By default, unique is set to true, and can be disabled using this method.
-func (_q *UserProfileQuery) Unique(unique bool) *UserProfileQuery {
+func (_q *ImageQuery) Unique(unique bool) *ImageQuery {
 	_q.ctx.Unique = &unique
 	return _q
 }
 
 // Order specifies how the records should be ordered.
-func (_q *UserProfileQuery) Order(o ...userprofile.OrderOption) *UserProfileQuery {
+func (_q *ImageQuery) Order(o ...image.OrderOption) *ImageQuery {
 	_q.order = append(_q.order, o...)
 	return _q
 }
 
-// QueryUser chains the current query on the "user" edge.
-func (_q *UserProfileQuery) QueryUser() *UserQuery {
-	query := (&UserClient{config: _q.config}).Query()
+// QueryPost chains the current query on the "post" edge.
+func (_q *ImageQuery) QueryPost() *PostQuery {
+	query := (&PostClient{config: _q.config}).Query()
 	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
 		if err := _q.prepareQuery(ctx); err != nil {
 			return nil, err
@@ -72,9 +72,9 @@ func (_q *UserProfileQuery) QueryUser() *UserQuery {
 			return nil, err
 		}
 		step := sqlgraph.NewStep(
-			sqlgraph.From(userprofile.Table, userprofile.FieldID, selector),
-			sqlgraph.To(user.Table, user.FieldID),
-			sqlgraph.Edge(sqlgraph.O2O, true, userprofile.UserTable, userprofile.UserColumn),
+			sqlgraph.From(image.Table, image.FieldID, selector),
+			sqlgraph.To(post.Table, post.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, image.PostTable, image.PostColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -82,21 +82,21 @@ func (_q *UserProfileQuery) QueryUser() *UserQuery {
 	return query
 }
 
-// First returns the first UserProfile entity from the query.
-// Returns a *NotFoundError when no UserProfile was found.
-func (_q *UserProfileQuery) First(ctx context.Context) (*UserProfile, error) {
+// First returns the first Image entity from the query.
+// Returns a *NotFoundError when no Image was found.
+func (_q *ImageQuery) First(ctx context.Context) (*Image, error) {
 	nodes, err := _q.Limit(1).All(setContextOp(ctx, _q.ctx, ent.OpQueryFirst))
 	if err != nil {
 		return nil, err
 	}
 	if len(nodes) == 0 {
-		return nil, &NotFoundError{userprofile.Label}
+		return nil, &NotFoundError{image.Label}
 	}
 	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
-func (_q *UserProfileQuery) FirstX(ctx context.Context) *UserProfile {
+func (_q *ImageQuery) FirstX(ctx context.Context) *Image {
 	node, err := _q.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -104,22 +104,22 @@ func (_q *UserProfileQuery) FirstX(ctx context.Context) *UserProfile {
 	return node
 }
 
-// FirstID returns the first UserProfile ID from the query.
-// Returns a *NotFoundError when no UserProfile ID was found.
-func (_q *UserProfileQuery) FirstID(ctx context.Context) (id int64, err error) {
+// FirstID returns the first Image ID from the query.
+// Returns a *NotFoundError when no Image ID was found.
+func (_q *ImageQuery) FirstID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(1).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryFirstID)); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{userprofile.Label}
+		err = &NotFoundError{image.Label}
 		return
 	}
 	return ids[0], nil
 }
 
 // FirstIDX is like FirstID, but panics if an error occurs.
-func (_q *UserProfileQuery) FirstIDX(ctx context.Context) int64 {
+func (_q *ImageQuery) FirstIDX(ctx context.Context) int64 {
 	id, err := _q.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -127,10 +127,10 @@ func (_q *UserProfileQuery) FirstIDX(ctx context.Context) int64 {
 	return id
 }
 
-// Only returns a single UserProfile entity found by the query, ensuring it only returns one.
-// Returns a *NotSingularError when more than one UserProfile entity is found.
-// Returns a *NotFoundError when no UserProfile entities are found.
-func (_q *UserProfileQuery) Only(ctx context.Context) (*UserProfile, error) {
+// Only returns a single Image entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when more than one Image entity is found.
+// Returns a *NotFoundError when no Image entities are found.
+func (_q *ImageQuery) Only(ctx context.Context) (*Image, error) {
 	nodes, err := _q.Limit(2).All(setContextOp(ctx, _q.ctx, ent.OpQueryOnly))
 	if err != nil {
 		return nil, err
@@ -139,14 +139,14 @@ func (_q *UserProfileQuery) Only(ctx context.Context) (*UserProfile, error) {
 	case 1:
 		return nodes[0], nil
 	case 0:
-		return nil, &NotFoundError{userprofile.Label}
+		return nil, &NotFoundError{image.Label}
 	default:
-		return nil, &NotSingularError{userprofile.Label}
+		return nil, &NotSingularError{image.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
-func (_q *UserProfileQuery) OnlyX(ctx context.Context) *UserProfile {
+func (_q *ImageQuery) OnlyX(ctx context.Context) *Image {
 	node, err := _q.Only(ctx)
 	if err != nil {
 		panic(err)
@@ -154,10 +154,10 @@ func (_q *UserProfileQuery) OnlyX(ctx context.Context) *UserProfile {
 	return node
 }
 
-// OnlyID is like Only, but returns the only UserProfile ID in the query.
-// Returns a *NotSingularError when more than one UserProfile ID is found.
+// OnlyID is like Only, but returns the only Image ID in the query.
+// Returns a *NotSingularError when more than one Image ID is found.
 // Returns a *NotFoundError when no entities are found.
-func (_q *UserProfileQuery) OnlyID(ctx context.Context) (id int64, err error) {
+func (_q *ImageQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	var ids []int64
 	if ids, err = _q.Limit(2).IDs(setContextOp(ctx, _q.ctx, ent.OpQueryOnlyID)); err != nil {
 		return
@@ -166,15 +166,15 @@ func (_q *UserProfileQuery) OnlyID(ctx context.Context) (id int64, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{userprofile.Label}
+		err = &NotFoundError{image.Label}
 	default:
-		err = &NotSingularError{userprofile.Label}
+		err = &NotSingularError{image.Label}
 	}
 	return
 }
 
 // OnlyIDX is like OnlyID, but panics if an error occurs.
-func (_q *UserProfileQuery) OnlyIDX(ctx context.Context) int64 {
+func (_q *ImageQuery) OnlyIDX(ctx context.Context) int64 {
 	id, err := _q.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -182,18 +182,18 @@ func (_q *UserProfileQuery) OnlyIDX(ctx context.Context) int64 {
 	return id
 }
 
-// All executes the query and returns a list of UserProfiles.
-func (_q *UserProfileQuery) All(ctx context.Context) ([]*UserProfile, error) {
+// All executes the query and returns a list of Images.
+func (_q *ImageQuery) All(ctx context.Context) ([]*Image, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryAll)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return nil, err
 	}
-	qr := querierAll[[]*UserProfile, *UserProfileQuery]()
-	return withInterceptors[[]*UserProfile](ctx, _q, qr, _q.inters)
+	qr := querierAll[[]*Image, *ImageQuery]()
+	return withInterceptors[[]*Image](ctx, _q, qr, _q.inters)
 }
 
 // AllX is like All, but panics if an error occurs.
-func (_q *UserProfileQuery) AllX(ctx context.Context) []*UserProfile {
+func (_q *ImageQuery) AllX(ctx context.Context) []*Image {
 	nodes, err := _q.All(ctx)
 	if err != nil {
 		panic(err)
@@ -201,20 +201,20 @@ func (_q *UserProfileQuery) AllX(ctx context.Context) []*UserProfile {
 	return nodes
 }
 
-// IDs executes the query and returns a list of UserProfile IDs.
-func (_q *UserProfileQuery) IDs(ctx context.Context) (ids []int64, err error) {
+// IDs executes the query and returns a list of Image IDs.
+func (_q *ImageQuery) IDs(ctx context.Context) (ids []int64, err error) {
 	if _q.ctx.Unique == nil && _q.path != nil {
 		_q.Unique(true)
 	}
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryIDs)
-	if err = _q.Select(userprofile.FieldID).Scan(ctx, &ids); err != nil {
+	if err = _q.Select(image.FieldID).Scan(ctx, &ids); err != nil {
 		return nil, err
 	}
 	return ids, nil
 }
 
 // IDsX is like IDs, but panics if an error occurs.
-func (_q *UserProfileQuery) IDsX(ctx context.Context) []int64 {
+func (_q *ImageQuery) IDsX(ctx context.Context) []int64 {
 	ids, err := _q.IDs(ctx)
 	if err != nil {
 		panic(err)
@@ -223,16 +223,16 @@ func (_q *UserProfileQuery) IDsX(ctx context.Context) []int64 {
 }
 
 // Count returns the count of the given query.
-func (_q *UserProfileQuery) Count(ctx context.Context) (int, error) {
+func (_q *ImageQuery) Count(ctx context.Context) (int, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryCount)
 	if err := _q.prepareQuery(ctx); err != nil {
 		return 0, err
 	}
-	return withInterceptors[int](ctx, _q, querierCount[*UserProfileQuery](), _q.inters)
+	return withInterceptors[int](ctx, _q, querierCount[*ImageQuery](), _q.inters)
 }
 
 // CountX is like Count, but panics if an error occurs.
-func (_q *UserProfileQuery) CountX(ctx context.Context) int {
+func (_q *ImageQuery) CountX(ctx context.Context) int {
 	count, err := _q.Count(ctx)
 	if err != nil {
 		panic(err)
@@ -241,7 +241,7 @@ func (_q *UserProfileQuery) CountX(ctx context.Context) int {
 }
 
 // Exist returns true if the query has elements in the graph.
-func (_q *UserProfileQuery) Exist(ctx context.Context) (bool, error) {
+func (_q *ImageQuery) Exist(ctx context.Context) (bool, error) {
 	ctx = setContextOp(ctx, _q.ctx, ent.OpQueryExist)
 	switch _, err := _q.FirstID(ctx); {
 	case IsNotFound(err):
@@ -254,7 +254,7 @@ func (_q *UserProfileQuery) Exist(ctx context.Context) (bool, error) {
 }
 
 // ExistX is like Exist, but panics if an error occurs.
-func (_q *UserProfileQuery) ExistX(ctx context.Context) bool {
+func (_q *ImageQuery) ExistX(ctx context.Context) bool {
 	exist, err := _q.Exist(ctx)
 	if err != nil {
 		panic(err)
@@ -262,33 +262,33 @@ func (_q *UserProfileQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the UserProfileQuery builder, including all associated steps. It can be
+// Clone returns a duplicate of the ImageQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
-func (_q *UserProfileQuery) Clone() *UserProfileQuery {
+func (_q *ImageQuery) Clone() *ImageQuery {
 	if _q == nil {
 		return nil
 	}
-	return &UserProfileQuery{
+	return &ImageQuery{
 		config:     _q.config,
 		ctx:        _q.ctx.Clone(),
-		order:      append([]userprofile.OrderOption{}, _q.order...),
+		order:      append([]image.OrderOption{}, _q.order...),
 		inters:     append([]Interceptor{}, _q.inters...),
-		predicates: append([]predicate.UserProfile{}, _q.predicates...),
-		withUser:   _q.withUser.Clone(),
+		predicates: append([]predicate.Image{}, _q.predicates...),
+		withPost:   _q.withPost.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
 	}
 }
 
-// WithUser tells the query-builder to eager-load the nodes that are connected to
-// the "user" edge. The optional arguments are used to configure the query builder of the edge.
-func (_q *UserProfileQuery) WithUser(opts ...func(*UserQuery)) *UserProfileQuery {
-	query := (&UserClient{config: _q.config}).Query()
+// WithPost tells the query-builder to eager-load the nodes that are connected to
+// the "post" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *ImageQuery) WithPost(opts ...func(*PostQuery)) *ImageQuery {
+	query := (&PostClient{config: _q.config}).Query()
 	for _, opt := range opts {
 		opt(query)
 	}
-	_q.withUser = query
+	_q.withPost = query
 	return _q
 }
 
@@ -298,19 +298,19 @@ func (_q *UserProfileQuery) WithUser(opts ...func(*UserQuery)) *UserProfileQuery
 // Example:
 //
 //	var v []struct {
-//		UserID int64 `json:"user_id,omitempty"`
+//		PostID int64 `json:"post_id,omitempty"`
 //		Count int `json:"count,omitempty"`
 //	}
 //
-//	client.UserProfile.Query().
-//		GroupBy(userprofile.FieldUserID).
+//	client.Image.Query().
+//		GroupBy(image.FieldPostID).
 //		Aggregate(ent.Count()).
 //		Scan(ctx, &v)
-func (_q *UserProfileQuery) GroupBy(field string, fields ...string) *UserProfileGroupBy {
+func (_q *ImageQuery) GroupBy(field string, fields ...string) *ImageGroupBy {
 	_q.ctx.Fields = append([]string{field}, fields...)
-	grbuild := &UserProfileGroupBy{build: _q}
+	grbuild := &ImageGroupBy{build: _q}
 	grbuild.flds = &_q.ctx.Fields
-	grbuild.label = userprofile.Label
+	grbuild.label = image.Label
 	grbuild.scan = grbuild.Scan
 	return grbuild
 }
@@ -321,26 +321,26 @@ func (_q *UserProfileQuery) GroupBy(field string, fields ...string) *UserProfile
 // Example:
 //
 //	var v []struct {
-//		UserID int64 `json:"user_id,omitempty"`
+//		PostID int64 `json:"post_id,omitempty"`
 //	}
 //
-//	client.UserProfile.Query().
-//		Select(userprofile.FieldUserID).
+//	client.Image.Query().
+//		Select(image.FieldPostID).
 //		Scan(ctx, &v)
-func (_q *UserProfileQuery) Select(fields ...string) *UserProfileSelect {
+func (_q *ImageQuery) Select(fields ...string) *ImageSelect {
 	_q.ctx.Fields = append(_q.ctx.Fields, fields...)
-	sbuild := &UserProfileSelect{UserProfileQuery: _q}
-	sbuild.label = userprofile.Label
+	sbuild := &ImageSelect{ImageQuery: _q}
+	sbuild.label = image.Label
 	sbuild.flds, sbuild.scan = &_q.ctx.Fields, sbuild.Scan
 	return sbuild
 }
 
-// Aggregate returns a UserProfileSelect configured with the given aggregations.
-func (_q *UserProfileQuery) Aggregate(fns ...AggregateFunc) *UserProfileSelect {
+// Aggregate returns a ImageSelect configured with the given aggregations.
+func (_q *ImageQuery) Aggregate(fns ...AggregateFunc) *ImageSelect {
 	return _q.Select().Aggregate(fns...)
 }
 
-func (_q *UserProfileQuery) prepareQuery(ctx context.Context) error {
+func (_q *ImageQuery) prepareQuery(ctx context.Context) error {
 	for _, inter := range _q.inters {
 		if inter == nil {
 			return fmt.Errorf("ent: uninitialized interceptor (forgotten import ent/runtime?)")
@@ -352,7 +352,7 @@ func (_q *UserProfileQuery) prepareQuery(ctx context.Context) error {
 		}
 	}
 	for _, f := range _q.ctx.Fields {
-		if !userprofile.ValidColumn(f) {
+		if !image.ValidColumn(f) {
 			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
 		}
 	}
@@ -366,19 +366,19 @@ func (_q *UserProfileQuery) prepareQuery(ctx context.Context) error {
 	return nil
 }
 
-func (_q *UserProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*UserProfile, error) {
+func (_q *ImageQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Image, error) {
 	var (
-		nodes       = []*UserProfile{}
+		nodes       = []*Image{}
 		_spec       = _q.querySpec()
 		loadedTypes = [1]bool{
-			_q.withUser != nil,
+			_q.withPost != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
-		return (*UserProfile).scanValues(nil, columns)
+		return (*Image).scanValues(nil, columns)
 	}
 	_spec.Assign = func(columns []string, values []any) error {
-		node := &UserProfile{config: _q.config}
+		node := &Image{config: _q.config}
 		nodes = append(nodes, node)
 		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(columns, values)
@@ -392,20 +392,20 @@ func (_q *UserProfileQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
-	if query := _q.withUser; query != nil {
-		if err := _q.loadUser(ctx, query, nodes, nil,
-			func(n *UserProfile, e *User) { n.Edges.User = e }); err != nil {
+	if query := _q.withPost; query != nil {
+		if err := _q.loadPost(ctx, query, nodes, nil,
+			func(n *Image, e *Post) { n.Edges.Post = e }); err != nil {
 			return nil, err
 		}
 	}
 	return nodes, nil
 }
 
-func (_q *UserProfileQuery) loadUser(ctx context.Context, query *UserQuery, nodes []*UserProfile, init func(*UserProfile), assign func(*UserProfile, *User)) error {
+func (_q *ImageQuery) loadPost(ctx context.Context, query *PostQuery, nodes []*Image, init func(*Image), assign func(*Image, *Post)) error {
 	ids := make([]int64, 0, len(nodes))
-	nodeids := make(map[int64][]*UserProfile)
+	nodeids := make(map[int64][]*Image)
 	for i := range nodes {
-		fk := nodes[i].UserID
+		fk := nodes[i].PostID
 		if _, ok := nodeids[fk]; !ok {
 			ids = append(ids, fk)
 		}
@@ -414,7 +414,7 @@ func (_q *UserProfileQuery) loadUser(ctx context.Context, query *UserQuery, node
 	if len(ids) == 0 {
 		return nil
 	}
-	query.Where(user.IDIn(ids...))
+	query.Where(post.IDIn(ids...))
 	neighbors, err := query.All(ctx)
 	if err != nil {
 		return err
@@ -422,7 +422,7 @@ func (_q *UserProfileQuery) loadUser(ctx context.Context, query *UserQuery, node
 	for _, n := range neighbors {
 		nodes, ok := nodeids[n.ID]
 		if !ok {
-			return fmt.Errorf(`unexpected foreign-key "user_id" returned %v`, n.ID)
+			return fmt.Errorf(`unexpected foreign-key "post_id" returned %v`, n.ID)
 		}
 		for i := range nodes {
 			assign(nodes[i], n)
@@ -431,7 +431,7 @@ func (_q *UserProfileQuery) loadUser(ctx context.Context, query *UserQuery, node
 	return nil
 }
 
-func (_q *UserProfileQuery) sqlCount(ctx context.Context) (int, error) {
+func (_q *ImageQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := _q.querySpec()
 	_spec.Node.Columns = _q.ctx.Fields
 	if len(_q.ctx.Fields) > 0 {
@@ -440,8 +440,8 @@ func (_q *UserProfileQuery) sqlCount(ctx context.Context) (int, error) {
 	return sqlgraph.CountNodes(ctx, _q.driver, _spec)
 }
 
-func (_q *UserProfileQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := sqlgraph.NewQuerySpec(userprofile.Table, userprofile.Columns, sqlgraph.NewFieldSpec(userprofile.FieldID, field.TypeInt64))
+func (_q *ImageQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := sqlgraph.NewQuerySpec(image.Table, image.Columns, sqlgraph.NewFieldSpec(image.FieldID, field.TypeInt64))
 	_spec.From = _q.sql
 	if unique := _q.ctx.Unique; unique != nil {
 		_spec.Unique = *unique
@@ -450,14 +450,14 @@ func (_q *UserProfileQuery) querySpec() *sqlgraph.QuerySpec {
 	}
 	if fields := _q.ctx.Fields; len(fields) > 0 {
 		_spec.Node.Columns = make([]string, 0, len(fields))
-		_spec.Node.Columns = append(_spec.Node.Columns, userprofile.FieldID)
+		_spec.Node.Columns = append(_spec.Node.Columns, image.FieldID)
 		for i := range fields {
-			if fields[i] != userprofile.FieldID {
+			if fields[i] != image.FieldID {
 				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
 			}
 		}
-		if _q.withUser != nil {
-			_spec.Node.AddColumnOnce(userprofile.FieldUserID)
+		if _q.withPost != nil {
+			_spec.Node.AddColumnOnce(image.FieldPostID)
 		}
 	}
 	if ps := _q.predicates; len(ps) > 0 {
@@ -483,12 +483,12 @@ func (_q *UserProfileQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (_q *UserProfileQuery) sqlQuery(ctx context.Context) *sql.Selector {
+func (_q *ImageQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(_q.driver.Dialect())
-	t1 := builder.Table(userprofile.Table)
+	t1 := builder.Table(image.Table)
 	columns := _q.ctx.Fields
 	if len(columns) == 0 {
-		columns = userprofile.Columns
+		columns = image.Columns
 	}
 	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if _q.sql != nil {
@@ -515,28 +515,28 @@ func (_q *UserProfileQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	return selector
 }
 
-// UserProfileGroupBy is the group-by builder for UserProfile entities.
-type UserProfileGroupBy struct {
+// ImageGroupBy is the group-by builder for Image entities.
+type ImageGroupBy struct {
 	selector
-	build *UserProfileQuery
+	build *ImageQuery
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (_g *UserProfileGroupBy) Aggregate(fns ...AggregateFunc) *UserProfileGroupBy {
+func (_g *ImageGroupBy) Aggregate(fns ...AggregateFunc) *ImageGroupBy {
 	_g.fns = append(_g.fns, fns...)
 	return _g
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_g *UserProfileGroupBy) Scan(ctx context.Context, v any) error {
+func (_g *ImageGroupBy) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _g.build.ctx, ent.OpQueryGroupBy)
 	if err := _g.build.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*UserProfileQuery, *UserProfileGroupBy](ctx, _g.build, _g, _g.build.inters, v)
+	return scanWithInterceptors[*ImageQuery, *ImageGroupBy](ctx, _g.build, _g, _g.build.inters, v)
 }
 
-func (_g *UserProfileGroupBy) sqlScan(ctx context.Context, root *UserProfileQuery, v any) error {
+func (_g *ImageGroupBy) sqlScan(ctx context.Context, root *ImageQuery, v any) error {
 	selector := root.sqlQuery(ctx).Select()
 	aggregation := make([]string, 0, len(_g.fns))
 	for _, fn := range _g.fns {
@@ -563,28 +563,28 @@ func (_g *UserProfileGroupBy) sqlScan(ctx context.Context, root *UserProfileQuer
 	return sql.ScanSlice(rows, v)
 }
 
-// UserProfileSelect is the builder for selecting fields of UserProfile entities.
-type UserProfileSelect struct {
-	*UserProfileQuery
+// ImageSelect is the builder for selecting fields of Image entities.
+type ImageSelect struct {
+	*ImageQuery
 	selector
 }
 
 // Aggregate adds the given aggregation functions to the selector query.
-func (_s *UserProfileSelect) Aggregate(fns ...AggregateFunc) *UserProfileSelect {
+func (_s *ImageSelect) Aggregate(fns ...AggregateFunc) *ImageSelect {
 	_s.fns = append(_s.fns, fns...)
 	return _s
 }
 
 // Scan applies the selector query and scans the result into the given value.
-func (_s *UserProfileSelect) Scan(ctx context.Context, v any) error {
+func (_s *ImageSelect) Scan(ctx context.Context, v any) error {
 	ctx = setContextOp(ctx, _s.ctx, ent.OpQuerySelect)
 	if err := _s.prepareQuery(ctx); err != nil {
 		return err
 	}
-	return scanWithInterceptors[*UserProfileQuery, *UserProfileSelect](ctx, _s.UserProfileQuery, _s, _s.inters, v)
+	return scanWithInterceptors[*ImageQuery, *ImageSelect](ctx, _s.ImageQuery, _s, _s.inters, v)
 }
 
-func (_s *UserProfileSelect) sqlScan(ctx context.Context, root *UserProfileQuery, v any) error {
+func (_s *ImageSelect) sqlScan(ctx context.Context, root *ImageQuery, v any) error {
 	selector := root.sqlQuery(ctx)
 	aggregation := make([]string, 0, len(_s.fns))
 	for _, fn := range _s.fns {

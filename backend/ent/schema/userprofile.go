@@ -20,6 +20,8 @@ func (UserProfile) Fields() []ent.Field {
 	return []ent.Field{
 		field.Int64("id"),
 
+		field.Int64("user_id"),
+
 		field.String("name").
 			MaxLen(100).
 			NotEmpty(),
@@ -50,6 +52,7 @@ func (UserProfile) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("user", User.Type).
 			Ref("profile").
+			Field("user_id").
 			Unique().
 			Required(),
 	}

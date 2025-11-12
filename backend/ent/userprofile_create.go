@@ -21,6 +21,12 @@ type UserProfileCreate struct {
 	hooks    []Hook
 }
 
+// SetUserID sets the "user_id" field.
+func (_c *UserProfileCreate) SetUserID(v int64) *UserProfileCreate {
+	_c.mutation.SetUserID(v)
+	return _c
+}
+
 // SetName sets the "name" field.
 func (_c *UserProfileCreate) SetName(v string) *UserProfileCreate {
 	_c.mutation.SetName(v)
@@ -81,12 +87,6 @@ func (_c *UserProfileCreate) SetID(v int64) *UserProfileCreate {
 	return _c
 }
 
-// SetUserID sets the "user" edge to the User entity by ID.
-func (_c *UserProfileCreate) SetUserID(id int64) *UserProfileCreate {
-	_c.mutation.SetUserID(id)
-	return _c
-}
-
 // SetUser sets the "user" edge to the User entity.
 func (_c *UserProfileCreate) SetUser(v *User) *UserProfileCreate {
 	return _c.SetUserID(v.ID)
@@ -139,6 +139,9 @@ func (_c *UserProfileCreate) defaults() {
 
 // check runs all checks and user-defined validators on the builder.
 func (_c *UserProfileCreate) check() error {
+	if _, ok := _c.mutation.UserID(); !ok {
+		return &ValidationError{Name: "user_id", err: errors.New(`ent: missing required field "UserProfile.user_id"`)}
+	}
 	if _, ok := _c.mutation.Name(); !ok {
 		return &ValidationError{Name: "name", err: errors.New(`ent: missing required field "UserProfile.name"`)}
 	}
@@ -235,7 +238,7 @@ func (_c *UserProfileCreate) createSpec() (*UserProfile, *sqlgraph.CreateSpec) {
 		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_node.user_profile = &nodes[0]
+		_node.UserID = nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec

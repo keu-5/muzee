@@ -55,6 +55,11 @@ func IDLTE(id int64) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldLTE(FieldID, id))
 }
 
+// UserID applies equality check predicate on the "user_id" field. It's identical to UserIDEQ.
+func UserID(v int64) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldUserID, v))
+}
+
 // Name applies equality check predicate on the "name" field. It's identical to NameEQ.
 func Name(v string) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldName, v))
@@ -78,6 +83,26 @@ func CreatedAt(v time.Time) predicate.UserProfile {
 // UpdatedAt applies equality check predicate on the "updated_at" field. It's identical to UpdatedAtEQ.
 func UpdatedAt(v time.Time) predicate.UserProfile {
 	return predicate.UserProfile(sql.FieldEQ(FieldUpdatedAt, v))
+}
+
+// UserIDEQ applies the EQ predicate on the "user_id" field.
+func UserIDEQ(v int64) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldEQ(FieldUserID, v))
+}
+
+// UserIDNEQ applies the NEQ predicate on the "user_id" field.
+func UserIDNEQ(v int64) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNEQ(FieldUserID, v))
+}
+
+// UserIDIn applies the In predicate on the "user_id" field.
+func UserIDIn(vs ...int64) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldIn(FieldUserID, vs...))
+}
+
+// UserIDNotIn applies the NotIn predicate on the "user_id" field.
+func UserIDNotIn(vs ...int64) predicate.UserProfile {
+	return predicate.UserProfile(sql.FieldNotIn(FieldUserID, vs...))
 }
 
 // NameEQ applies the EQ predicate on the "name" field.

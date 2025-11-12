@@ -12,6 +12,9 @@ import (
 	"entgo.io/ent"
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
+	"github.com/keu-5/muzee/backend/ent/image"
+	"github.com/keu-5/muzee/backend/ent/like"
+	"github.com/keu-5/muzee/backend/ent/post"
 	"github.com/keu-5/muzee/backend/ent/test"
 	"github.com/keu-5/muzee/backend/ent/user"
 	"github.com/keu-5/muzee/backend/ent/userprofile"
@@ -75,6 +78,9 @@ var (
 func checkColumn(t, c string) error {
 	initCheck.Do(func() {
 		columnCheck = sql.NewColumnCheck(map[string]func(string) bool{
+			image.Table:       image.ValidColumn,
+			like.Table:        like.ValidColumn,
+			post.Table:        post.ValidColumn,
 			test.Table:        test.ValidColumn,
 			user.Table:        user.ValidColumn,
 			userprofile.Table: userprofile.ValidColumn,

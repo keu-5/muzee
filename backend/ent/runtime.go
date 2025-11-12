@@ -5,6 +5,9 @@ package ent
 import (
 	"time"
 
+	"github.com/keu-5/muzee/backend/ent/image"
+	"github.com/keu-5/muzee/backend/ent/like"
+	"github.com/keu-5/muzee/backend/ent/post"
 	"github.com/keu-5/muzee/backend/ent/schema"
 	"github.com/keu-5/muzee/backend/ent/user"
 	"github.com/keu-5/muzee/backend/ent/userprofile"
@@ -14,6 +17,84 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	imageFields := schema.Image{}.Fields()
+	_ = imageFields
+	// imageDescImageURL is the schema descriptor for image_url field.
+	imageDescImageURL := imageFields[2].Descriptor()
+	// image.ImageURLValidator is a validator for the "image_url" field. It is called by the builders before save.
+	image.ImageURLValidator = imageDescImageURL.Validators[0].(func(string) error)
+	// imageDescDisplayOrder is the schema descriptor for display_order field.
+	imageDescDisplayOrder := imageFields[3].Descriptor()
+	// image.DisplayOrderValidator is a validator for the "display_order" field. It is called by the builders before save.
+	image.DisplayOrderValidator = imageDescDisplayOrder.Validators[0].(func(int8) error)
+	// imageDescWidth is the schema descriptor for width field.
+	imageDescWidth := imageFields[4].Descriptor()
+	// image.WidthValidator is a validator for the "width" field. It is called by the builders before save.
+	image.WidthValidator = imageDescWidth.Validators[0].(func(int16) error)
+	// imageDescHeight is the schema descriptor for height field.
+	imageDescHeight := imageFields[5].Descriptor()
+	// image.HeightValidator is a validator for the "height" field. It is called by the builders before save.
+	image.HeightValidator = imageDescHeight.Validators[0].(func(int16) error)
+	// imageDescCreatedAt is the schema descriptor for created_at field.
+	imageDescCreatedAt := imageFields[7].Descriptor()
+	// image.DefaultCreatedAt holds the default value on creation for the created_at field.
+	image.DefaultCreatedAt = imageDescCreatedAt.Default.(func() time.Time)
+	// imageDescUpdatedAt is the schema descriptor for updated_at field.
+	imageDescUpdatedAt := imageFields[8].Descriptor()
+	// image.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	image.DefaultUpdatedAt = imageDescUpdatedAt.Default.(func() time.Time)
+	// image.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	image.UpdateDefaultUpdatedAt = imageDescUpdatedAt.UpdateDefault.(func() time.Time)
+	likeFields := schema.Like{}.Fields()
+	_ = likeFields
+	// likeDescCreatedAt is the schema descriptor for created_at field.
+	likeDescCreatedAt := likeFields[3].Descriptor()
+	// like.DefaultCreatedAt holds the default value on creation for the created_at field.
+	like.DefaultCreatedAt = likeDescCreatedAt.Default.(func() time.Time)
+	// likeDescUpdatedAt is the schema descriptor for updated_at field.
+	likeDescUpdatedAt := likeFields[4].Descriptor()
+	// like.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	like.DefaultUpdatedAt = likeDescUpdatedAt.Default.(func() time.Time)
+	// like.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	like.UpdateDefaultUpdatedAt = likeDescUpdatedAt.UpdateDefault.(func() time.Time)
+	postFields := schema.Post{}.Fields()
+	_ = postFields
+	// postDescIsPublic is the schema descriptor for is_public field.
+	postDescIsPublic := postFields[4].Descriptor()
+	// post.DefaultIsPublic holds the default value on creation for the is_public field.
+	post.DefaultIsPublic = postDescIsPublic.Default.(bool)
+	// postDescIsNsfw is the schema descriptor for is_nsfw field.
+	postDescIsNsfw := postFields[5].Descriptor()
+	// post.DefaultIsNsfw holds the default value on creation for the is_nsfw field.
+	post.DefaultIsNsfw = postDescIsNsfw.Default.(bool)
+	// postDescLikedCount is the schema descriptor for liked_count field.
+	postDescLikedCount := postFields[6].Descriptor()
+	// post.DefaultLikedCount holds the default value on creation for the liked_count field.
+	post.DefaultLikedCount = postDescLikedCount.Default.(int)
+	// post.LikedCountValidator is a validator for the "liked_count" field. It is called by the builders before save.
+	post.LikedCountValidator = postDescLikedCount.Validators[0].(func(int) error)
+	// postDescRecommendedCount is the schema descriptor for recommended_count field.
+	postDescRecommendedCount := postFields[7].Descriptor()
+	// post.DefaultRecommendedCount holds the default value on creation for the recommended_count field.
+	post.DefaultRecommendedCount = postDescRecommendedCount.Default.(int)
+	// post.RecommendedCountValidator is a validator for the "recommended_count" field. It is called by the builders before save.
+	post.RecommendedCountValidator = postDescRecommendedCount.Validators[0].(func(int) error)
+	// postDescViewCount is the schema descriptor for view_count field.
+	postDescViewCount := postFields[8].Descriptor()
+	// post.DefaultViewCount holds the default value on creation for the view_count field.
+	post.DefaultViewCount = postDescViewCount.Default.(int)
+	// post.ViewCountValidator is a validator for the "view_count" field. It is called by the builders before save.
+	post.ViewCountValidator = postDescViewCount.Validators[0].(func(int) error)
+	// postDescCreatedAt is the schema descriptor for created_at field.
+	postDescCreatedAt := postFields[9].Descriptor()
+	// post.DefaultCreatedAt holds the default value on creation for the created_at field.
+	post.DefaultCreatedAt = postDescCreatedAt.Default.(func() time.Time)
+	// postDescUpdatedAt is the schema descriptor for updated_at field.
+	postDescUpdatedAt := postFields[10].Descriptor()
+	// post.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	post.DefaultUpdatedAt = postDescUpdatedAt.Default.(func() time.Time)
+	// post.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	post.UpdateDefaultUpdatedAt = postDescUpdatedAt.UpdateDefault.(func() time.Time)
 	userFields := schema.User{}.Fields()
 	_ = userFields
 	// userDescEmail is the schema descriptor for email field.
@@ -65,7 +146,7 @@ func init() {
 	userprofileFields := schema.UserProfile{}.Fields()
 	_ = userprofileFields
 	// userprofileDescName is the schema descriptor for name field.
-	userprofileDescName := userprofileFields[1].Descriptor()
+	userprofileDescName := userprofileFields[2].Descriptor()
 	// userprofile.NameValidator is a validator for the "name" field. It is called by the builders before save.
 	userprofile.NameValidator = func() func(string) error {
 		validators := userprofileDescName.Validators
@@ -83,7 +164,7 @@ func init() {
 		}
 	}()
 	// userprofileDescUsername is the schema descriptor for username field.
-	userprofileDescUsername := userprofileFields[2].Descriptor()
+	userprofileDescUsername := userprofileFields[3].Descriptor()
 	// userprofile.UsernameValidator is a validator for the "username" field. It is called by the builders before save.
 	userprofile.UsernameValidator = func() func(string) error {
 		validators := userprofileDescUsername.Validators
@@ -102,15 +183,15 @@ func init() {
 		}
 	}()
 	// userprofileDescIconPath is the schema descriptor for icon_path field.
-	userprofileDescIconPath := userprofileFields[3].Descriptor()
+	userprofileDescIconPath := userprofileFields[4].Descriptor()
 	// userprofile.IconPathValidator is a validator for the "icon_path" field. It is called by the builders before save.
 	userprofile.IconPathValidator = userprofileDescIconPath.Validators[0].(func(string) error)
 	// userprofileDescCreatedAt is the schema descriptor for created_at field.
-	userprofileDescCreatedAt := userprofileFields[4].Descriptor()
+	userprofileDescCreatedAt := userprofileFields[5].Descriptor()
 	// userprofile.DefaultCreatedAt holds the default value on creation for the created_at field.
 	userprofile.DefaultCreatedAt = userprofileDescCreatedAt.Default.(func() time.Time)
 	// userprofileDescUpdatedAt is the schema descriptor for updated_at field.
-	userprofileDescUpdatedAt := userprofileFields[5].Descriptor()
+	userprofileDescUpdatedAt := userprofileFields[6].Descriptor()
 	// userprofile.DefaultUpdatedAt holds the default value on creation for the updated_at field.
 	userprofile.DefaultUpdatedAt = userprofileDescUpdatedAt.Default.(func() time.Time)
 	// userprofile.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
