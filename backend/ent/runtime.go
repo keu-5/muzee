@@ -5,6 +5,7 @@ package ent
 import (
 	"time"
 
+	"github.com/keu-5/muzee/backend/ent/image"
 	"github.com/keu-5/muzee/backend/ent/like"
 	"github.com/keu-5/muzee/backend/ent/post"
 	"github.com/keu-5/muzee/backend/ent/schema"
@@ -16,6 +17,34 @@ import (
 // (default values, validators, hooks and policies) and stitches it
 // to their package variables.
 func init() {
+	imageFields := schema.Image{}.Fields()
+	_ = imageFields
+	// imageDescImageURL is the schema descriptor for image_url field.
+	imageDescImageURL := imageFields[2].Descriptor()
+	// image.ImageURLValidator is a validator for the "image_url" field. It is called by the builders before save.
+	image.ImageURLValidator = imageDescImageURL.Validators[0].(func(string) error)
+	// imageDescDisplayOrder is the schema descriptor for display_order field.
+	imageDescDisplayOrder := imageFields[3].Descriptor()
+	// image.DisplayOrderValidator is a validator for the "display_order" field. It is called by the builders before save.
+	image.DisplayOrderValidator = imageDescDisplayOrder.Validators[0].(func(int8) error)
+	// imageDescWidth is the schema descriptor for width field.
+	imageDescWidth := imageFields[4].Descriptor()
+	// image.WidthValidator is a validator for the "width" field. It is called by the builders before save.
+	image.WidthValidator = imageDescWidth.Validators[0].(func(int16) error)
+	// imageDescHeight is the schema descriptor for height field.
+	imageDescHeight := imageFields[5].Descriptor()
+	// image.HeightValidator is a validator for the "height" field. It is called by the builders before save.
+	image.HeightValidator = imageDescHeight.Validators[0].(func(int16) error)
+	// imageDescCreatedAt is the schema descriptor for created_at field.
+	imageDescCreatedAt := imageFields[7].Descriptor()
+	// image.DefaultCreatedAt holds the default value on creation for the created_at field.
+	image.DefaultCreatedAt = imageDescCreatedAt.Default.(func() time.Time)
+	// imageDescUpdatedAt is the schema descriptor for updated_at field.
+	imageDescUpdatedAt := imageFields[8].Descriptor()
+	// image.DefaultUpdatedAt holds the default value on creation for the updated_at field.
+	image.DefaultUpdatedAt = imageDescUpdatedAt.Default.(func() time.Time)
+	// image.UpdateDefaultUpdatedAt holds the default value on update for the updated_at field.
+	image.UpdateDefaultUpdatedAt = imageDescUpdatedAt.UpdateDefault.(func() time.Time)
 	likeFields := schema.Like{}.Fields()
 	_ = likeFields
 	// likeDescCreatedAt is the schema descriptor for created_at field.

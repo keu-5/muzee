@@ -12,6 +12,7 @@ import (
 	"entgo.io/ent/dialect/sql"
 	"entgo.io/ent/dialect/sql/sqlgraph"
 	"entgo.io/ent/schema/field"
+	"github.com/keu-5/muzee/backend/ent/image"
 	"github.com/keu-5/muzee/backend/ent/like"
 	"github.com/keu-5/muzee/backend/ent/post"
 	"github.com/keu-5/muzee/backend/ent/predicate"
@@ -29,6 +30,7 @@ type PostQuery struct {
 	withRecommendingPosts *PostQuery
 	withRecommendedPost   *PostQuery
 	withLikes             *LikeQuery
+	withImages            *ImageQuery
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -146,6 +148,28 @@ func (_q *PostQuery) QueryLikes() *LikeQuery {
 			sqlgraph.From(post.Table, post.FieldID, selector),
 			sqlgraph.To(like.Table, like.FieldID),
 			sqlgraph.Edge(sqlgraph.O2M, false, post.LikesTable, post.LikesColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
+		return fromU, nil
+	}
+	return query
+}
+
+// QueryImages chains the current query on the "images" edge.
+func (_q *PostQuery) QueryImages() *ImageQuery {
+	query := (&ImageClient{config: _q.config}).Query()
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := _q.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := _q.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(post.Table, post.FieldID, selector),
+			sqlgraph.To(image.Table, image.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, post.ImagesTable, post.ImagesColumn),
 		)
 		fromU = sqlgraph.SetNeighbors(_q.driver.Dialect(), step)
 		return fromU, nil
@@ -349,6 +373,7 @@ func (_q *PostQuery) Clone() *PostQuery {
 		withRecommendingPosts: _q.withRecommendingPosts.Clone(),
 		withRecommendedPost:   _q.withRecommendedPost.Clone(),
 		withLikes:             _q.withLikes.Clone(),
+		withImages:            _q.withImages.Clone(),
 		// clone intermediate query.
 		sql:  _q.sql.Clone(),
 		path: _q.path,
@@ -396,6 +421,17 @@ func (_q *PostQuery) WithLikes(opts ...func(*LikeQuery)) *PostQuery {
 		opt(query)
 	}
 	_q.withLikes = query
+	return _q
+}
+
+// WithImages tells the query-builder to eager-load the nodes that are connected to
+// the "images" edge. The optional arguments are used to configure the query builder of the edge.
+func (_q *PostQuery) WithImages(opts ...func(*ImageQuery)) *PostQuery {
+	query := (&ImageClient{config: _q.config}).Query()
+	for _, opt := range opts {
+		opt(query)
+	}
+	_q.withImages = query
 	return _q
 }
 
@@ -477,11 +513,12 @@ func (_q *PostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Post, e
 	var (
 		nodes       = []*Post{}
 		_spec       = _q.querySpec()
-		loadedTypes = [4]bool{
+		loadedTypes = [5]bool{
 			_q.withUser != nil,
 			_q.withRecommendingPosts != nil,
 			_q.withRecommendedPost != nil,
 			_q.withLikes != nil,
+			_q.withImages != nil,
 		}
 	)
 	_spec.ScanValues = func(columns []string) ([]any, error) {
@@ -525,6 +562,13 @@ func (_q *PostQuery) sqlAll(ctx context.Context, hooks ...queryHook) ([]*Post, e
 		if err := _q.loadLikes(ctx, query, nodes,
 			func(n *Post) { n.Edges.Likes = []*Like{} },
 			func(n *Post, e *Like) { n.Edges.Likes = append(n.Edges.Likes, e) }); err != nil {
+			return nil, err
+		}
+	}
+	if query := _q.withImages; query != nil {
+		if err := _q.loadImages(ctx, query, nodes,
+			func(n *Post) { n.Edges.Images = []*Image{} },
+			func(n *Post, e *Image) { n.Edges.Images = append(n.Edges.Images, e) }); err != nil {
 			return nil, err
 		}
 	}
@@ -634,6 +678,36 @@ func (_q *PostQuery) loadLikes(ctx context.Context, query *LikeQuery, nodes []*P
 	}
 	query.Where(predicate.Like(func(s *sql.Selector) {
 		s.Where(sql.InValues(s.C(post.LikesColumn), fks...))
+	}))
+	neighbors, err := query.All(ctx)
+	if err != nil {
+		return err
+	}
+	for _, n := range neighbors {
+		fk := n.PostID
+		node, ok := nodeids[fk]
+		if !ok {
+			return fmt.Errorf(`unexpected referenced foreign-key "post_id" returned %v for node %v`, fk, n.ID)
+		}
+		assign(node, n)
+	}
+	return nil
+}
+func (_q *PostQuery) loadImages(ctx context.Context, query *ImageQuery, nodes []*Post, init func(*Post), assign func(*Post, *Image)) error {
+	fks := make([]driver.Value, 0, len(nodes))
+	nodeids := make(map[int64]*Post)
+	for i := range nodes {
+		fks = append(fks, nodes[i].ID)
+		nodeids[nodes[i].ID] = nodes[i]
+		if init != nil {
+			init(nodes[i])
+		}
+	}
+	if len(query.ctx.Fields) > 0 {
+		query.ctx.AppendFieldOnce(image.FieldPostID)
+	}
+	query.Where(predicate.Image(func(s *sql.Selector) {
+		s.Where(sql.InValues(s.C(post.ImagesColumn), fks...))
 	}))
 	neighbors, err := query.All(ctx)
 	if err != nil {

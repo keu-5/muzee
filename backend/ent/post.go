@@ -54,9 +54,11 @@ type PostEdges struct {
 	RecommendedPost *Post `json:"recommended_post,omitempty"`
 	// Likes holds the value of the likes edge.
 	Likes []*Like `json:"likes,omitempty"`
+	// Images holds the value of the images edge.
+	Images []*Image `json:"images,omitempty"`
 	// loadedTypes holds the information for reporting if a
 	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [4]bool
+	loadedTypes [5]bool
 }
 
 // UserOrErr returns the User value or an error if the edge
@@ -97,6 +99,15 @@ func (e PostEdges) LikesOrErr() ([]*Like, error) {
 		return e.Likes, nil
 	}
 	return nil, &NotLoadedError{edge: "likes"}
+}
+
+// ImagesOrErr returns the Images value or an error if the edge
+// was not loaded in eager-loading.
+func (e PostEdges) ImagesOrErr() ([]*Image, error) {
+	if e.loadedTypes[4] {
+		return e.Images, nil
+	}
+	return nil, &NotLoadedError{edge: "images"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -224,6 +235,11 @@ func (_m *Post) QueryRecommendedPost() *PostQuery {
 // QueryLikes queries the "likes" edge of the Post entity.
 func (_m *Post) QueryLikes() *LikeQuery {
 	return NewPostClient(_m.config).QueryLikes(_m)
+}
+
+// QueryImages queries the "images" edge of the Post entity.
+func (_m *Post) QueryImages() *ImageQuery {
+	return NewPostClient(_m.config).QueryImages(_m)
 }
 
 // Update returns a builder for updating this Post.

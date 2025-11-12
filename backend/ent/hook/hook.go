@@ -9,6 +9,18 @@ import (
 	"github.com/keu-5/muzee/backend/ent"
 )
 
+// The ImageFunc type is an adapter to allow the use of ordinary
+// function as Image mutator.
+type ImageFunc func(context.Context, *ent.ImageMutation) (ent.Value, error)
+
+// Mutate calls f(ctx, m).
+func (f ImageFunc) Mutate(ctx context.Context, m ent.Mutation) (ent.Value, error) {
+	if mv, ok := m.(*ent.ImageMutation); ok {
+		return f(ctx, mv)
+	}
+	return nil, fmt.Errorf("unexpected mutation type %T. expect *ent.ImageMutation", m)
+}
+
 // The LikeFunc type is an adapter to allow the use of ordinary
 // function as Like mutator.
 type LikeFunc func(context.Context, *ent.LikeMutation) (ent.Value, error)

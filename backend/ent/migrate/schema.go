@@ -8,6 +8,44 @@ import (
 )
 
 var (
+	// ImagesColumns holds the columns for the "images" table.
+	ImagesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt64, Increment: true},
+		{Name: "image_url", Type: field.TypeString, Size: 255},
+		{Name: "display_order", Type: field.TypeInt8},
+		{Name: "width", Type: field.TypeInt16},
+		{Name: "height", Type: field.TypeInt16},
+		{Name: "alt_text", Type: field.TypeString, Nullable: true, Size: 2147483647},
+		{Name: "created_at", Type: field.TypeTime},
+		{Name: "updated_at", Type: field.TypeTime},
+		{Name: "post_id", Type: field.TypeInt64},
+	}
+	// ImagesTable holds the schema information for the "images" table.
+	ImagesTable = &schema.Table{
+		Name:       "images",
+		Columns:    ImagesColumns,
+		PrimaryKey: []*schema.Column{ImagesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:     "images_posts_images",
+				Columns:    []*schema.Column{ImagesColumns[8]},
+				RefColumns: []*schema.Column{PostsColumns[0]},
+				OnDelete:   schema.NoAction,
+			},
+		},
+		Indexes: []*schema.Index{
+			{
+				Name:    "image_post_id",
+				Unique:  false,
+				Columns: []*schema.Column{ImagesColumns[8]},
+			},
+			{
+				Name:    "idx_images_post_display_order",
+				Unique:  true,
+				Columns: []*schema.Column{ImagesColumns[8], ImagesColumns[2]},
+			},
+		},
+	}
 	// LikesColumns holds the columns for the "likes" table.
 	LikesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt64, Increment: true},
@@ -183,6 +221,7 @@ var (
 	}
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
+		ImagesTable,
 		LikesTable,
 		PostsTable,
 		TestsTable,
@@ -192,6 +231,7 @@ var (
 )
 
 func init() {
+	ImagesTable.ForeignKeys[0].RefTable = PostsTable
 	LikesTable.ForeignKeys[0].RefTable = PostsTable
 	LikesTable.ForeignKeys[1].RefTable = UsersTable
 	PostsTable.ForeignKeys[0].RefTable = PostsTable
